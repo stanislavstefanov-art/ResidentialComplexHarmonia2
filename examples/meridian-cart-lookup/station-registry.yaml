@@ -1,0 +1,64 @@
+version: 1
+feature_source: feature.md
+station_order:
+  - 100
+  - 200
+  - 300
+  - 400
+  - 500
+  - 700
+  - 800
+  - 900
+  - 600
+  - 1000
+stations:
+  - id: 100
+    name: Consulting / SME
+    slot_file: station-specs/100-consulting.md
+    claude_agent_file: .claude/agents/100-consulting.md
+    writes: 100-opportunity-brief.md
+  - id: 200
+    name: Product / BA
+    slot_file: station-specs/200-product.md
+    claude_agent_file: .claude/agents/200-product.md
+    writes: 200-spec.md
+  - id: 300
+    name: Design
+    slot_file: station-specs/300-design.md
+    claude_agent_file: .claude/agents/300-design.md
+    writes: 300-design.md
+  - id: 400
+    name: Architecture
+    slot_file: station-specs/400-architecture.md
+    claude_agent_file: .claude/agents/400-architecture.md
+    writes: 400-architecture.md
+  - id: 500
+    name: Engineering
+    slot_file: station-specs/500-engineering.md
+    claude_agent_file: .claude/agents/500-engineering.md
+    writes: 500-implementation.md
+  - id: 700
+    name: Data
+    slot_file: station-specs/700-data.md
+    claude_agent_file: .claude/agents/700-data.md
+    writes: 700-data-design.md
+  - id: 800
+    name: Infra/Ops
+    slot_file: station-specs/800-infrastructure.md
+    claude_agent_file: .claude/agents/800-infrastructure.md
+    writes: 800-infra.md
+  - id: 900
+    name: Security
+    slot_file: station-specs/900-security.md
+    claude_agent_file: .claude/agents/900-security.md
+    writes: 900-security-review.md
+  - id: 600
+    name: QA
+    slot_file: station-specs/600-qa.md
+    claude_agent_file: .claude/agents/600-qa.md
+    writes: 600-test-plan.md
+  - id: 1000
+    name: Management / Delivery
+    slot_file: station-specs/1000-delivery.md
+    claude_agent_file: .claude/agents/1000-delivery.md
+    writes: 1000-release-plan.md

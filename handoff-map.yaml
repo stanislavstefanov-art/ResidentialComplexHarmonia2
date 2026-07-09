@@ -1,0 +1,100 @@
+version: 1
+execution_order:
+  - 100
+  - 200
+  - 300
+  - 400
+  - 500
+  - 700
+  - 800
+  - 900
+  - 600
+  - 1000
+edges:
+  - from: feature
+    to: 100
+    file: feature.md
+  - from: 100
+    to: 200
+    file: runs/<feature-slug>/100-opportunity-brief.md
+  - from: 200
+    to: 300
+    file: runs/<feature-slug>/200-spec.md
+  - from: 300
+    to: 400
+    file: runs/<feature-slug>/300-design.md
+  - from: 400
+    to: 500
+    file: runs/<feature-slug>/400-architecture.md
+  - from: 400
+    to: 700
+    file: runs/<feature-slug>/400-architecture.md
+  - from: 400
+    to: 800
+    file: runs/<feature-slug>/400-architecture.md
+  - from: 500
+    to: 800
+    file: runs/<feature-slug>/500-implementation.md
+  - from: 700
+    to: 800
+    file: runs/<feature-slug>/700-data-design.md
+  - from: 400
+    to: 900
+    file: runs/<feature-slug>/400-architecture.md
+  - from: 500
+    to: 900
+    file: runs/<feature-slug>/500-implementation.md
+  - from: 700
+    to: 900
+    file: runs/<feature-slug>/700-data-design.md
+  - from: 800
+    to: 900
+    file: runs/<feature-slug>/800-infra.md
+  - from: 200
+    to: 600
+    file: runs/<feature-slug>/200-spec.md
+  - from: 500
+    to: 600
+    file: runs/<feature-slug>/500-implementation.md
+  - from: 700
+    to: 600
+    file: runs/<feature-slug>/700-data-design.md
+  - from: 800
+    to: 600
+    file: runs/<feature-slug>/800-infra.md
+  - from: 900
+    to: 600
+    file: runs/<feature-slug>/900-security-review.md
+  - from: 100
+    to: 1000
+    file: runs/<feature-slug>/100-opportunity-brief.md
+  - from: 200
+    to: 1000
+    file: runs/<feature-slug>/200-spec.md
+  - from: 300
+    to: 1000
+    file: runs/<feature-slug>/300-design.md
+  - from: 400
+    to: 1000
+    file: runs/<feature-slug>/400-architecture.md
+  - from: 500
+    to: 1000
+    file: runs/<feature-slug>/500-implementation.md
+  - from: 700
+    to: 1000
+    file: runs/<feature-slug>/700-data-design.md
+  - from: 800
+    to: 1000
+    file: runs/<feature-slug>/800-infra.md
+  - from: 900
+    to: 1000
+    file: runs/<feature-slug>/900-security-review.md
+  - from: 600
+    to: 1000
+    file: runs/<feature-slug>/600-test-plan.md
+human_gate_policy:
+  stop_when:
+    - a station tries to accept risk without named human approval
+    - a station chooses scope beyond feature.md
+    - a station asks for secrets, credentials, client-confidential data, or production data
+    - a station needs a policy, compliance, budget, or release decision

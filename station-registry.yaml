@@ -1,0 +1,74 @@
+version: 1
+feature_source: feature.md
+station_order:
+  - 100
+  - 200
+  - 300
+  - 400
+  - 500
+  - 700
+  - 800
+  - 900
+  - 600
+  - 1000
+stations:
+  - id: 100
+    name: Consulting / SME
+    slot_file: station-slots/100-consulting.md
+    claude_agent_file: .claude/agents/100-consulting.md
+    fallback_file: fallback-specs/100-consulting.md
+    writes: runs/<feature-slug>/100-opportunity-brief.md
+  - id: 200
+    name: Product / BA
+    slot_file: station-slots/200-product.md
+    claude_agent_file: .claude/agents/200-product.md
+    fallback_file: fallback-specs/200-product.md
+    writes: runs/<feature-slug>/200-spec.md
+  - id: 300
+    name: Design
+    slot_file: station-slots/300-design.md
+    claude_agent_file: .claude/agents/300-design.md
+    fallback_file: fallback-specs/300-design.md
+    writes: runs/<feature-slug>/300-design.md
+  - id: 400
+    name: Architecture
+    slot_file: station-slots/400-architecture.md
+    claude_agent_file: .claude/agents/400-architecture.md
+    fallback_file: fallback-specs/400-architecture.md
+    writes: runs/<feature-slug>/400-architecture.md
+  - id: 500
+    name: Engineering
+    slot_file: station-slots/500-engineering.md
+    claude_agent_file: .claude/agents/500-engineering.md
+    fallback_file: fallback-specs/500-engineering.md
+    writes: runs/<feature-slug>/500-implementation.md
+  - id: 700
+    name: Data
+    slot_file: station-slots/700-data.md
+    claude_agent_file: .claude/agents/700-data.md
+    fallback_file: fallback-specs/700-data.md
+    writes: runs/<feature-slug>/700-data-design.md
+  - id: 800
+    name: Infra/Ops
+    slot_file: station-slots/800-infrastructure.md
+    claude_agent_file: .claude/agents/800-infrastructure.md
+    fallback_file: fallback-specs/800-infrastructure.md
+    writes: runs/<feature-slug>/800-infra.md
+  - id: 900
+    name: Security
+    slot_file: station-slots/900-security.md
+    claude_agent_file: .claude/agents/900-security.md
+    fallback_file: fallback-specs/900-security.md
+    writes: runs/<feature-slug>/900-security-review.md
+  - id: 600
+    name: QA
+    slot_file: station-slots/600-qa.md
+    claude_agent_file: .claude/agents/600-qa.md
+    fallback_file: fallback-specs/600-qa.md
+    writes: runs/<feature-slug>/600-test-plan.md
+  - id: 1000
+    name: Management / Delivery
+    slot_file: station-slots/1000-delivery.md
+    claude_agent_file: .claude/agents/1000-delivery.md
+    fallback_file: fallback-specs/1000-delivery.md
+    writes: runs/<feature-slug>/1000-release-plan.md

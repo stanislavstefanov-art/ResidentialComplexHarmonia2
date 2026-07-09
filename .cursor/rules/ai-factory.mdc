@@ -1,0 +1,20 @@
+---
+description: Module 1111 hand-wired AI factory run protocol
+alwaysApply: true
+---
+
+# Module 1111 AI Factory
+
+Use `station-slots/` as the visible station contract. Use `.claude/agents/` only when running in a
+runtime that needs Claude-style sub-agent files.
+
+Run one feature from `feature.md` through the stations in this order:
+
+`100,200,300,400,500,700,800,900,600,1000`
+
+Follow `handoff-map.yaml` for inputs and write each named output under `runs/<feature-slug>/`.
+Append a transcript note after each station. Do not invent missing upstream context. Record a seam
+or stop when the station cannot produce the named output from saved artefacts.
+
+Use `PREFLIGHT.md`, `COST_GUARDRAILS.md`, and `MANUAL_RUN_PROMPTS.md` for setup, cost limits, and
+manual guided prompts.
