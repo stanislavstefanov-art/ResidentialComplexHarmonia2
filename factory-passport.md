@@ -42,16 +42,16 @@ the run.
 
 | Station | Planned source (`own` / `own+overlay` / `fallback` / `fallback-after-gap`) | Visible station slot | Claude adapter if used | Note |
 |---------|------------------------------------------------------------------------------|----------------------|------------------------|------|
-| 100 Consulting / SME | | `station-slots/100-consulting.md` | `.claude/agents/100-consulting.md` | |
-| 200 Product / BA | | `station-slots/200-product.md` | `.claude/agents/200-product.md` | |
-| 300 Design | | `station-slots/300-design.md` | `.claude/agents/300-design.md` | |
-| 400 Architecture | | `station-slots/400-architecture.md` | `.claude/agents/400-architecture.md` | |
-| 500 Engineering | | `station-slots/500-engineering.md` | `.claude/agents/500-engineering.md` | |
-| 700 Data | | `station-slots/700-data.md` | `.claude/agents/700-data.md` | |
-| 800 Infra/Ops | | `station-slots/800-infrastructure.md` | `.claude/agents/800-infrastructure.md` | |
-| 900 Security | | `station-slots/900-security.md` | `.claude/agents/900-security.md` | |
-| 600 QA | | `station-slots/600-qa.md` | `.claude/agents/600-qa.md` | |
-| 1000 Management / Delivery | | `station-slots/1000-delivery.md` | `.claude/agents/1000-delivery.md` | |
+| 100 Consulting / SME | `fallback` | `station-slots/100-consulting.md` | `.claude/agents/100-consulting.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 200 Product / BA | `fallback` | `station-slots/200-product.md` | `.claude/agents/200-product.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 300 Design | `fallback` | `station-slots/300-design.md` | `.claude/agents/300-design.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 400 Architecture | `fallback` | `station-slots/400-architecture.md` | `.claude/agents/400-architecture.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 500 Engineering | `fallback` | `station-slots/500-engineering.md` | `.claude/agents/500-engineering.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 700 Data | `fallback` | `station-slots/700-data.md` | `.claude/agents/700-data.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 800 Infra/Ops | `fallback` | `station-slots/800-infrastructure.md` | `.claude/agents/800-infrastructure.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 900 Security | `fallback` | `station-slots/900-security.md` | `.claude/agents/900-security.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 600 QA | `fallback` | `station-slots/600-qa.md` | `.claude/agents/600-qa.md` | No Final Kata spec; wired from `fallback-specs/`. |
+| 1000 Management / Delivery | `fallback` | `station-slots/1000-delivery.md` | `.claude/agents/1000-delivery.md` | No Final Kata spec; wired from `fallback-specs/`. |
 
 ## Recommendation options
 

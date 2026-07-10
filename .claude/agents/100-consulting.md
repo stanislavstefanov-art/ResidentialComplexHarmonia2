@@ -4,12 +4,26 @@ description: Produces `runs/<feature-slug>/100-opportunity-brief.md` from `featu
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 100 -- Consulting / SME
 
-Replace this file with your adapted Consulting / SME station spec before the required run.
+Use this fallback only when the learner has no Module 100 Final Kata spec.
 
-- **Use first:** `station-slots/100-consulting.md`
-- **Adapter guide:** `STATION_ADAPTER.md`
-- **Fallback:** `fallback-specs/100-consulting.md`
+**Station source:** `fallback`
+
 - **Reads:** `feature.md`
 - **Writes:** `runs/<feature-slug>/100-opportunity-brief.md`
+
+## Instructions
+
+Write a one-page opportunity brief for the feature. Include the business trigger, target users, the
+current pain, one measurable outcome, constraints, assumptions, and open questions.
+
+## Human gates
+
+Pause if the business goal is unclear, the feature expands beyond one slice, or a stakeholder
+priority must be chosen.
+
+## Done when
+
+The Product / BA station can write scope and acceptance criteria without inventing the business
+reason.

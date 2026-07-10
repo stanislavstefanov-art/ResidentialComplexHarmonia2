@@ -4,12 +4,25 @@ description: Produces `runs/<feature-slug>/300-design.md` from `runs/<feature-sl
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 300 -- Design
 
-Replace this file with your adapted Design station spec before the required run.
+Use this fallback only when the learner has no Module 300 Final Kata spec.
 
-- **Use first:** `station-slots/300-design.md`
-- **Adapter guide:** `STATION_ADAPTER.md`
-- **Fallback:** `fallback-specs/300-design.md`
+**Station source:** `fallback`
+
 - **Reads:** `runs/<feature-slug>/200-spec.md`
 - **Writes:** `runs/<feature-slug>/300-design.md`
+
+## Instructions
+
+Write the experience flow, key screen states, content requirements, empty/error states,
+accessibility checks, and design questions that block implementation.
+
+## Human gates
+
+Pause if visual policy, regulated copy, accessibility trade-offs, or user research interpretation
+need a human decision.
+
+## Done when
+
+Architecture can see the user-facing flow and Engineering can identify the UI/API behavior.

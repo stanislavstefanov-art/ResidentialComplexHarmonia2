@@ -4,12 +4,24 @@ description: Produces `runs/<feature-slug>/1000-release-plan.md` from all prior 
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 1000 -- Management / Delivery
 
-Replace this file with your adapted Management / Delivery station spec before the required run.
+Use this fallback only when the learner has no Module 1000 Final Kata spec.
 
-- **Use first:** `station-slots/1000-delivery.md`
-- **Adapter guide:** `STATION_ADAPTER.md`
-- **Fallback:** `fallback-specs/1000-delivery.md`
-- **Reads:** all prior station outputs in `runs/<feature-slug>/`
+**Station source:** `fallback`
+
+- **Reads:** all prior station outputs in `runs/<feature-slug>/`; `transcript.md` if it exists
 - **Writes:** `runs/<feature-slug>/1000-release-plan.md`
+
+## Instructions
+
+Write a delivery plan with release scope, owners, decision gates, readiness evidence, rollout and
+rollback steps, top seam to harden first, and a final recommendation.
+
+## Human gates
+
+Pause if scope, schedule, budget, risk acceptance, or release approval needs owner decision.
+
+## Done when
+
+The run has a recommendation: adopt for bootcamp, pilot with fixes, or defer.

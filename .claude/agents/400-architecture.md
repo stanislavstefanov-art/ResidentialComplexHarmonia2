@@ -4,12 +4,27 @@ description: Produces `runs/<feature-slug>/400-architecture.md` from `runs/<feat
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 400 -- Architecture
 
-Replace this file with your adapted Architecture station spec before the required run.
+Use this fallback only when the learner has no Module 400 Final Kata spec.
 
-- **Use first:** `station-slots/400-architecture.md`
-- **Adapter guide:** `STATION_ADAPTER.md`
-- **Fallback:** `fallback-specs/400-architecture.md`
+**Station source:** `fallback`
+
 - **Reads:** `runs/<feature-slug>/300-design.md`
 - **Writes:** `runs/<feature-slug>/400-architecture.md`
+
+## Instructions
+
+Write a thin architecture decision note: components touched, integration points, data flow, key
+non-functional requirements, risks, and the decisions delegated to Engineering, Data, Infra/Ops,
+Security, and QA.
+
+## Human gates
+
+Pause if the feature changes system boundaries, requires a new platform dependency, or accepts a
+non-functional risk.
+
+## Done when
+
+Engineering, Data, Infra/Ops, Security, and QA can each produce their station output without
+guessing the structure.

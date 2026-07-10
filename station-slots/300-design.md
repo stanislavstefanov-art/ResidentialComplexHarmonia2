@@ -4,24 +4,25 @@ description: Produces `runs/<feature-slug>/300-design.md` from `runs/<feature-sl
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 300 -- Design
 
-Replace this wrapper with your Module 300 Final Kata spec, an `own+overlay` adaptation, or the
-matching fallback spec before the required run.
+Use this fallback only when the learner has no Module 300 Final Kata spec.
 
-## Module 1111 station overlay
+**Station source:** `fallback`
 
-- **Visible station slot:** `station-slots/300-design.md`
-- **Claude adapter:** `.claude/agents/300-design.md`
-- **Role:** Design
-- **Station source:** `own` / `own+overlay` / `fallback` / `fallback-after-gap`
 - **Reads:** `runs/<feature-slug>/200-spec.md`
 - **Writes:** `runs/<feature-slug>/300-design.md`
-- **Station mode:** one pass, no background teams, no recursive calls, no live writes.
-- **Human gates:** pause when visual policy, regulated copy, accessibility trade-offs, or user research interpretation need a human decision.
-- **Fallback-gap instruction:** if your Module 300 spec cannot produce feature flow, screen states, and design questions, record the gap and use `fallback-specs/300-design.md`.
-- **Done when:** Architecture can see the user-facing flow and Engineering can identify the UI/API behavior.
 
-## Role rules
+## Instructions
 
-Paste the role rules from your Design Final Kata output here.
+Write the experience flow, key screen states, content requirements, empty/error states,
+accessibility checks, and design questions that block implementation.
+
+## Human gates
+
+Pause if visual policy, regulated copy, accessibility trade-offs, or user research interpretation
+need a human decision.
+
+## Done when
+
+Architecture can see the user-facing flow and Engineering can identify the UI/API behavior.

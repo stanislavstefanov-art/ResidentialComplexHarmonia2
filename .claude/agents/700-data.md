@@ -4,12 +4,24 @@ description: Produces `runs/<feature-slug>/700-data-design.md` from `runs/<featu
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 700 -- Data
 
-Replace this file with your adapted Data station spec before the required run.
+Use this fallback only when the learner has no Module 700 Final Kata spec.
 
-- **Use first:** `station-slots/700-data.md`
-- **Adapter guide:** `STATION_ADAPTER.md`
-- **Fallback:** `fallback-specs/700-data.md`
+**Station source:** `fallback`
+
 - **Reads:** `runs/<feature-slug>/400-architecture.md`
 - **Writes:** `runs/<feature-slug>/700-data-design.md`
+
+## Instructions
+
+Write the data contract for the feature: source data, fields, lineage, retention, quality checks,
+audit events, privacy classification, and unresolved owner decisions.
+
+## Human gates
+
+Pause if retention, classification, or permitted use of customer data is unclear.
+
+## Done when
+
+Infra/Ops, Security, and QA can verify data handling without inventing policy.

@@ -4,12 +4,25 @@ description: Produces `runs/<feature-slug>/900-security-review.md` from architec
 tools: Read, Write
 ---
 
-# INVALID PLACEHOLDER -- DO NOT RUN
+# Fallback Station 900 -- Security
 
-Replace this file with your adapted Security station spec before the required run.
+Use this fallback only when the learner has no Module 900 Final Kata spec.
 
-- **Use first:** `station-slots/900-security.md`
-- **Adapter guide:** `STATION_ADAPTER.md`
-- **Fallback:** `fallback-specs/900-security.md`
-- **Reads:** `runs/<feature-slug>/400-architecture.md`, `runs/<feature-slug>/500-implementation.md`, `runs/<feature-slug>/700-data-design.md`, `runs/<feature-slug>/800-infra.md`
+**Station source:** `fallback`
+
+- **Reads:** `runs/<feature-slug>/400-architecture.md`, `runs/<feature-slug>/500-implementation.md`,
+  `runs/<feature-slug>/700-data-design.md`, `runs/<feature-slug>/800-infra.md`
 - **Writes:** `runs/<feature-slug>/900-security-review.md`
+
+## Instructions
+
+Write a security review with trust boundaries, sensitive data, top risks, mitigations, residual
+risks, required checks, and human approvals before release.
+
+## Human gates
+
+Pause if risk acceptance, data exposure, identity policy, or exception approval is required.
+
+## Done when
+
+QA can turn risks into tests and Delivery can see what must be approved before rollout.
