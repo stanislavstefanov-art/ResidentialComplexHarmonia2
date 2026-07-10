@@ -1,6 +1,6 @@
 # Build an application using the AI Factory approach
 
-Starting point: a rough idea. No code, no spec, no Harmonia-custom Final-Kata skills — off-the-shelf plugins only.
+Starting point: a rough idea. No code, no spec, no skills.
 Ending point: merged, reviewed, production-ready code with a full evidence chain.
 
 This guide is application-agnostic. It applies to any tech stack, language, or domain.
@@ -170,6 +170,17 @@ exactly four things:
 3. **Draw the in/out boundary** — name what is explicitly deferred to later slices.
 4. **Draft testable ACs**, including at least one failure case and one NFR.
 
+**These four are what you *think through* to pick a coherent slice — not what you write
+into `feature.md`.** The file stays thin (a description + an AC checklist; see Shape
+below). The formal **in-scope / out-of-scope split, non-functional constraints, and open
+questions are station 200's output, not the input's** — the EPAM Product/BA station is
+defined to *"write a feature spec with … in-scope and out-of-scope bullets, acceptance
+criteria, non-functional constraints, dependencies, open questions"*
+(`factory/fallback-specs/200-product.md`). Pre-writing an In/Out section or an
+Open-Questions list into `feature.md` does 200's job for it and, on a fresh line, hides
+whether the station would have produced them itself. Keep only the failure-case and NFR
+**acceptance criteria** that *define* why the slice exists.
+
 **Then stop at `feature.md` — this is a hard boundary.** Do not let the brainstorm roll
 on into a design doc or an implementation plan: the factory owns spec (200), design
 (300), architecture (400), and the implementation plan (500). Continuing past
@@ -196,6 +207,11 @@ pre-deciding them — it hands the factory the real decisions it exists to surfa
 - [ ] [AC 3 — include at least one failure or edge case]
 - [ ] [AC 4 — include at least one performance or timeout constraint]
 ```
+
+This matches the EPAM template `feature.md` (description + AC checklist). No In/Out-scope
+section, no Open-Questions list, no stack/schema/tech choices — stations 200 and downstream
+produce those. If a deferral genuinely helps frame the slice, at most a single inline
+"deferred: …" line, not a section.
 
 **What makes a good first feature:**
 - Touches at least 6 stations (product, design, architecture, engineering, data, security)
