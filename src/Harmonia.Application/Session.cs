@@ -16,4 +16,6 @@ public interface ISession
 }
 
 /// <summary>The identity a verified session yields (ADR-0001).</summary>
-public sealed record SessionContext(bool IsResident, HouseholdRef HouseholdRef);
+/// <param name="IsAdmin">True for admin sessions (Gap #4: dev stand-in only; real IdP gate not yet wired).</param>
+/// <param name="HouseholdRef">Null for admins who have no apartment.</param>
+public sealed record SessionContext(bool IsResident, bool IsAdmin, HouseholdRef? HouseholdRef);

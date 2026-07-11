@@ -46,7 +46,7 @@ public sealed class ReserveSlot(ISession session, ISlotGrid grid, IReservationSt
 
         // THE load-bearing line (R1): one atomic conditional write; the store decides
         // the race. No availability pre-check here — that would reopen the TOCTOU gap.
-        var result = await _store.ClaimSlotAsync(day, slotKey, ctx.HouseholdRef, ct);
+        var result = await _store.ClaimSlotAsync(day, slotKey, ctx.HouseholdRef!.Value, ct);
 
         return new ReserveResult.Outcome(OutcomeMapper.Map(result));
     }

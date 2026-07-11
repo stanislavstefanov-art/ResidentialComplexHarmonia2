@@ -43,7 +43,7 @@ public sealed class GetDayAvailability(ISession session, ISlotGrid grid, IReserv
                 key,
                 SlotStateDeriver.Derive(
                     holders.TryGetValue(key, out var holder) ? holder : null,
-                    ctx.HouseholdRef)))
+                    ctx.HouseholdRef!.Value)))
             .ToList();
 
         return new AvailabilityResult.Ok(day, slots);

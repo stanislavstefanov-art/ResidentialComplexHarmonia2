@@ -13,7 +13,7 @@ public class ReserveSlotTests
 
     private static ReserveSlot UseCase(RecordingStore store)
         => new(
-            new FakeSession(new SessionContext(true, SessionHousehold)),
+            new FakeSession(new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: SessionHousehold)),
             new FakeSlotGrid("SLOT"),
             store);
 

@@ -31,7 +31,7 @@ public class LogExclusionTests
 
     private static ReserveSlot UseCase(RecordingStore store)
         => new(
-            new FakeSession(new SessionContext(true, new HouseholdRef(SecretRef))),
+            new FakeSession(new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef(SecretRef))),
             new FakeSlotGrid("SLOT"),
             store);
 

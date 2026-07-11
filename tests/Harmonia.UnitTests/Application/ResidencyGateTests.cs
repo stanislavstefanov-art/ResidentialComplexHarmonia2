@@ -13,7 +13,7 @@ public class ResidencyGateTests
     public static TheoryData<SessionContext?> NonResidentSessions => new()
     {
         { null },                                            // no valid session at all
-        { new SessionContext(false, new HouseholdRef("HH-X")) }, // session, but not a resident
+        { new SessionContext(IsResident: false, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-X")) }, // session, but not a resident
     };
 
     [Theory] // T8 — read surface

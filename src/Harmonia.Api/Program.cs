@@ -27,9 +27,17 @@ if (!builder.Environment.IsDevelopment())
         "refusing to start outside Development until a real ISession adapter exists.");
 }
 
-builder.Services.AddSingleton<ISession>(new DevSession(
-    builder.Configuration.GetValue("Session:IsResident", true),
-    builder.Configuration.GetValue("Session:HouseholdRef", "HH-DEV-1")!));
+if (builder.Configuration.GetValue("Session:IsAdmin", false))
+{
+    builder.Services.AddSingleton<ISession>(
+        new DevAdminSession(builder.Environment));
+}
+else
+{
+    builder.Services.AddSingleton<ISession>(new DevSession(
+        builder.Configuration.GetValue("Session:IsResident", true),
+        builder.Configuration.GetValue("Session:HouseholdRef", "HH-DEV-1")!));
+}
 builder.Services.AddScoped<GetDayAvailability>();
 builder.Services.AddScoped<ReserveSlot>();
 

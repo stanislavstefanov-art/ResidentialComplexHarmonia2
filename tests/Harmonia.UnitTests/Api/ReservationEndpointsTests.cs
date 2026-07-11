@@ -14,7 +14,7 @@ namespace Harmonia.UnitTests.Api;
 public class ReservationEndpointsTests
 {
     private static readonly DateOnly Day = new(2026, 7, 18);
-    private static readonly SessionContext Resident = new(true, new HouseholdRef("HH-ME"));
+    private static readonly SessionContext Resident = new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-ME"));
 
     private static GetDayAvailability ReadUseCase(SessionContext? ctx, RecordingStore store)
         => new(new FakeSession(ctx), new FakeSlotGrid("SLOT"), store);
