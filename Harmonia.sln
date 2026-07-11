@@ -5,17 +5,17 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reserve.Domain", "src\Reserve.Domain\Reserve.Domain.csproj", "{427E4733-80D4-4707-B21D-3325FBC8D300}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmonia.Domain", "src\Harmonia.Domain\Harmonia.Domain.csproj", "{427E4733-80D4-4707-B21D-3325FBC8D300}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reserve.Application", "src\Reserve.Application\Reserve.Application.csproj", "{23B39B12-86D4-41AD-B181-F9CA1A2956CB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmonia.Application", "src\Harmonia.Application\Harmonia.Application.csproj", "{23B39B12-86D4-41AD-B181-F9CA1A2956CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reserve.Api", "src\Reserve.Api\Reserve.Api.csproj", "{B62BBB75-8D55-46AF-BBE7-8B260CE9C126}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmonia.Api", "src\Harmonia.Api\Harmonia.Api.csproj", "{B62BBB75-8D55-46AF-BBE7-8B260CE9C126}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reserve.UnitTests", "tests\Reserve.UnitTests\Reserve.UnitTests.csproj", "{A0548D48-8D5E-4591-9C7B-E1B9840ABC07}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmonia.UnitTests", "tests\Harmonia.UnitTests\Harmonia.UnitTests.csproj", "{A0548D48-8D5E-4591-9C7B-E1B9840ABC07}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reserve.IntegrationTests", "tests\Reserve.IntegrationTests\Reserve.IntegrationTests.csproj", "{7E5227D8-ED3A-4E9E-8285-97CF135BC7E2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harmonia.IntegrationTests", "tests\Harmonia.IntegrationTests\Harmonia.IntegrationTests.csproj", "{7E5227D8-ED3A-4E9E-8285-97CF135BC7E2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
