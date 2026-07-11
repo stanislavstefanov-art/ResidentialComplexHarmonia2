@@ -18,6 +18,14 @@ and note the process rules live **in the guide**, not restated here:
   habit that conflicts.
 - **`docs/LearningMaterials/modules/`** — deep reference, loaded **on demand** per the map at the
   bottom of the vision doc. Reading it all up front exhausts the session before work starts.
+
+## Context bundle (all sessions)
+
+Layered context for this repo — load the warm files before writing code:
+- **Warm:** `docs/context/stack.md` — stack, build/test commands, the R1 constraint. Standards:
+  `docs/context/standards/code-quality.md`, `docs/context/standards/git-workflow.md`.
+- **Decisions (ADRs):** `docs/architecture/decisions/` — ADR-0001 (identity), ADR-0002 (store).
+- **Open gaps:** `context/cold/gap-log.md` — never assume past a listed gap; escalate instead.
   
 ## Run bounds
 
@@ -86,6 +94,23 @@ from `STATION_ADAPTER.md` and mark it `own+overlay`. If you did not complete tha
 matching fallback spec from `fallback-specs/` so all ten stations are present for the first run.
 Keep the full station table and record `own`, `own+overlay`, `fallback`, or `fallback-after-gap` in
 the run record instead of deleting stations.
+
+## Building a feature (Pipeline 2)
+
+Once the factory run has produced the plan + evidence pack, build the feature **test-first**.
+Non-negotiables (facts + commands live in `docs/context/stack.md`):
+
+- **Layering:** pure domain (no I/O), dependencies point inward, adapters at the edges, business
+  logic never in the API handler or store adapter — see `docs/context/architecture.md`.  
+- **R1 (no double-booking):** the store decides the race with one atomic conditional write.
+  NEVER read-then-write in app code on the claim path.
+- **R2 (identity):** derive the household from the verified session, NEVER the request
+  body/query/header. No valid session ⇒ no read, no claim. (ADR-0001.)
+- **R3 (residency + PII):** EU region only; `householdRef` is personal data — never log it.
+- **Tests:** framework + real-DB tier per `stack.md`. The concurrency test runs on a REAL SQL
+  Server (never in-memory) or CI fails — never skip it. Watch each test fail before implementing.
+- **Secrets:** never commit secrets/connection strings; local dev config stays git-ignored.
+- Follow `standards/git-workflow.md` for branches/commits; escalate anything touching a `gap-log` item.
 
 ## Human gates
 
