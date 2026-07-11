@@ -13,6 +13,7 @@ dotnet format           # formatting; run before committing
 ## Naming
 - PascalCase types/methods/public members; camelCase locals/params.
 - Async methods end in `Async`. Test methods describe behavior (`Two_simultaneous_claims_yield_one_winner`).
+- Projects follow `Harmonia.<Layer>` (`Harmonia.Domain`, `Harmonia.Application`, `Harmonia.Api`). Features are sub-namespaces within each layer: `Harmonia.Domain.Reservations`, `Harmonia.Application.Reservations`, …. Never name a project after a single capability (`Harmonia.Reservations.*`).
 
 ## Type safety
 - Domain outcomes are enums/records, not magic strings/bools (`Claimed` / `AlreadyHeldByMe` / …).
