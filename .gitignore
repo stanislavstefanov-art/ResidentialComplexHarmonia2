@@ -1,2 +1,12 @@
 # Deep reference library — loaded on demand, not tracked in this repo
 docs/LearningMaterials/
+
+# .NET build artifacts
+bin/
+obj/
+*.user
+
+# Local dev config — never commit connection strings or secrets (CLAUDE.md)
+appsettings.*.local.json
+*.local
+.claude/settings.local.json

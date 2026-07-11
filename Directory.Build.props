@@ -1,0 +1,12 @@
+<Project>
+
+  <!-- Stack contract: docs/context/stack.md (.NET 8) + standards/code-quality.md
+       (warning-clean builds, nullable everywhere). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

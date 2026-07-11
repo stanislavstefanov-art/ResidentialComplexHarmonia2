@@ -7,11 +7,12 @@ Pragmatic clean architecture — proportionate to a small app. Do NOT add layers
   no Angular types. Unit-tested directly with no DB.
 - **Application** (use cases): the availability-read and reserve-claim orchestration. Depends on the
   domain + the ports below; no framework types.
-- **Adapters / Infrastructure** (the edges): EF Core store, the Minimal-API endpoints, the Angular
-  UI, the session/IdP. These translate to/from the outside world; they hold no business rules.
+- **Adapters / Infrastructure** (the edges): the SQL store adapter (raw SqlClient — stack.md), the
+  Minimal-API endpoints, the Angular UI, the session/IdP. These translate to/from the outside
+  world; they hold no business rules.
 
 ## Ports (defined by Application, implemented by adapters)
-- `IReservationStore` — the atomic claim (`claimSlot`) + reads. The **only** place SQL/EF lives.
+- `IReservationStore` — the atomic claim (`claimSlot`) + reads. The **only** place SQL lives.
 - `ISession` — resolves the verified session → `{ isResident, householdRef }` (ADR-0001).
 
 ## Rules
