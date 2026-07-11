@@ -55,7 +55,7 @@ public sealed class SqlMaintenanceFeeStore(string connectionString) : IMaintenan
             "SELECT Id, HouseholdRef, AmountEur, Description, Period, ChargedAt, IdempotencyKey " +
             "FROM dbo.MaintenanceFeeCharges " +
             "WHERE HouseholdRef = @HouseholdRef " +
-            "ORDER BY ChargedAt ASC;";
+            "ORDER BY ChargedAt DESC;";
         cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
 
         var results = new List<MaintenanceFeeCharge>();

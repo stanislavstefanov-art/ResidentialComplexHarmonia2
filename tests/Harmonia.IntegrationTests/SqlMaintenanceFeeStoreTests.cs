@@ -44,29 +44,31 @@ public class SqlMaintenanceFeeStoreTests(SqlServerFixture fixture)
         Assert.Equal(100m, dup.Charge.AmountEur); // amount is the original, not 999
     }
 
-    [Fact] // Listed charges are ordered by ChargedAt ascending
-    public async Task Listed_charges_are_ordered_by_charged_at()
+    [Fact] // Listed charges are ordered by ChargedAt descending (newest first)
+    public async Task Listed_charges_are_ordered_newest_first()
     {
         var h = new HouseholdRef($"HH-ORDER-{Guid.NewGuid():N}");
         var store = new SqlMaintenanceFeeStore(fixture.ConnectionString);
 
-        var first = new MaintenanceFeeCharge(
-            Guid.NewGuid(), h, 50m, "Fee", "2026-06",
+        await store.RecordChargeAsync(new MaintenanceFeeCharge(
+            Guid.NewGuid(), h, 10m, "Fee", "2026-05",
+            new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero),
+            $"k1-{Guid.NewGuid():N}"));
+        await store.RecordChargeAsync(new MaintenanceFeeCharge(
+            Guid.NewGuid(), h, 20m, "Fee", "2026-06",
             new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
-            $"k1-{Guid.NewGuid():N}");
-        var second = new MaintenanceFeeCharge(
-            Guid.NewGuid(), h, 75m, "Fee", "2026-07",
+            $"k2-{Guid.NewGuid():N}"));
+        await store.RecordChargeAsync(new MaintenanceFeeCharge(
+            Guid.NewGuid(), h, 30m, "Fee", "2026-07",
             new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero),
-            $"k2-{Guid.NewGuid():N}");
-
-        await store.RecordChargeAsync(first);
-        await store.RecordChargeAsync(second);
+            $"k3-{Guid.NewGuid():N}"));
 
         var charges = await store.ListChargesAsync(h);
 
-        Assert.Equal(2, charges.Count);
-        Assert.Equal(first.Id, charges[0].Id);
-        Assert.Equal(second.Id, charges[1].Id);
+        Assert.Equal(3, charges.Count);
+        Assert.Equal(30m, charges[0].AmountEur); // most recent first
+        Assert.Equal(20m, charges[1].AmountEur);
+        Assert.Equal(10m, charges[2].AmountEur);
     }
 
     [Fact] // Empty household returns empty list, not error
