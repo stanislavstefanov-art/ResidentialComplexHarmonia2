@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "task": "Record a maintenance fee charge per household and list all charges for a household via an append-only ledger backed by SQL Server.",
+  "generated": "2026-07-11T00:00:00Z",
+  "dimensions": {
+    "component_scope":      { "score": 5, "label": "XL" },
+    "requirements_clarity": { "score": 5, "label": "XL" },
+    "technical_risk":       { "score": 3, "label": "M" },
+    "file_change_estimate": { "score": 5, "label": "XL" },
+    "dependencies":         { "score": 1, "label": "XS" },
+    "affected_layers":      { "score": 4, "label": "L" }
+  },
+  "total": 23,
+  "size": "L",
+  "routing": "brainstorming",
+  "key_reasoning": [
+    {
+      "dimension": "component_scope",
+      "reason": "Full-stack greenfield feature: new Domain record type(s), Application port interface (IMaintenanceFeeStore), two use-case classes (RecordCharge, ListCharges), SQL adapter (SqlMaintenanceFeeStore), Minimal API endpoints, Program.cs wiring, and schema extension. ISession and HouseholdRef currently live in Harmonia.Application.Reservations and Harmonia.Domain.Reservations — using them from a second feature touches shared utilities with no established cross-feature precedent, triggering the red-flag bump."
+    },
+    {
+      "dimension": "requirements_clarity",
+      "reason": "Task description is under 50 words and leaves critical questions open: amount/currency data type (decimal vs. money), presence of description or period fields, who may record a charge (any resident or an admin role only — ISession only exposes IsResident), error/retry contract for RecordCharge, and ChargeId structure. Vague acceptance criteria bump applied."
+    },
+    {
+      "dimension": "file_change_estimate",
+      "reason": "Technical analysis estimates 10–14 files: new domain file(s), Application ports file, RecordCharge and ListCharges use-case classes, SqlMaintenanceFeeStore adapter, MaintenanceFeeEndpoints static class, Program.cs (modified), db/schema.sql (modified), unit test fakes, use-case unit test class(es), endpoint translation tests, log-exclusion test, and integration test class for the SQL adapter. Maps to XL (11–15 files)."
+    },
+    {
+      "dimension": "affected_layers",
+      "reason": "Four distinct architectural layers touched: Domain (new charge record/value types), Service/Application (port interface and two use cases), Repository/Adapter (SQL Server store adapter), API (Minimal API endpoints and route registration), plus DB-Persistence (schema.sql DDL addition)."
+    }
+  ],
+  "red_flags_applied": [
+    "Requirements Clarity bumped from L(4) to XL(5): task description is under 50 words with vague acceptance criteria — amount type, recorder role (resident vs. admin), error contract, and charge fields are all unspecified.",
+    "Component Scope bumped from L(4) to XL(5): ISession and HouseholdRef are currently namespace-scoped to Harmonia.Application.Reservations and Harmonia.Domain.Reservations — the new feature must consume them as shared utilities, and no multi-feature precedent exists in the codebase for how to share them."
+  ],
+  "split_recommendation": null
+}
