@@ -1,5 +1,6 @@
+using Harmonia.Application;
 using Harmonia.Application.Reservations;
-using Harmonia.Domain.Reservations;
+using Harmonia.Domain;
 
 namespace Harmonia.UnitTests.Application;
 

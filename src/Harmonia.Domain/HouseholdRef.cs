@@ -1,4 +1,4 @@
-namespace Harmonia.Domain.Reservations;
+namespace Harmonia.Domain;
 
 /// <summary>
 /// Opaque reference to the household that holds (or requests) a reservation.

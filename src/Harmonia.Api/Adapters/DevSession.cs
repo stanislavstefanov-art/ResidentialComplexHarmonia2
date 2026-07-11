@@ -1,6 +1,6 @@
-using Harmonia.Application.Reservations;
-using Harmonia.Domain.Reservations;
-using ISession = Harmonia.Application.Reservations.ISession;
+using Harmonia.Application;
+using Harmonia.Domain;
+using ISession = Harmonia.Application.ISession;
 
 namespace Harmonia.Api.Reservations.Adapters;
 

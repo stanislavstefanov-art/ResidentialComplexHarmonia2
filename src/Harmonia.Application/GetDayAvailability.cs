@@ -1,3 +1,4 @@
+using Harmonia.Domain;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.Application.Reservations;

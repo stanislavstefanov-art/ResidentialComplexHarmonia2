@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging.Abstractions;
 using Harmonia.Api.Reservations;
+using Harmonia.Application;
 using Harmonia.Application.Reservations;
+using Harmonia.Domain;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.UnitTests.Api;

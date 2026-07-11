@@ -1,7 +1,8 @@
 using Harmonia.Api.Reservations;
 using Harmonia.Api.Reservations.Adapters;
+using Harmonia.Application;
 using Harmonia.Application.Reservations;
-using ISession = Harmonia.Application.Reservations.ISession;
+using ISession = Harmonia.Application.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
 

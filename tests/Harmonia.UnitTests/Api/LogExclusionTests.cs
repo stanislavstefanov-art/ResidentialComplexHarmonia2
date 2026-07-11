@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Harmonia.Api.Reservations;
+using Harmonia.Application;
 using Harmonia.Application.Reservations;
+using Harmonia.Domain;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.UnitTests.Api;
