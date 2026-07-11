@@ -1,4 +1,6 @@
+using Harmonia.Application;
 using Harmonia.Application.Reservations;
+using Harmonia.Domain;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.UnitTests.Application;
@@ -18,7 +20,7 @@ public class GetDayAvailabilityTests
         store.Holders["S2"] = Me;
         store.Holders["S3"] = Other;
         var useCase = new GetDayAvailability(
-            new FakeSession(new SessionContext(true, Me)),
+            new FakeSession(new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: Me)),
             new FakeSlotGrid("S1", "S2", "S3"),
             store);
 

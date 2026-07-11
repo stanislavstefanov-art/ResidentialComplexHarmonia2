@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Harmonia.Api.Reservations;
+using Harmonia.Application;
 using Harmonia.Application.Reservations;
+using Harmonia.Domain;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.UnitTests.Api;
@@ -29,7 +31,7 @@ public class LogExclusionTests
 
     private static ReserveSlot UseCase(RecordingStore store)
         => new(
-            new FakeSession(new SessionContext(true, new HouseholdRef(SecretRef))),
+            new FakeSession(new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef(SecretRef))),
             new FakeSlotGrid("SLOT"),
             store);
 

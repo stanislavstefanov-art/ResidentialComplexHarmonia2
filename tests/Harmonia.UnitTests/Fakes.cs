@@ -1,4 +1,8 @@
+using Harmonia.Application;
+using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
+using Harmonia.Domain;
+using Harmonia.Domain.MaintenanceFees;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.UnitTests;
@@ -12,6 +16,38 @@ public sealed class FakeSession(SessionContext? context) : ISession
 public sealed class FakeSlotGrid(params string[] slotKeys) : ISlotGrid
 {
     public IReadOnlyList<string> ForDay(DateOnly day) => slotKeys;
+}
+
+/// <summary>In-memory fake maintenance fee store for unit tests.</summary>
+public sealed class FakeMaintenanceFeeStore : IMaintenanceFeeStore
+{
+    private readonly Dictionary<(HouseholdRef, string), MaintenanceFeeCharge> _byKey = [];
+    private readonly Dictionary<HouseholdRef, List<MaintenanceFeeCharge>> _byHousehold = [];
+
+    public List<MaintenanceFeeCharge> RecordedCharges { get; } = [];
+
+    public Task<RecordChargeResult> RecordChargeAsync(MaintenanceFeeCharge charge, CancellationToken ct = default)
+    {
+        var key = (charge.HouseholdRef, charge.IdempotencyKey);
+        if (_byKey.TryGetValue(key, out var existing))
+            return Task.FromResult<RecordChargeResult>(new RecordChargeResult.Duplicate(existing));
+
+        _byKey[key] = charge;
+        if (!_byHousehold.TryGetValue(charge.HouseholdRef, out var list))
+            _byHousehold[charge.HouseholdRef] = list = [];
+        list.Add(charge);
+        RecordedCharges.Add(charge);
+        return Task.FromResult<RecordChargeResult>(new RecordChargeResult.Created(charge));
+    }
+
+    public Task<IReadOnlyList<MaintenanceFeeCharge>> ListChargesAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        var charges = _byHousehold.TryGetValue(householdRef, out var list)
+            ? (IReadOnlyList<MaintenanceFeeCharge>)list.OrderBy(c => c.ChargedAt).ToList()
+            : [];
+        return Task.FromResult(charges);
+    }
 }
 
 /// <summary>

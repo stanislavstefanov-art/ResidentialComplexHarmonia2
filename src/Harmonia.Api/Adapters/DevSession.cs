@@ -1,6 +1,6 @@
-using Harmonia.Application.Reservations;
-using Harmonia.Domain.Reservations;
-using ISession = Harmonia.Application.Reservations.ISession;
+using Harmonia.Application;
+using Harmonia.Domain;
+using ISession = Harmonia.Application.ISession;
 
 namespace Harmonia.Api.Reservations.Adapters;
 
@@ -14,5 +14,5 @@ namespace Harmonia.Api.Reservations.Adapters;
 public sealed class DevSession(bool isResident, string householdRef) : ISession
 {
     public SessionContext? Resolve()
-        => new(isResident, new HouseholdRef(householdRef));
+        => new(IsResident: isResident, IsAdmin: false, HouseholdRef: new HouseholdRef(householdRef));
 }

@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Harmonia.Api.Reservations.Adapters;
+using Harmonia.Domain;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.IntegrationTests;
