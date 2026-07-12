@@ -4,8 +4,9 @@ using Harmonia.Domain.Expenses;
 
 namespace Harmonia.IntegrationTests;
 
+[Collection("Database")]
 [Trait("Category", "Rel")]
-public class SqlExpenseStoreTests(SqlServerFixture db) : IClassFixture<SqlServerFixture>
+public class SqlExpenseStoreTests(SqlServerFixture db)
 {
     private static readonly DateOnly TestDate = new(2026, 7, 1);
 

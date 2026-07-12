@@ -7,8 +7,9 @@ namespace Harmonia.IntegrationTests;
 
 // T11–T18 (500 plan test table): the store adapter against a REAL SQL Server.
 // The engine's unique key decides every race (R1, ADR-0002) — never in-memory.
+[Collection("Database")]
 [Trait("Category", "Rel")]
-public class SqlReservationStoreTests(SqlServerFixture fixture) : IClassFixture<SqlServerFixture>
+public class SqlReservationStoreTests(SqlServerFixture fixture)
 {
     private static readonly DateOnly Day = new(2026, 7, 18);
     private static readonly HouseholdRef HouseholdA = new("HH-A");

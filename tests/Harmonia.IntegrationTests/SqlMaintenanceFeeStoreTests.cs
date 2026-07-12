@@ -5,9 +5,9 @@ using Harmonia.Domain.MaintenanceFees;
 
 namespace Harmonia.IntegrationTests;
 
+[Collection("Database")]
 [Trait("Category", "Rel")]
 public class SqlMaintenanceFeeStoreTests(SqlServerFixture fixture)
-    : IClassFixture<SqlServerFixture>
 {
     private static readonly HouseholdRef Household = new("HH-FEE-TEST");
 
