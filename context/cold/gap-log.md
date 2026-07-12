@@ -2,11 +2,11 @@
 
 Things the code/agent cannot infer — decided by a human, not assumed.
 
-- **status: CLOSED** — closed by ADR-0003 (`docs/architecture/decisions/ADR-0003-identity-provider.md`)
-  **description:** Concrete IdP = Microsoft Entra External ID; closes this gap.
+- **status: CLOSED** — decided by ADR-0003 (`docs/architecture/decisions/ADR-0003-identity-provider.md`); shipped in code by PR #5 (master `920fa4c`)
+  **description:** Concrete IdP = Microsoft Entra External ID. `EntraSession : ISession` reads `extension_role` and `extension_householdRef` from JWT claims; `Microsoft.Identity.Web` validates the token. Dev stubs remain behind `IsDevelopment()` guard. Spec: `docs/superpowers/specs/2026-07-12-entra-session-adapter-design.md`.
   **discovery_event:** ADR-0001 deferred the vendor to the production-provider gate (#6); `ISession`
   is the port it plugs into (`docs/context/architecture.md`).
-  **refresh_trigger:** N/A — decided.
+  **refresh_trigger:** N/A — decided and shipped.
 
 - **description:** `householdRef` retention + data-classification policy undecided.
   **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; not closed.
