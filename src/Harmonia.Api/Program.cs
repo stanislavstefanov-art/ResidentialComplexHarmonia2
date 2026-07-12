@@ -1,10 +1,12 @@
 using Harmonia.Api.Expenses;
+using Harmonia.Api.FinancialSummary;
 using Harmonia.Api.Identity;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Api.Reservations;
 using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application;
 using Harmonia.Application.Expenses;
+using Harmonia.Application.FinancialSummary;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -73,6 +75,7 @@ builder.Services.AddScoped<ListCharges>();
 builder.Services.AddScoped<ListAllCharges>();
 builder.Services.AddScoped<RecordExpense>();
 builder.Services.AddScoped<ListExpenses>();
+builder.Services.AddScoped<GetFinancialSummary>();
 
 var app = builder.Build();
 
@@ -123,5 +126,11 @@ app.MapGet(
     (ListExpenses useCase, ILoggerFactory loggers, CancellationToken ct)
         => ExpenseEndpoints.ListExpensesEndpoint(
             useCase, loggers.CreateLogger("Expenses"), ct));
+
+app.MapGet(
+    "/financial-summary",
+    (GetFinancialSummary useCase, string period, ILoggerFactory loggers, CancellationToken ct)
+        => FinancialSummaryEndpoints.GetSummaryEndpoint(
+            useCase, period, loggers.CreateLogger("FinancialSummary"), ct));
 
 app.Run();
