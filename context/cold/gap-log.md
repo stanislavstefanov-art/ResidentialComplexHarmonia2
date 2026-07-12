@@ -2,12 +2,11 @@
 
 Things the code/agent cannot infer — decided by a human, not assumed.
 
-- **description:** Concrete identity provider (IdP) behind the `ISession` port not chosen — the build
-  fakes `ISession` yielding `{ isResident, householdRef }`. Both the .NET API and the Angular client
-  depend on this seam; swapping the fake for the real IdP adapter needs NO domain/application change.
+- **status: CLOSED** — closed by ADR-0003 (`docs/architecture/decisions/ADR-0003-identity-provider.md`)
+  **description:** Concrete IdP = Microsoft Entra External ID; closes this gap.
   **discovery_event:** ADR-0001 deferred the vendor to the production-provider gate (#6); `ISession`
   is the port it plugs into (`docs/context/architecture.md`).
-  **refresh_trigger:** before onboarding real residents / first prod deploy.
+  **refresh_trigger:** N/A — decided.
 
 - **description:** `householdRef` retention + data-classification policy undecided.
   **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; not closed.
