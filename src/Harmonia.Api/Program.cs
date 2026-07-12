@@ -1,8 +1,10 @@
+using Harmonia.Api.Expenses;
 using Harmonia.Api.Identity;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Api.Reservations;
 using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application;
+using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,6 +38,15 @@ if (string.IsNullOrWhiteSpace(feeConnString))
 }
 builder.Services.AddSingleton<IMaintenanceFeeStore>(new SqlMaintenanceFeeStore(feeConnString));
 
+var expConnString = builder.Configuration.GetConnectionString("Expenses");
+if (string.IsNullOrWhiteSpace(expConnString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:Expenses is not configured. Supply it via environment " +
+        "(ConnectionStrings__Expenses) or a git-ignored local config file.");
+}
+builder.Services.AddSingleton<IExpenseStore>(new SqlExpenseStore(expConnString));
+
 if (builder.Environment.IsDevelopment())
 {
     // Dev stubs unchanged — config-driven household ref and admin flag.
@@ -60,6 +71,8 @@ builder.Services.AddScoped<ReserveSlot>();
 builder.Services.AddScoped<RecordCharge>();
 builder.Services.AddScoped<ListCharges>();
 builder.Services.AddScoped<ListAllCharges>();
+builder.Services.AddScoped<RecordExpense>();
+builder.Services.AddScoped<ListExpenses>();
 
 var app = builder.Build();
 
@@ -98,5 +111,17 @@ app.MapGet(
     (ListAllCharges useCase, ILoggerFactory loggers, CancellationToken ct)
         => MaintenanceFeeEndpoints.ListAllChargesEndpoint(
             useCase, loggers.CreateLogger("MaintenanceFees"), ct));
+
+app.MapPost(
+    "/expenses",
+    (RecordExpense useCase, RecordExpenseRequest body, ILoggerFactory loggers, CancellationToken ct)
+        => ExpenseEndpoints.RecordExpenseEndpoint(
+            useCase, body, loggers.CreateLogger("Expenses"), ct));
+
+app.MapGet(
+    "/expenses",
+    (ListExpenses useCase, ILoggerFactory loggers, CancellationToken ct)
+        => ExpenseEndpoints.ListExpensesEndpoint(
+            useCase, loggers.CreateLogger("Expenses"), ct));
 
 app.Run();
