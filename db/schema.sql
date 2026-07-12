@@ -15,6 +15,23 @@ CREATE TABLE dbo.MaintenanceFeeCharges
     CONSTRAINT UQ_MaintenanceFeeCharges_Id UNIQUE (Id)
 );
 
+-- Association expense ledger (append-only; no UPDATE or DELETE ever executed).
+-- PK on IdempotencyKey guarantees idempotent POST semantics at the DB layer.
+-- Expenses are complex-wide; no HouseholdRef.
+IF OBJECT_ID(N'dbo.AssociationExpenses', N'U') IS NULL
+CREATE TABLE dbo.AssociationExpenses
+(
+    Id             uniqueidentifier  NOT NULL,
+    AmountEur      decimal(18, 2)    NOT NULL,
+    Description    nvarchar(256)     NOT NULL,
+    Category       nvarchar(128)     NOT NULL,
+    ExpenseDate    date              NOT NULL,
+    RecordedAt     datetimeoffset(3) NOT NULL,
+    IdempotencyKey nvarchar(128)     NOT NULL,
+    CONSTRAINT PK_AssociationExpenses    PRIMARY KEY (IdempotencyKey),
+    CONSTRAINT UQ_AssociationExpenses_Id UNIQUE (Id)
+);
+
 -- Reservation store schema (ADR-0002, 700-data-design).
 -- The PRIMARY KEY on (DayDate, SlotKey) IS the concurrency mechanism (R1):
 -- a claim is a plain INSERT and the engine's unique enforcement decides the race.

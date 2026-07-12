@@ -4,9 +4,9 @@ using Harmonia.Domain.MaintenanceFees;
 
 namespace Harmonia.IntegrationTests;
 
+[Collection("Database")]
 [Trait("Category", "Rel")]
 public class SqlListAllChargesTests(SqlServerFixture fixture)
-    : IClassFixture<SqlServerFixture>
 {
     private SqlMaintenanceFeeStore Store => new(fixture.ConnectionString);
 
