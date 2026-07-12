@@ -1,7 +1,9 @@
 using Harmonia.Application;
+using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
 using Harmonia.Domain;
+using Harmonia.Domain.Expenses;
 using Harmonia.Domain.MaintenanceFees;
 using Harmonia.Domain.Reservations;
 
@@ -73,6 +75,36 @@ public sealed class FailingMaintenanceFeeStore : IMaintenanceFeeStore
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+}
+
+public sealed class FakeExpenseStore : IExpenseStore
+{
+    private readonly Dictionary<string, AssociationExpense> _byKey = [];
+
+    public Task<RecordExpenseResult> RecordExpenseAsync(
+        AssociationExpense expense, CancellationToken ct = default)
+    {
+        if (_byKey.TryGetValue(expense.IdempotencyKey, out var existing))
+            return Task.FromResult<RecordExpenseResult>(new RecordExpenseResult.Duplicate(existing));
+        _byKey[expense.IdempotencyKey] = expense;
+        return Task.FromResult<RecordExpenseResult>(new RecordExpenseResult.Created(expense));
+    }
+
+    public Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(CancellationToken ct = default)
+    {
+        var list = _byKey.Values.OrderByDescending(e => e.RecordedAt).ToList();
+        return Task.FromResult<IReadOnlyList<AssociationExpense>>(list);
+    }
+}
+
+public sealed class FailingExpenseStore : IExpenseStore
+{
+    public Task<RecordExpenseResult> RecordExpenseAsync(
+        AssociationExpense expense, CancellationToken ct = default)
+        => Task.FromResult<RecordExpenseResult>(new RecordExpenseResult.Failed());
+
+    public Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
