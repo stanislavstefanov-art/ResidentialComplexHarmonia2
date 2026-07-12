@@ -1,9 +1,12 @@
+using Harmonia.Api.Identity;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Api.Reservations;
 using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 using ISession = Harmonia.Application.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,26 +35,26 @@ if (string.IsNullOrWhiteSpace(feeConnString))
         "(ConnectionStrings__MaintenanceFees) or a git-ignored local config file.");
 }
 builder.Services.AddSingleton<IMaintenanceFeeStore>(new SqlMaintenanceFeeStore(feeConnString));
-// Fail safe, never open (SEC-CHK-17): the dev identity stand-in must not exist
-// outside Development — a real ISession adapter closes gap-log #1 first.
-if (!builder.Environment.IsDevelopment())
-{
-    throw new InvalidOperationException(
-        "DevSession is a dev-only identity stand-in (context/cold/gap-log.md); " +
-        "refusing to start outside Development until a real ISession adapter exists.");
-}
 
-if (builder.Configuration.GetValue("Session:IsAdmin", false))
+if (builder.Environment.IsDevelopment())
 {
-    builder.Services.AddSingleton<ISession>(
-        new DevAdminSession(builder.Environment));
+    // Dev stubs unchanged — config-driven household ref and admin flag.
+    if (builder.Configuration.GetValue("Session:IsAdmin", false))
+        builder.Services.AddSingleton<ISession>(new DevAdminSession(builder.Environment));
+    else
+        builder.Services.AddSingleton<ISession>(new DevSession(
+            builder.Configuration.GetValue("Session:IsResident", true),
+            builder.Configuration.GetValue("Session:HouseholdRef", "HH-DEV-1")!));
 }
 else
 {
-    builder.Services.AddSingleton<ISession>(new DevSession(
-        builder.Configuration.GetValue("Session:IsResident", true),
-        builder.Configuration.GetValue("Session:HouseholdRef", "HH-DEV-1")!));
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
+    builder.Services.AddAuthorization();
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<ISession, EntraSession>();
 }
+
 builder.Services.AddScoped<GetDayAvailability>();
 builder.Services.AddScoped<ReserveSlot>();
 builder.Services.AddScoped<RecordCharge>();
@@ -59,6 +62,13 @@ builder.Services.AddScoped<ListCharges>();
 builder.Services.AddScoped<ListAllCharges>();
 
 var app = builder.Build();
+
+// MUST precede all app.MapGet / app.MapPost calls — middleware pipeline is order-sensitive.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
 
 app.MapGet(
     "/days/{day}/slots",
