@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          SA_PASSWORD: "Harmonia1TestPass!"
+          ACCEPT_EULA: "Y"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'Harmonia1TestPass!' -Q 'SELECT 1' -No"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore Harmonia.sln
+
+      - name: Build
+        run: dotnet build Harmonia.sln --no-restore --configuration Release
+
+      - name: Unit tests
+        run: dotnet test tests/Harmonia.UnitTests/Harmonia.UnitTests.csproj --no-build --configuration Release --verbosity minimal
+
+      - name: Rel integration tests (real SQL Server — R1 concurrency gate)
+        run: dotnet test tests/Harmonia.IntegrationTests/Harmonia.IntegrationTests.csproj --no-build --configuration Release --verbosity minimal --filter "Category=Rel"
+        env:
+          HARMONIA_SQL_CONNSTR: "Server=localhost,1433;User Id=SA;Password=Harmonia1TestPass!;TrustServerCertificate=True;"
