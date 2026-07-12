@@ -56,6 +56,7 @@ builder.Services.AddScoped<GetDayAvailability>();
 builder.Services.AddScoped<ReserveSlot>();
 builder.Services.AddScoped<RecordCharge>();
 builder.Services.AddScoped<ListCharges>();
+builder.Services.AddScoped<ListAllCharges>();
 
 var app = builder.Build();
 
@@ -80,6 +81,12 @@ app.MapGet(
     "/maintenance-fees/charges",
     (ListCharges useCase, ILoggerFactory loggers, CancellationToken ct)
         => MaintenanceFeeEndpoints.ListChargesEndpoint(
+            useCase, loggers.CreateLogger("MaintenanceFees"), ct));
+
+app.MapGet(
+    "/maintenance-fees/charges/all",
+    (ListAllCharges useCase, ILoggerFactory loggers, CancellationToken ct)
+        => MaintenanceFeeEndpoints.ListAllChargesEndpoint(
             useCase, loggers.CreateLogger("MaintenanceFees"), ct));
 
 app.Run();

@@ -79,6 +79,29 @@ public static class MaintenanceFeeEndpoints
         }
     }
 
+    public static async Task<IResult> ListAllChargesEndpoint(
+        ListAllCharges useCase,
+        ILogger logger,
+        CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(ct);
+
+        switch (result)
+        {
+            case ListAllChargesResult.Refused:
+                return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
+            case ListAllChargesResult.Failed:
+                return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
+            case ListAllChargesResult.Ok ok:
+                logger.LogInformation("Admin charges listed: {Count} charges across all households", ok.Charges.Count);
+                return TypedResults.Json(
+                    ok.Charges.Select(ToDto).ToList(),
+                    statusCode: StatusCodes.Status200OK);
+            default:
+                return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
     private static ChargeDto ToDto(MaintenanceFeeCharge c) =>
         new(c.Id, c.HouseholdRef.Value, c.AmountEur, c.Description, c.Period, c.ChargedAt, c.IdempotencyKey);
 }

@@ -35,6 +35,20 @@ public abstract record ListChargesResult
     public sealed record Failed : ListChargesResult;
 }
 
+/// <summary>Outcome of listing all charges across every household (admin-only).</summary>
+public abstract record ListAllChargesResult
+{
+    private ListAllChargesResult() { }
+
+    /// <summary>Caller is not an admin.</summary>
+    public sealed record Refused : ListAllChargesResult;
+
+    public sealed record Ok(IReadOnlyList<MaintenanceFeeCharge> Charges) : ListAllChargesResult;
+
+    /// <summary>Unexpected store error; use 500 Internal Server Error.</summary>
+    public sealed record Failed : ListAllChargesResult;
+}
+
 /// <summary>Append-only ledger store port. No update or delete methods by design.</summary>
 public interface IMaintenanceFeeStore
 {
@@ -48,4 +62,7 @@ public interface IMaintenanceFeeStore
     /// <summary>Returns all charges for the given household, ordered by ChargedAt descending (newest first).</summary>
     Task<IReadOnlyList<MaintenanceFeeCharge>> ListChargesAsync(
         HouseholdRef householdRef, CancellationToken ct = default);
+
+    /// <summary>Returns all charges across every household, ordered by HouseholdRef ASC then ChargedAt DESC.</summary>
+    Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default);
 }
