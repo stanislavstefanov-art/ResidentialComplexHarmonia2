@@ -79,8 +79,31 @@ public sealed class SqlMaintenanceFeeStore(string connectionString) : IMaintenan
         return results;
     }
 
-    public Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default)
-        => throw new NotImplementedException("SQL implementation added in Task 2");
+    public async Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT Id, HouseholdRef, AmountEur, Description, Period, ChargedAt, IdempotencyKey " +
+            "FROM dbo.MaintenanceFeeCharges " +
+            "ORDER BY HouseholdRef ASC, ChargedAt DESC;";
+
+        var results = new List<MaintenanceFeeCharge>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            results.Add(new MaintenanceFeeCharge(
+                Id: reader.GetGuid(0),
+                HouseholdRef: new HouseholdRef(reader.GetString(1)),
+                AmountEur: reader.GetDecimal(2),
+                Description: reader.GetString(3),
+                Period: reader.GetString(4),
+                ChargedAt: reader.GetDateTimeOffset(5),
+                IdempotencyKey: reader.GetString(6)));
+        }
+        return results;
+    }
 
     private async Task<MaintenanceFeeCharge> LoadExistingAsync(
         HouseholdRef householdRef, string idempotencyKey, CancellationToken ct)
