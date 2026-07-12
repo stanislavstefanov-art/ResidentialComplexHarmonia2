@@ -12,7 +12,7 @@ public class RecordChargeTests
     private static SessionContext AdminCtx =>
         new(IsResident: false, IsAdmin: true, HouseholdRef: null);
 
-    private static RecordCharge UseCase(FakeMaintenanceFeeStore store, SessionContext? ctx = null)
+    private static RecordCharge UseCase(IMaintenanceFeeStore store, SessionContext? ctx = null)
         => new(new FakeSession(ctx ?? AdminCtx), store);
 
     [Fact] // Non-admin session is refused — admin guard
@@ -81,5 +81,14 @@ public class RecordChargeTests
 
         var charge = Assert.Single(store.RecordedCharges);
         Assert.Equal(other, charge.HouseholdRef);
+    }
+
+    [Fact] // Store failure returns Failed, not an unhandled exception
+    public async Task Store_failure_returns_failed()
+    {
+        var result = await UseCase(new FailingMaintenanceFeeStore()).ExecuteAsync(
+            TargetHousehold, 100m, "Fee", "2026-07", "key-fail");
+
+        Assert.IsType<RecordChargeResult.Failed>(result);
     }
 }

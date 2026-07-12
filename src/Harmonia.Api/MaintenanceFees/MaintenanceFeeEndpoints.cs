@@ -42,38 +42,40 @@ public static class MaintenanceFeeEndpoints
         switch (result)
         {
             case RecordChargeResult.Refused:
-                return Results.Unauthorized();
+                return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
             case RecordChargeResult.Created created:
                 logger.LogInformation("Charge recorded: created");
                 return TypedResults.Json(ToDto(created.Charge), statusCode: StatusCodes.Status201Created);
             case RecordChargeResult.Duplicate duplicate:
                 logger.LogInformation("Charge recorded: duplicate (idempotent)");
                 return TypedResults.Json(ToDto(duplicate.Charge), statusCode: StatusCodes.Status200OK);
+            case RecordChargeResult.Failed:
+                return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
             default:
-                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
     public static async Task<IResult> ListChargesEndpoint(
         ListCharges useCase,
-        string householdRef,
         ILogger logger,
         CancellationToken ct)
     {
-        var target = new HouseholdRef(householdRef);
-        var result = await useCase.ExecuteAsync(target, ct);
+        var result = await useCase.ExecuteAsync(ct);
 
         switch (result)
         {
             case ListChargesResult.Refused:
-                return Results.Unauthorized();
+                return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
+            case ListChargesResult.Failed:
+                return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
             case ListChargesResult.Ok ok:
                 logger.LogInformation("Charges listed: {Count} charges", ok.Charges.Count);
                 return TypedResults.Json(
                     ok.Charges.Select(ToDto).ToList(),
                     statusCode: StatusCodes.Status200OK);
             default:
-                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 

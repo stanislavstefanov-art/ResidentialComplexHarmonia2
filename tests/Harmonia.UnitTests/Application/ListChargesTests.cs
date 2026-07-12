@@ -12,14 +12,11 @@ public class ListChargesTests
     private static SessionContext ResidentCtx(string ref1 = "HH-LIST")
         => new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef(ref1));
 
-    private static SessionContext AdminCtx =>
-        new(IsResident: false, IsAdmin: true, HouseholdRef: null);
-
     [Fact] // No session — refused
     public async Task No_session_returns_refused()
     {
         var result = await new ListCharges(new FakeSession(null), new FakeMaintenanceFeeStore())
-            .ExecuteAsync(Household);
+            .ExecuteAsync();
 
         Assert.IsType<ListChargesResult.Refused>(result);
     }
@@ -29,52 +26,51 @@ public class ListChargesTests
     {
         var ctx = new SessionContext(IsResident: false, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-X"));
         var result = await new ListCharges(new FakeSession(ctx), new FakeMaintenanceFeeStore())
-            .ExecuteAsync(Household);
+            .ExecuteAsync();
 
         Assert.IsType<ListChargesResult.Refused>(result);
     }
 
-    [Fact] // Resident reading own charges — allowed
+    [Fact] // Resident reading own charges — allowed (household derived from session)
     public async Task Resident_can_read_own_charges()
     {
         var store = new FakeMaintenanceFeeStore();
         await store.RecordChargeAsync(MakeCharge("idem-1"), default);
 
         var result = await new ListCharges(new FakeSession(ResidentCtx()), store)
-            .ExecuteAsync(Household);
+            .ExecuteAsync();
 
         var ok = Assert.IsType<ListChargesResult.Ok>(result);
         Assert.Single(ok.Charges);
     }
 
-    [Fact] // Resident reading another household's charges — refused
-    public async Task Resident_cannot_read_other_household_charges()
+    [Fact] // Admin is refused — admin listing is out of scope (spec §2)
+    public async Task Admin_returns_refused()
     {
-        var other = new HouseholdRef("HH-OTHER");
-        var result = await new ListCharges(new FakeSession(ResidentCtx()), new FakeMaintenanceFeeStore())
-            .ExecuteAsync(other);
+        var adminCtx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
+        var store = new FakeMaintenanceFeeStore();
+        await store.RecordChargeAsync(MakeCharge("idem-2"), default);
+
+        var result = await new ListCharges(new FakeSession(adminCtx), store)
+            .ExecuteAsync();
 
         Assert.IsType<ListChargesResult.Refused>(result);
     }
 
-    [Fact] // Admin can read any household
-    public async Task Admin_can_read_any_household()
+    [Fact] // Store error returns Failed, not an unhandled exception
+    public async Task Store_error_returns_failed()
     {
-        var store = new FakeMaintenanceFeeStore();
-        await store.RecordChargeAsync(MakeCharge("idem-2"), default);
+        var result = await new ListCharges(new FakeSession(ResidentCtx()), new FailingMaintenanceFeeStore())
+            .ExecuteAsync();
 
-        var result = await new ListCharges(new FakeSession(AdminCtx), store)
-            .ExecuteAsync(Household);
-
-        var ok = Assert.IsType<ListChargesResult.Ok>(result);
-        Assert.Single(ok.Charges);
+        Assert.IsType<ListChargesResult.Failed>(result);
     }
 
     [Fact] // Empty ledger returns Ok with empty list, not Refused
     public async Task Empty_ledger_returns_ok_with_empty_list()
     {
         var result = await new ListCharges(new FakeSession(ResidentCtx()), new FakeMaintenanceFeeStore())
-            .ExecuteAsync(Household);
+            .ExecuteAsync();
 
         var ok = Assert.IsType<ListChargesResult.Ok>(result);
         Assert.Empty(ok.Charges);

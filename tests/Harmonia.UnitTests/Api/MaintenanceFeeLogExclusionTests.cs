@@ -63,7 +63,7 @@ public class MaintenanceFeeLogExclusionTests
         var useCase = new ListCharges(new FakeSession(ResidentCtx), store);
 
         await MaintenanceFeeEndpoints.ListChargesEndpoint(
-            useCase, Target.Value, logger, default);
+            useCase, logger, default);
 
         Assert.All(logger.Lines, line => Assert.DoesNotContain(SecretRef, line));
     }

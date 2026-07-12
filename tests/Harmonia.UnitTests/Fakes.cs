@@ -44,10 +44,23 @@ public sealed class FakeMaintenanceFeeStore : IMaintenanceFeeStore
         HouseholdRef householdRef, CancellationToken ct = default)
     {
         var charges = _byHousehold.TryGetValue(householdRef, out var list)
-            ? (IReadOnlyList<MaintenanceFeeCharge>)list.OrderBy(c => c.ChargedAt).ToList()
+            ? (IReadOnlyList<MaintenanceFeeCharge>)list.OrderByDescending(c => c.ChargedAt).ToList()
             : [];
         return Task.FromResult(charges);
     }
+}
+
+/// <summary>
+/// Store that simulates failure: RecordChargeAsync returns Failed, ListChargesAsync throws.
+/// Used to unit-test the Failed result paths in use cases.
+/// </summary>
+public sealed class FailingMaintenanceFeeStore : IMaintenanceFeeStore
+{
+    public Task<RecordChargeResult> RecordChargeAsync(MaintenanceFeeCharge charge, CancellationToken ct = default)
+        => Task.FromResult<RecordChargeResult>(new RecordChargeResult.Failed());
+
+    public Task<IReadOnlyList<MaintenanceFeeCharge>> ListChargesAsync(HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
 }
 
 /// <summary>

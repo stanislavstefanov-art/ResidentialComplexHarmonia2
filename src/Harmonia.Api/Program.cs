@@ -70,16 +70,16 @@ app.MapPost(
         => ReservationEndpoints.ClaimSlot(useCase, day, slotKey, loggers.CreateLogger("Reservations"), ct));
 
 app.MapPost(
-    "/admin/charges/{householdRef}",
+    "/maintenance-fees/charges/{householdRef}",
     (RecordCharge useCase, string householdRef, RecordChargeRequest body,
      ILoggerFactory loggers, CancellationToken ct)
         => MaintenanceFeeEndpoints.RecordChargeEndpoint(
             useCase, householdRef, body, loggers.CreateLogger("MaintenanceFees"), ct));
 
 app.MapGet(
-    "/households/{householdRef}/charges",
-    (ListCharges useCase, string householdRef, ILoggerFactory loggers, CancellationToken ct)
+    "/maintenance-fees/charges",
+    (ListCharges useCase, ILoggerFactory loggers, CancellationToken ct)
         => MaintenanceFeeEndpoints.ListChargesEndpoint(
-            useCase, householdRef, loggers.CreateLogger("MaintenanceFees"), ct));
+            useCase, loggers.CreateLogger("MaintenanceFees"), ct));
 
 app.Run();

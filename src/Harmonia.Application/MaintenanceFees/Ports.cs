@@ -16,6 +16,9 @@ public abstract record RecordChargeResult
 
     /// <summary>Duplicate submission with same IdempotencyKey; use 200 OK.</summary>
     public sealed record Duplicate(MaintenanceFeeCharge Charge) : RecordChargeResult;
+
+    /// <summary>Unexpected store error; use 500 Internal Server Error.</summary>
+    public sealed record Failed : RecordChargeResult;
 }
 
 /// <summary>Outcome of listing charges for a household.</summary>
@@ -27,6 +30,9 @@ public abstract record ListChargesResult
     public sealed record Refused : ListChargesResult;
 
     public sealed record Ok(IReadOnlyList<MaintenanceFeeCharge> Charges) : ListChargesResult;
+
+    /// <summary>Unexpected store error; use 500 Internal Server Error.</summary>
+    public sealed record Failed : ListChargesResult;
 }
 
 /// <summary>Append-only ledger store port. No update or delete methods by design.</summary>
@@ -39,7 +45,7 @@ public interface IMaintenanceFeeStore
     Task<RecordChargeResult> RecordChargeAsync(
         MaintenanceFeeCharge charge, CancellationToken ct = default);
 
-    /// <summary>Returns all charges for the given household, ordered by ChargedAt ascending.</summary>
+    /// <summary>Returns all charges for the given household, ordered by ChargedAt descending (newest first).</summary>
     Task<IReadOnlyList<MaintenanceFeeCharge>> ListChargesAsync(
         HouseholdRef householdRef, CancellationToken ct = default);
 }

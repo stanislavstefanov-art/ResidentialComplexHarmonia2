@@ -3,26 +3,25 @@ using Harmonia.Domain;
 namespace Harmonia.Application.MaintenanceFees;
 
 /// <summary>
-/// Use case: list all maintenance fee charges for a household.
-/// Residents may only read their own household's ledger.
-/// Admins may read any household's ledger.
+/// Use case: list maintenance fee charges for the calling resident's household.
+/// Household is always derived from the session (R2). Admin listing is out of scope (spec §2).
 /// </summary>
 public sealed class ListCharges(ISession session, IMaintenanceFeeStore store)
 {
-    public async Task<ListChargesResult> ExecuteAsync(
-        HouseholdRef targetHousehold, CancellationToken ct = default)
+    public async Task<ListChargesResult> ExecuteAsync(CancellationToken ct = default)
     {
         var ctx = session.Resolve();
-        if (ctx is null)
+        if (ctx is null || !ctx.IsResident || ctx.HouseholdRef is null)
             return new ListChargesResult.Refused();
 
-        if (!ctx.IsAdmin)
+        try
         {
-            if (!ctx.IsResident || ctx.HouseholdRef != targetHousehold)
-                return new ListChargesResult.Refused();
+            var charges = await store.ListChargesAsync(ctx.HouseholdRef.Value, ct);
+            return new ListChargesResult.Ok(charges);
         }
-
-        var charges = await store.ListChargesAsync(targetHousehold, ct);
-        return new ListChargesResult.Ok(charges);
+        catch (Exception)
+        {
+            return new ListChargesResult.Failed();
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Domain;
@@ -30,10 +31,10 @@ public sealed class SqlMaintenanceFeeStore(string connectionString) : IMaintenan
                 "VALUES (@Id, @HouseholdRef, @AmountEur, @Description, @Period, @ChargedAt, @IdempotencyKey);";
             cmd.Parameters.AddWithValue("@Id", charge.Id);
             cmd.Parameters.AddWithValue("@HouseholdRef", charge.HouseholdRef.Value);
-            cmd.Parameters.AddWithValue("@AmountEur", charge.AmountEur);
+            cmd.Parameters.Add(new SqlParameter("@AmountEur", SqlDbType.Decimal) { Value = charge.AmountEur, Precision = 18, Scale = 2 });
             cmd.Parameters.AddWithValue("@Description", charge.Description);
             cmd.Parameters.AddWithValue("@Period", charge.Period);
-            cmd.Parameters.AddWithValue("@ChargedAt", charge.ChargedAt);
+            cmd.Parameters.Add(new SqlParameter("@ChargedAt", SqlDbType.DateTimeOffset) { Value = charge.ChargedAt });
             cmd.Parameters.AddWithValue("@IdempotencyKey", charge.IdempotencyKey);
             await cmd.ExecuteNonQueryAsync(ct);
             return new RecordChargeResult.Created(charge);
@@ -42,6 +43,10 @@ public sealed class SqlMaintenanceFeeStore(string connectionString) : IMaintenan
         {
             var existing = await LoadExistingAsync(charge.HouseholdRef, charge.IdempotencyKey, ct);
             return new RecordChargeResult.Duplicate(existing);
+        }
+        catch (Exception)
+        {
+            return new RecordChargeResult.Failed();
         }
     }
 
