@@ -7,6 +7,10 @@ no ORM needed). Money/keys are typed; no dynamic SQL string-building for values 
 prod). Prod = Azure SQL Database, free-forever serverless, **EU region**. (ADR-0002.)
 **Tests:** xUnit. Pure-logic tests use fakes (no DB). Integration + concurrency tests run against a
 **real SQL Server** — never in-memory.
+**Identity:** Microsoft Entra External ID (ADR-0003) — social login (Google OAuth 2.0) + local
+accounts; invite-only; `householdRef` and role as custom claims (`extension_householdRef`,
+`extension_role`); JWT validated by `Microsoft.Identity.Web` in the API; dev stubs
+(`DevSession`/`DevAdminSession`) remain behind `IsDevelopment()` guard.
 
 ## Build / test / run
 dotnet build
