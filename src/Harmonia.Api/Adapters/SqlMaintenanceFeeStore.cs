@@ -79,6 +79,9 @@ public sealed class SqlMaintenanceFeeStore(string connectionString) : IMaintenan
         return results;
     }
 
+    public Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default)
+        => throw new NotImplementedException("SQL implementation added in Task 2");
+
     private async Task<MaintenanceFeeCharge> LoadExistingAsync(
         HouseholdRef householdRef, string idempotencyKey, CancellationToken ct)
     {

@@ -48,6 +48,16 @@ public sealed class FakeMaintenanceFeeStore : IMaintenanceFeeStore
             : [];
         return Task.FromResult(charges);
     }
+
+    public Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default)
+    {
+        var all = _byHousehold.Values
+            .SelectMany(x => x)
+            .OrderBy(c => c.HouseholdRef.Value)
+            .ThenByDescending(c => c.ChargedAt)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<MaintenanceFeeCharge>>(all);
+    }
 }
 
 /// <summary>
@@ -60,6 +70,9 @@ public sealed class FailingMaintenanceFeeStore : IMaintenanceFeeStore
         => Task.FromResult<RecordChargeResult>(new RecordChargeResult.Failed());
 
     public Task<IReadOnlyList<MaintenanceFeeCharge>> ListChargesAsync(HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<MaintenanceFeeCharge>> ListAllChargesAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
