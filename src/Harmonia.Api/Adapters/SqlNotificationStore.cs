@@ -23,7 +23,7 @@ public sealed class SqlNotificationStore(string connectionString) : INotificatio
             await conn.OpenAsync(ct);
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = """
-                DECLARE @result TABLE (act nvarchar(10));
+                DECLARE @result TABLE (act nvarchar(10), createdAt datetimeoffset(3));
                 MERGE dbo.PushSubscriptions AS t
                 USING (VALUES (
                     @HouseholdRef, @Endpoint, @P256dhKey, @AuthKey, @FallbackEmail, @Now
@@ -39,8 +39,8 @@ public sealed class SqlNotificationStore(string connectionString) : INotificatio
                     INSERT (HouseholdRef, Endpoint, P256dhKey, AuthKey, FallbackEmail, CreatedAt, UpdatedAt)
                     VALUES (s.HouseholdRef, s.Endpoint, s.P256dhKey, s.AuthKey,
                             s.FallbackEmail, s.UpdatedAt, s.UpdatedAt)
-                OUTPUT $action INTO @result;
-                SELECT act FROM @result;
+                OUTPUT $action, INSERTED.CreatedAt INTO @result;
+                SELECT act, createdAt FROM @result;
                 """;
             cmd.Parameters.AddWithValue("@HouseholdRef", sub.HouseholdRef.Value);
             cmd.Parameters.AddWithValue("@Endpoint", sub.Endpoint);
@@ -50,12 +50,16 @@ public sealed class SqlNotificationStore(string connectionString) : INotificatio
                 { Value = (object?)sub.FallbackEmail ?? DBNull.Value });
             cmd.Parameters.Add(new SqlParameter("@Now", SqlDbType.DateTimeOffset) { Value = DateTimeOffset.UtcNow });
 
-            var action = (string?)await cmd.ExecuteScalarAsync(ct);
-            var isNew  = action == "INSERT";
+            await using var reader = (SqlDataReader)await cmd.ExecuteReaderAsync(ct);
+            await reader.ReadAsync(ct);
+            var action    = reader.GetString(0);
+            var createdAt = reader.GetDateTimeOffset(1);
+            var isNew     = action == "INSERT";
 
-            var stored = isNew ? sub with { CreatedAt = sub.UpdatedAt } : sub;
+            var stored = sub with { CreatedAt = createdAt };
             return new SaveSubscriptionResult.Saved(stored, isNew);
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception)
         {
             return new SaveSubscriptionResult.Failed();
@@ -77,6 +81,7 @@ public sealed class SqlNotificationStore(string connectionString) : INotificatio
                 ? new RemoveSubscriptionResult.Removed()
                 : new RemoveSubscriptionResult.NotFound();
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception)
         {
             return new RemoveSubscriptionResult.Failed();
