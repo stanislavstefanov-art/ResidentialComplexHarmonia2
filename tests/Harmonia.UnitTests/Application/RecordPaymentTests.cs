@@ -1,4 +1,5 @@
 using Harmonia.Application;
+using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
 using Harmonia.Domain;
 using Harmonia.Domain.Payments;
@@ -10,7 +11,7 @@ public class RecordPaymentTests
     private static (RecordPayment UseCase, FakePaymentStore Store) Build(SessionContext? ctx)
     {
         var store = new FakePaymentStore();
-        return (new RecordPayment(new FakeSession(ctx), store), store);
+        return (new RecordPayment(new FakeSession(ctx), store, new FakeNotificationDispatcher()), store);
     }
 
     [Fact]
@@ -70,7 +71,7 @@ public class RecordPaymentTests
     public async Task Store_failure_returns_Failed()
     {
         var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
-        var useCase = new RecordPayment(new FakeSession(ctx), new FailingPaymentStore());
+        var useCase = new RecordPayment(new FakeSession(ctx), new FailingPaymentStore(), new FakeNotificationDispatcher());
 
         var result = await useCase.ExecuteAsync(
             "HH-1", 500m, "2026-07", new DateOnly(2026, 7, 10), "pay-001");

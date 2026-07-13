@@ -1,9 +1,10 @@
+using Harmonia.Application.Notifications;
 using Harmonia.Domain;
 using Harmonia.Domain.Payments;
 
 namespace Harmonia.Application.Payments;
 
-public sealed class RecordPayment(ISession session, IPaymentStore store)
+public sealed class RecordPayment(ISession session, IPaymentStore store, INotificationDispatcher dispatcher)
 {
     public async Task<RecordPaymentResult> ExecuteAsync(
         string householdRef,
@@ -26,6 +27,9 @@ public sealed class RecordPayment(ISession session, IPaymentStore store)
             RecordedAt:     DateTimeOffset.UtcNow,
             IdempotencyKey: idempotencyKey);
 
-        return await store.RecordPaymentAsync(payment, ct);
+        var result = await store.RecordPaymentAsync(payment, ct);
+        if (result is RecordPaymentResult.Created created)
+            _ = dispatcher.DispatchAsync(NotificationKind.PaymentRecorded, created.Payment.HouseholdRef, ct);
+        return result;
     }
 }

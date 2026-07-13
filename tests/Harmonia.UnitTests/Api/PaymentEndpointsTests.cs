@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Harmonia.Api.Payments;
 using Harmonia.Application;
+using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
 using Harmonia.Domain;
 
@@ -10,7 +11,7 @@ namespace Harmonia.UnitTests.Api;
 public class PaymentEndpointsTests
 {
     private static RecordPayment RecordUseCase(SessionContext? ctx) =>
-        new(new FakeSession(ctx), new FakePaymentStore());
+        new(new FakeSession(ctx), new FakePaymentStore(), new FakeNotificationDispatcher());
 
     private static ListAllPayments ListAllUseCase(SessionContext? ctx) =>
         new(new FakeSession(ctx), new FakePaymentStore());
@@ -42,7 +43,7 @@ public class PaymentEndpointsTests
         var store = new FakePaymentStore();
         var body = new RecordPaymentRequest(
             "HH-1", 500m, "2026-07", new DateOnly(2026, 7, 10), "pay-001");
-        var useCase = new RecordPayment(new FakeSession(ctx), store);
+        var useCase = new RecordPayment(new FakeSession(ctx), store, new FakeNotificationDispatcher());
         await useCase.ExecuteAsync("HH-1", 500m, "2026-07", new DateOnly(2026, 7, 10), "pay-001");
 
         var result = await PaymentEndpoints.RecordPaymentEndpoint(
