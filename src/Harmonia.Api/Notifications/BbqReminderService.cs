@@ -15,10 +15,10 @@ public sealed class BbqReminderService(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var now  = DateTimeOffset.UtcNow;
+            var now  = DateTime.UtcNow;
             var next = now.Date.AddDays(1).AddHours(7); // 07:00 UTC next day
-            if (next <= now.UtcDateTime) next = next.AddDays(1);
-            await Task.Delay(next - now.UtcDateTime, stoppingToken);
+            if (next <= now) next = next.AddDays(1);
+            await Task.Delay(next - now, stoppingToken);
             if (stoppingToken.IsCancellationRequested) break;
             await SendTomorrowRemindersAsync(stoppingToken);
         }
