@@ -29,7 +29,7 @@ public sealed class VapidPushDispatcher(
 
         if (sub is not null)
         {
-            channel = await TrySendPushAsync(sub, title, body) ? "push" : "skipped";
+            channel = await TrySendPushAsync(sub, title, body, ct) ? "push" : "skipped";
             if (channel == "skipped" && sub.FallbackEmail is not null)
                 channel = await TrySendEmailAsync(sub.FallbackEmail, title, body, ct) ? "email" : "skipped";
         }
@@ -47,7 +47,7 @@ public sealed class VapidPushDispatcher(
         var subs = await store.ListAllSubscriptionsAsync(ct);
         foreach (var sub in subs)
         {
-            var channel = await TrySendPushAsync(sub, title, body) ? "push" : "skipped";
+            var channel = await TrySendPushAsync(sub, title, body, ct) ? "push" : "skipped";
             if (channel == "skipped" && sub.FallbackEmail is not null)
                 channel = await TrySendEmailAsync(sub.FallbackEmail, title, body, ct) ? "email" : "skipped";
 
@@ -56,7 +56,7 @@ public sealed class VapidPushDispatcher(
         }
     }
 
-    private async Task<bool> TrySendPushAsync(Harmonia.Domain.Notifications.PushSubscription sub, string title, string body)
+    private async Task<bool> TrySendPushAsync(Harmonia.Domain.Notifications.PushSubscription sub, string title, string body, CancellationToken ct)
     {
         // Generic payload — no amounts, no HouseholdRef (R3)
         var payload = JsonSerializer.Serialize(new { title, body });
@@ -65,7 +65,7 @@ public sealed class VapidPushDispatcher(
             var client  = new WebPushClient();
             var vapidDetails = new VapidDetails(vapidConfig.Subject, vapidConfig.PublicKey, vapidConfig.PrivateKey);
             var pushSub = new WebPush.PushSubscription(sub.Endpoint, sub.P256dhKey, sub.AuthKey);
-            await client.SendNotificationAsync(pushSub, payload, vapidDetails);
+            await client.SendNotificationAsync(pushSub, payload, vapidDetails, cancellationToken: ct);
             return true;
         }
         catch (WebPushException ex) when (ex.StatusCode == HttpStatusCode.Gone)

@@ -115,6 +115,18 @@ public class NotificationEndpointsTests
         Assert.Equal(StatusCodes.Status403Forbidden, status.StatusCode);
     }
 
+    [Fact]
+    public async Task Unsubscribe_store_failure_returns_500()
+    {
+        var useCase = new RemoveSubscription(new FakeSession(ResidentCtx), new FailingNotificationStore());
+
+        var result = await NotificationEndpoints.RemoveSubscriptionEndpoint(
+            useCase, NullLogger.Instance, default);
+
+        var status = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, status.StatusCode);
+    }
+
     // ── POST /notifications/announce ───────────────────────────────────────
 
     [Fact]

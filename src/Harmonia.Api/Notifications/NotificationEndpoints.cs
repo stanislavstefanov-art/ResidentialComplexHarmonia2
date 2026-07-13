@@ -8,7 +8,7 @@ namespace Harmonia.Api.Notifications;
 
 public sealed record SaveSubscriptionRequest(string Endpoint, string P256dhKey, string AuthKey);
 public sealed record AnnouncementRequest(string Title, string Body);
-public sealed record SubscriptionDto(string HouseholdRef, DateTimeOffset UpdatedAt);
+public sealed record SubscriptionDto(DateTimeOffset UpdatedAt);
 public sealed record NotificationRecordDto(Guid Id, string Title, DateTimeOffset SentAt, string Channel);
 
 public static class NotificationEndpoints
@@ -25,7 +25,7 @@ public static class NotificationEndpoints
                 return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
             case SaveSubscriptionResult.Saved saved:
                 return TypedResults.Json(
-                    new SubscriptionDto(saved.Subscription.HouseholdRef.Value, saved.Subscription.UpdatedAt),
+                    new SubscriptionDto(saved.Subscription.UpdatedAt),
                     statusCode: saved.IsNew ? StatusCodes.Status201Created : StatusCodes.Status200OK);
             case SaveSubscriptionResult.Failed:
                 return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
