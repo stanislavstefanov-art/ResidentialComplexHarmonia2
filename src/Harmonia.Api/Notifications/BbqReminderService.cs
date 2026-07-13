@@ -33,6 +33,7 @@ public sealed class BbqReminderService(
             foreach (var householdRef in holders)
                 await dispatcher.DispatchAsync(NotificationKind.BbqReminder, householdRef, ct);
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception)
         {
             logger.LogWarning("BBQ reminder run failed");
