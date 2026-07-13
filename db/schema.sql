@@ -45,3 +45,20 @@ CREATE TABLE dbo.Reservations
         CONSTRAINT DF_Reservations_ClaimedAt DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Reservations PRIMARY KEY (DayDate, SlotKey)
 );
+
+-- Payment ledger (append-only; no UPDATE or DELETE ever executed against this table).
+-- PK on (HouseholdRef, IdempotencyKey) mirrors MaintenanceFeeCharges.
+-- DateReceived is admin-supplied (supports backfilling); RecordedAt is server-stamped.
+IF OBJECT_ID(N'dbo.MaintenanceFeePayments', N'U') IS NULL
+CREATE TABLE dbo.MaintenanceFeePayments
+(
+    Id             uniqueidentifier  NOT NULL,
+    HouseholdRef   nvarchar(128)     NOT NULL,
+    AmountEur      decimal(18, 2)    NOT NULL,
+    Period         nvarchar(16)      NOT NULL,
+    DateReceived   date              NOT NULL,
+    RecordedAt     datetimeoffset(3) NOT NULL,
+    IdempotencyKey nvarchar(128)     NOT NULL,
+    CONSTRAINT PK_MaintenanceFeePayments    PRIMARY KEY (HouseholdRef, IdempotencyKey),
+    CONSTRAINT UQ_MaintenanceFeePayments_Id UNIQUE (Id)
+);

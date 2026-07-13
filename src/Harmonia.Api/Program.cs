@@ -1,5 +1,7 @@
 using Harmonia.Api.Expenses;
 using Harmonia.Api.FinancialSummary;
+using Harmonia.Api.Payments;
+using Harmonia.Application.Payments;
 using Harmonia.Api.Identity;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Api.Reservations;
@@ -49,6 +51,15 @@ if (string.IsNullOrWhiteSpace(expConnString))
 }
 builder.Services.AddSingleton<IExpenseStore>(new SqlExpenseStore(expConnString));
 
+var payConnString = builder.Configuration.GetConnectionString("Payments");
+if (string.IsNullOrWhiteSpace(payConnString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:Payments is not configured. Supply it via environment " +
+        "(ConnectionStrings__Payments) or a git-ignored local config file.");
+}
+builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(payConnString));
+
 if (builder.Environment.IsDevelopment())
 {
     // Dev stubs unchanged — config-driven household ref and admin flag.
@@ -76,6 +87,10 @@ builder.Services.AddScoped<ListAllCharges>();
 builder.Services.AddScoped<RecordExpense>();
 builder.Services.AddScoped<ListExpenses>();
 builder.Services.AddScoped<GetFinancialSummary>();
+builder.Services.AddScoped<RecordPayment>();
+builder.Services.AddScoped<ListAllPayments>();
+builder.Services.AddScoped<ListMyPayments>();
+builder.Services.AddScoped<GetBalance>();
 
 var app = builder.Build();
 
@@ -132,5 +147,29 @@ app.MapGet(
     (GetFinancialSummary useCase, string period, ILoggerFactory loggers, CancellationToken ct)
         => FinancialSummaryEndpoints.GetSummaryEndpoint(
             useCase, period, loggers.CreateLogger("FinancialSummary"), ct));
+
+app.MapPost(
+    "/payments",
+    (RecordPayment useCase, RecordPaymentRequest body, ILoggerFactory loggers, CancellationToken ct)
+        => PaymentEndpoints.RecordPaymentEndpoint(
+            useCase, body, loggers.CreateLogger("Payments"), ct));
+
+app.MapGet(
+    "/payments/all",
+    (ListAllPayments useCase, ILoggerFactory loggers, CancellationToken ct)
+        => PaymentEndpoints.ListAllPaymentsEndpoint(
+            useCase, loggers.CreateLogger("Payments"), ct));
+
+app.MapGet(
+    "/payments",
+    (ListMyPayments useCase, ILoggerFactory loggers, CancellationToken ct)
+        => PaymentEndpoints.ListMyPaymentsEndpoint(
+            useCase, loggers.CreateLogger("Payments"), ct));
+
+app.MapGet(
+    "/balance",
+    (GetBalance useCase, string? period, ILoggerFactory loggers, CancellationToken ct)
+        => PaymentEndpoints.GetBalanceEndpoint(
+            useCase, period, loggers.CreateLogger("Payments"), ct));
 
 app.Run();
