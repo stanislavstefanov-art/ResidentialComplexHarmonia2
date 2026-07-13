@@ -1,10 +1,12 @@
 using Harmonia.Application;
 using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
+using Harmonia.Application.Payments;
 using Harmonia.Application.Reservations;
 using Harmonia.Domain;
 using Harmonia.Domain.Expenses;
 using Harmonia.Domain.MaintenanceFees;
+using Harmonia.Domain.Payments;
 using Harmonia.Domain.Reservations;
 
 namespace Harmonia.UnitTests;
@@ -133,4 +135,59 @@ public sealed class RecordingStore : IReservationStore
         ClaimCalls.Add((day, slotKey, householdRef));
         return Task.FromResult(NextClaimResult);
     }
+}
+
+public sealed class FakePaymentStore : IPaymentStore
+{
+    private readonly Dictionary<(HouseholdRef, string), MaintenanceFeePayment> _byKey = [];
+    private readonly Dictionary<HouseholdRef, List<MaintenanceFeePayment>> _byHousehold = [];
+
+    public Task<RecordPaymentResult> RecordPaymentAsync(
+        MaintenanceFeePayment payment, CancellationToken ct = default)
+    {
+        var key = (payment.HouseholdRef, payment.IdempotencyKey);
+        if (_byKey.TryGetValue(key, out var existing))
+            return Task.FromResult<RecordPaymentResult>(new RecordPaymentResult.Duplicate(existing));
+
+        _byKey[key] = payment;
+        if (!_byHousehold.TryGetValue(payment.HouseholdRef, out var list))
+            _byHousehold[payment.HouseholdRef] = list = [];
+        list.Add(payment);
+        return Task.FromResult<RecordPaymentResult>(new RecordPaymentResult.Created(payment));
+    }
+
+    public Task<IReadOnlyList<MaintenanceFeePayment>> ListPaymentsByHouseholdAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        var payments = _byHousehold.TryGetValue(householdRef, out var list)
+            ? (IReadOnlyList<MaintenanceFeePayment>)list.OrderByDescending(p => p.DateReceived).ToList()
+            : [];
+        return Task.FromResult(payments);
+    }
+
+    public Task<IReadOnlyList<MaintenanceFeePayment>> ListAllPaymentsAsync(
+        CancellationToken ct = default)
+    {
+        var all = _byHousehold.Values
+            .SelectMany(x => x)
+            .OrderBy(p => p.HouseholdRef.Value)
+            .ThenByDescending(p => p.DateReceived)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<MaintenanceFeePayment>>(all);
+    }
+}
+
+public sealed class FailingPaymentStore : IPaymentStore
+{
+    public Task<RecordPaymentResult> RecordPaymentAsync(
+        MaintenanceFeePayment payment, CancellationToken ct = default)
+        => Task.FromResult<RecordPaymentResult>(new RecordPaymentResult.Failed());
+
+    public Task<IReadOnlyList<MaintenanceFeePayment>> ListPaymentsByHouseholdAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<MaintenanceFeePayment>> ListAllPaymentsAsync(
+        CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
 }
