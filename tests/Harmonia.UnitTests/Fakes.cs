@@ -1,11 +1,13 @@
 using Harmonia.Application;
 using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
+using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
 using Harmonia.Application.Reservations;
 using Harmonia.Domain;
 using Harmonia.Domain.Expenses;
 using Harmonia.Domain.MaintenanceFees;
+using Harmonia.Domain.Notifications;
 using Harmonia.Domain.Payments;
 using Harmonia.Domain.Reservations;
 
@@ -190,4 +192,109 @@ public sealed class FailingPaymentStore : IPaymentStore
     public Task<IReadOnlyList<MaintenanceFeePayment>> ListAllPaymentsAsync(
         CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
+}
+
+/// <summary>Records all calls; never throws. DispatchCalls keyed by kind.</summary>
+public sealed class FakeNotificationStore : INotificationStore
+{
+    private readonly Dictionary<HouseholdRef, PushSubscription> _subs = [];
+    private readonly List<NotificationRecord> _history = [];
+
+    public Task<SaveSubscriptionResult> SaveSubscriptionAsync(
+        PushSubscription sub, CancellationToken ct = default)
+    {
+        var isNew = !_subs.ContainsKey(sub.HouseholdRef);
+        var stored = isNew ? sub : sub with { CreatedAt = _subs[sub.HouseholdRef].CreatedAt };
+        _subs[sub.HouseholdRef] = stored;
+        return Task.FromResult<SaveSubscriptionResult>(
+            new SaveSubscriptionResult.Saved(stored, isNew));
+    }
+
+    public Task<RemoveSubscriptionResult> RemoveSubscriptionAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        if (!_subs.Remove(householdRef))
+            return Task.FromResult<RemoveSubscriptionResult>(new RemoveSubscriptionResult.NotFound());
+        return Task.FromResult<RemoveSubscriptionResult>(new RemoveSubscriptionResult.Removed());
+    }
+
+    public Task<PushSubscription?> GetSubscriptionAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        _subs.TryGetValue(householdRef, out var sub);
+        return Task.FromResult(sub);
+    }
+
+    public Task<IReadOnlyList<PushSubscription>> ListAllSubscriptionsAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<PushSubscription>>(_subs.Values.ToList());
+
+    public Task AppendHistoryAsync(NotificationRecord record, CancellationToken ct = default)
+    {
+        _history.Add(record);
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<NotificationRecord>> GetHistoryAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-30);
+        var result = _history
+            .Where(r => r.HouseholdRef == householdRef && r.SentAt >= cutoff)
+            .OrderByDescending(r => r.SentAt)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<NotificationRecord>>(result);
+    }
+}
+
+public sealed class FailingNotificationStore : INotificationStore
+{
+    public Task<SaveSubscriptionResult> SaveSubscriptionAsync(
+        PushSubscription sub, CancellationToken ct = default)
+        => Task.FromResult<SaveSubscriptionResult>(new SaveSubscriptionResult.Failed());
+
+    public Task<RemoveSubscriptionResult> RemoveSubscriptionAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => Task.FromResult<RemoveSubscriptionResult>(new RemoveSubscriptionResult.Failed());
+
+    public Task<PushSubscription?> GetSubscriptionAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<PushSubscription>> ListAllSubscriptionsAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task AppendHistoryAsync(NotificationRecord record, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<NotificationRecord>> GetHistoryAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+}
+
+/// <summary>Records dispatch calls; never throws.</summary>
+public sealed class FakeNotificationDispatcher : INotificationDispatcher
+{
+    public List<(NotificationKind Kind, HouseholdRef HouseholdRef)> DispatchCalls { get; } = [];
+    public List<(string Title, string Body)> BroadcastCalls { get; } = [];
+
+    public Task DispatchAsync(NotificationKind kind, HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        DispatchCalls.Add((kind, householdRef));
+        return Task.CompletedTask;
+    }
+
+    public Task BroadcastAsync(string title, string body, CancellationToken ct = default)
+    {
+        BroadcastCalls.Add((title, body));
+        return Task.CompletedTask;
+    }
+}
+
+public sealed class FailingNotificationDispatcher : INotificationDispatcher
+{
+    public Task DispatchAsync(NotificationKind kind, HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated dispatcher failure");
+
+    public Task BroadcastAsync(string title, string body, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated dispatcher failure");
 }
