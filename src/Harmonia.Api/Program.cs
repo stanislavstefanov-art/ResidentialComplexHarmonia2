@@ -78,7 +78,8 @@ var vapidPrivate = builder.Configuration["Vapid:PrivateKey"];
 if (string.IsNullOrWhiteSpace(vapidSubject) || string.IsNullOrWhiteSpace(vapidPublic) || string.IsNullOrWhiteSpace(vapidPrivate))
 {
     throw new InvalidOperationException(
-        "Vapid:Subject, Vapid:PublicKey, and Vapid:PrivateKey must all be configured. " +
+        "Vapid:Subject, Vapid:PublicKey, and Vapid:PrivateKey must all be configured " +
+        "(env vars: Vapid__Subject, Vapid__PublicKey, Vapid__PrivateKey). " +
         "Generate VAPID keys (e.g. npx web-push generate-vapid-keys) and add to git-ignored local config.");
 }
 var vapidConfig = new VapidConfig(vapidSubject, vapidPublic, vapidPrivate);
@@ -88,7 +89,8 @@ var acsSender  = builder.Configuration["Acs:SenderAddress"];
 if (string.IsNullOrWhiteSpace(acsConnStr) || string.IsNullOrWhiteSpace(acsSender))
 {
     throw new InvalidOperationException(
-        "Acs:ConnectionString and Acs:SenderAddress must be configured. " +
+        "Acs:ConnectionString and Acs:SenderAddress must be configured " +
+        "(env vars: Acs__ConnectionString, Acs__SenderAddress). " +
         "Set them in a git-ignored local config file or as environment variables.");
 }
 var acsConfig = new AcsEmailConfig(acsConnStr, acsSender);
