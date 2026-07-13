@@ -15,6 +15,9 @@ public interface IReservationStore
 
     Task<ClaimResult> ClaimSlotAsync(
         DateOnly day, string slotKey, HouseholdRef householdRef, CancellationToken ct = default);
+
+    // Returns one HouseholdRef per distinct household with a booking on the given day.
+    Task<IReadOnlyList<HouseholdRef>> GetDayBookingHoldersAsync(DateOnly day, CancellationToken ct = default);
 }
 
 /// <summary>

@@ -137,6 +137,13 @@ public sealed class RecordingStore : IReservationStore
         ClaimCalls.Add((day, slotKey, householdRef));
         return Task.FromResult(NextClaimResult);
     }
+
+    public Task<IReadOnlyList<HouseholdRef>> GetDayBookingHoldersAsync(
+        DateOnly day, CancellationToken ct = default)
+    {
+        var holders = Holders.Values.Distinct().ToList();
+        return Task.FromResult<IReadOnlyList<HouseholdRef>>(holders);
+    }
 }
 
 public sealed class FakePaymentStore : IPaymentStore
