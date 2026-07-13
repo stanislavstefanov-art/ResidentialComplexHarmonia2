@@ -62,3 +62,31 @@ CREATE TABLE dbo.MaintenanceFeePayments
     CONSTRAINT PK_MaintenanceFeePayments    PRIMARY KEY (HouseholdRef, IdempotencyKey),
     CONSTRAINT UQ_MaintenanceFeePayments_Id UNIQUE (Id)
 );
+
+-- Push subscription store (one row per household; UPSERT semantics).
+-- Endpoint, P256dhKey, AuthKey, FallbackEmail are personal data (GDPR/R3) — never logged.
+IF OBJECT_ID(N'dbo.PushSubscriptions', N'U') IS NULL
+CREATE TABLE dbo.PushSubscriptions
+(
+    HouseholdRef  nvarchar(128)     NOT NULL,
+    Endpoint      nvarchar(2048)    NOT NULL,
+    P256dhKey     nvarchar(128)     NOT NULL,
+    AuthKey       nvarchar(128)     NOT NULL,
+    FallbackEmail nvarchar(320)     NULL,
+    CreatedAt     datetimeoffset(3) NOT NULL,
+    UpdatedAt     datetimeoffset(3) NOT NULL,
+    CONSTRAINT PK_PushSubscriptions PRIMARY KEY (HouseholdRef)
+);
+
+-- Notification history (last 30 days queried; no purge job in v1).
+IF OBJECT_ID(N'dbo.NotificationHistory', N'U') IS NULL
+CREATE TABLE dbo.NotificationHistory
+(
+    Id           uniqueidentifier  NOT NULL,
+    HouseholdRef nvarchar(128)     NOT NULL,
+    Title        nvarchar(256)     NOT NULL,
+    SentAt       datetimeoffset(3) NOT NULL,
+    Channel      nvarchar(16)      NOT NULL,
+    CONSTRAINT PK_NotificationHistory PRIMARY KEY (Id),
+    INDEX IX_NotificationHistory_HouseholdRef_SentAt (HouseholdRef, SentAt DESC)
+);

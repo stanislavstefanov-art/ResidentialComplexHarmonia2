@@ -1,5 +1,6 @@
 using Harmonia.Application;
 using Harmonia.Application.MaintenanceFees;
+using Harmonia.Application.Notifications;
 using Harmonia.Domain;
 using Harmonia.Domain.MaintenanceFees;
 
@@ -13,14 +14,14 @@ public class RecordChargeTests
         new(IsResident: false, IsAdmin: true, HouseholdRef: null);
 
     private static RecordCharge UseCase(IMaintenanceFeeStore store, SessionContext? ctx = null)
-        => new(new FakeSession(ctx ?? AdminCtx), store);
+        => new(new FakeSession(ctx ?? AdminCtx), store, new FakeNotificationDispatcher());
 
     [Fact] // Non-admin session is refused — admin guard
     public async Task Non_admin_returns_refused()
     {
         var ctx = new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-1"));
         var store = new FakeMaintenanceFeeStore();
-        var useCase = new RecordCharge(new FakeSession(ctx), store);
+        var useCase = new RecordCharge(new FakeSession(ctx), store, new FakeNotificationDispatcher());
 
         var result = await useCase.ExecuteAsync(
             TargetHousehold, 100m, "Maintenance", "2026-07", "key-1");
@@ -33,7 +34,7 @@ public class RecordChargeTests
     public async Task No_session_returns_refused()
     {
         var store = new FakeMaintenanceFeeStore();
-        var useCase = new RecordCharge(new FakeSession(null), store);
+        var useCase = new RecordCharge(new FakeSession(null), store, new FakeNotificationDispatcher());
 
         var result = await useCase.ExecuteAsync(
             TargetHousehold, 100m, "Maintenance", "2026-07", "key-1");

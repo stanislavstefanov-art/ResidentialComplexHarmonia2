@@ -1,3 +1,4 @@
+using Harmonia.Application.Notifications;
 using Harmonia.Domain;
 using Harmonia.Domain.MaintenanceFees;
 
@@ -9,7 +10,7 @@ namespace Harmonia.Application.MaintenanceFees;
 /// identity (documented R2 exception on admin POST). The actor's identity is verified via
 /// IsAdmin from the session; a non-admin or missing session is refused immediately.
 /// </summary>
-public sealed class RecordCharge(ISession session, IMaintenanceFeeStore store)
+public sealed class RecordCharge(ISession session, IMaintenanceFeeStore store, INotificationDispatcher dispatcher)
 {
     public async Task<RecordChargeResult> ExecuteAsync(
         HouseholdRef targetHousehold,
@@ -32,6 +33,9 @@ public sealed class RecordCharge(ISession session, IMaintenanceFeeStore store)
             ChargedAt: DateTimeOffset.UtcNow,
             IdempotencyKey: idempotencyKey);
 
-        return await store.RecordChargeAsync(charge, ct);
+        var result = await store.RecordChargeAsync(charge, ct);
+        if (result is RecordChargeResult.Created created)
+            _ = dispatcher.DispatchAsync(NotificationKind.ChargePosted, created.Charge.HouseholdRef, ct);
+        return result;
     }
 }

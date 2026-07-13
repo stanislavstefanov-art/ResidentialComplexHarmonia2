@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Application;
 using Harmonia.Application.MaintenanceFees;
+using Harmonia.Application.Notifications;
 using Harmonia.Domain;
 using Harmonia.Domain.MaintenanceFees;
 
@@ -30,7 +31,7 @@ public class MaintenanceFeeEndpointsTests
     public async Task Post_non_admin_returns_403()
     {
         var store = new FakeMaintenanceFeeStore();
-        var useCase = new RecordCharge(new FakeSession(ResidentCtx), store);
+        var useCase = new RecordCharge(new FakeSession(ResidentCtx), store, new FakeNotificationDispatcher());
 
         var result = await MaintenanceFeeEndpoints.RecordChargeEndpoint(
             useCase, Target.Value, DefaultRequest, NullLogger.Instance, default);
@@ -43,7 +44,7 @@ public class MaintenanceFeeEndpointsTests
     public async Task Post_admin_new_charge_returns_201()
     {
         var store = new FakeMaintenanceFeeStore();
-        var useCase = new RecordCharge(new FakeSession(AdminCtx), store);
+        var useCase = new RecordCharge(new FakeSession(AdminCtx), store, new FakeNotificationDispatcher());
 
         var result = await MaintenanceFeeEndpoints.RecordChargeEndpoint(
             useCase, Target.Value, DefaultRequest, NullLogger.Instance, default);
@@ -59,7 +60,7 @@ public class MaintenanceFeeEndpointsTests
     {
         var store = new FakeMaintenanceFeeStore();
         await store.RecordChargeAsync(MakeCharge(), default);
-        var useCase = new RecordCharge(new FakeSession(AdminCtx), store);
+        var useCase = new RecordCharge(new FakeSession(AdminCtx), store, new FakeNotificationDispatcher());
 
         var result = await MaintenanceFeeEndpoints.RecordChargeEndpoint(
             useCase, Target.Value, DefaultRequest, NullLogger.Instance, default);

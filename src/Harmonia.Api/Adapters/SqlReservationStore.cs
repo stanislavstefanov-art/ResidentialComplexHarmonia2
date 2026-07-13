@@ -104,6 +104,23 @@ public sealed class SqlReservationStore(string connectionString) : IReservationS
         }
     }
 
+    public async Task<IReadOnlyList<HouseholdRef>> GetDayBookingHoldersAsync(
+        DateOnly day, CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT DISTINCT HouseholdRef FROM dbo.Reservations WHERE DayDate = @Day;";
+        cmd.Parameters.Add(DayParameter(day));
+
+        var holders = new List<HouseholdRef>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            holders.Add(new HouseholdRef(reader.GetString(0)));
+        return holders;
+    }
+
     private static SqlParameter DayParameter(DateOnly day)
         => new("@Day", SqlDbType.Date) { Value = day.ToDateTime(TimeOnly.MinValue) };
 }

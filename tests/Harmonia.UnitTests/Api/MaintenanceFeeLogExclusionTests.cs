@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Application;
 using Harmonia.Application.MaintenanceFees;
+using Harmonia.Application.Notifications;
 using Harmonia.Domain;
 using Harmonia.Domain.MaintenanceFees;
 
@@ -30,7 +31,7 @@ public class MaintenanceFeeLogExclusionTests
     {
         var logger = new CapturingLogger();
         var store = new FakeMaintenanceFeeStore();
-        var useCase = new RecordCharge(new FakeSession(AdminCtx), store);
+        var useCase = new RecordCharge(new FakeSession(AdminCtx), store, new FakeNotificationDispatcher());
 
         await MaintenanceFeeEndpoints.RecordChargeEndpoint(
             useCase, Target.Value, Request, logger, default);
@@ -45,7 +46,7 @@ public class MaintenanceFeeLogExclusionTests
         var store = new FakeMaintenanceFeeStore();
         var key = $"idem-{Guid.NewGuid():N}";
         await store.RecordChargeAsync(MakeCharge(key), default);
-        var useCase = new RecordCharge(new FakeSession(AdminCtx), store);
+        var useCase = new RecordCharge(new FakeSession(AdminCtx), store, new FakeNotificationDispatcher());
         var dupRequest = new RecordChargeRequest(100m, "Fee", "2026-07", key);
 
         await MaintenanceFeeEndpoints.RecordChargeEndpoint(

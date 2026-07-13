@@ -121,6 +121,23 @@ public class SqlReservationStoreTests(SqlServerFixture fixture)
         Assert.Equal(0, await CountRowsAsync(slot)); // no partial holder on the real store
     }
 
+    [Fact]
+    public async Task GetDayBookingHolders_returns_distinct_households_for_given_day()
+    {
+        var store = Store;
+        // Use a day far in the future to avoid collision with other tests
+        var day   = new DateOnly(2099, 1, new Random().Next(1, 28));
+        var hh1   = new HouseholdRef($"HH-BBQ-{Guid.NewGuid():N}");
+        var hh2   = new HouseholdRef($"HH-BBQ-{Guid.NewGuid():N}");
+
+        await store.ClaimSlotAsync(day, FreshSlotKey(), hh1);
+
+        var holders = await store.GetDayBookingHoldersAsync(day);
+
+        Assert.Contains(hh1, holders);
+        Assert.DoesNotContain(hh2, holders);
+    }
+
     private async Task<ClaimResult> ClaimAfterGateAsync(
         Task gate, string slotKey, HouseholdRef household)
     {
