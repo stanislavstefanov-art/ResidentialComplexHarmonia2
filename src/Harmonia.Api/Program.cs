@@ -1,6 +1,8 @@
 using Harmonia.Api.Expenses;
 using Harmonia.Api.FinancialSummary;
+using Harmonia.Api.Notifications;
 using Harmonia.Api.Payments;
+using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
 using Harmonia.Api.Identity;
 using Harmonia.Api.MaintenanceFees;
@@ -60,6 +62,45 @@ if (string.IsNullOrWhiteSpace(payConnString))
 }
 builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(payConnString));
 
+// ── Notifications ─────────────────────────────────────────────────────────
+var notifConnString = builder.Configuration.GetConnectionString("Notifications");
+if (string.IsNullOrWhiteSpace(notifConnString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:Notifications is not configured. Supply it via environment " +
+        "(ConnectionStrings__Notifications) or a git-ignored local config file.");
+}
+builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(notifConnString));
+
+var vapidSubject = builder.Configuration["Vapid:Subject"];
+var vapidPublic  = builder.Configuration["Vapid:PublicKey"];
+var vapidPrivate = builder.Configuration["Vapid:PrivateKey"];
+if (string.IsNullOrWhiteSpace(vapidSubject) || string.IsNullOrWhiteSpace(vapidPublic) || string.IsNullOrWhiteSpace(vapidPrivate))
+{
+    throw new InvalidOperationException(
+        "Vapid:Subject, Vapid:PublicKey, and Vapid:PrivateKey must all be configured. " +
+        "Generate VAPID keys (e.g. npx web-push generate-vapid-keys) and add to git-ignored local config.");
+}
+var vapidConfig = new VapidConfig(vapidSubject, vapidPublic, vapidPrivate);
+
+var acsConnStr = builder.Configuration["Acs:ConnectionString"];
+var acsSender  = builder.Configuration["Acs:SenderAddress"];
+if (string.IsNullOrWhiteSpace(acsConnStr) || string.IsNullOrWhiteSpace(acsSender))
+{
+    throw new InvalidOperationException(
+        "Acs:ConnectionString and Acs:SenderAddress must be configured. " +
+        "Set them in a git-ignored local config file or as environment variables.");
+}
+var acsConfig = new AcsEmailConfig(acsConnStr, acsSender);
+
+builder.Services.AddSingleton<INotificationDispatcher>(sp =>
+    new VapidPushDispatcher(
+        sp.GetRequiredService<INotificationStore>(),
+        vapidConfig,
+        acsConfig,
+        sp.GetRequiredService<ILogger<VapidPushDispatcher>>()));
+builder.Services.AddHostedService<BbqReminderService>();
+
 if (builder.Environment.IsDevelopment())
 {
     // Dev stubs unchanged — config-driven household ref and admin flag.
@@ -91,6 +132,10 @@ builder.Services.AddScoped<RecordPayment>();
 builder.Services.AddScoped<ListAllPayments>();
 builder.Services.AddScoped<ListMyPayments>();
 builder.Services.AddScoped<GetBalance>();
+builder.Services.AddScoped<SaveSubscription>();
+builder.Services.AddScoped<RemoveSubscription>();
+builder.Services.AddScoped<SendAnnouncement>();
+builder.Services.AddScoped<GetNotificationHistory>();
 
 var app = builder.Build();
 
@@ -171,5 +216,29 @@ app.MapGet(
     (GetBalance useCase, string? period, ILoggerFactory loggers, CancellationToken ct)
         => PaymentEndpoints.GetBalanceEndpoint(
             useCase, period, loggers.CreateLogger("Payments"), ct));
+
+app.MapPost("/notifications/subscribe",
+    (SaveSubscription useCase, SaveSubscriptionRequest body,
+     HttpContext httpContext, ILoggerFactory loggers, CancellationToken ct) =>
+        NotificationEndpoints.SaveSubscriptionEndpoint(
+            useCase, body,
+            httpContext.User?.FindFirst("email")?.Value,  // Entra claim, never from body (R2)
+            loggers.CreateLogger("Notifications"), ct));
+
+app.MapDelete("/notifications/subscribe",
+    (RemoveSubscription useCase, ILoggerFactory loggers, CancellationToken ct) =>
+        NotificationEndpoints.RemoveSubscriptionEndpoint(
+            useCase, loggers.CreateLogger("Notifications"), ct));
+
+app.MapPost("/notifications/announce",
+    (SendAnnouncement useCase, AnnouncementRequest body,
+     ILoggerFactory loggers, CancellationToken ct) =>
+        NotificationEndpoints.AnnounceEndpoint(
+            useCase, body, loggers.CreateLogger("Notifications"), ct));
+
+app.MapGet("/notifications",
+    (GetNotificationHistory useCase, ILoggerFactory loggers, CancellationToken ct) =>
+        NotificationEndpoints.GetHistoryEndpoint(
+            useCase, loggers.CreateLogger("Notifications"), ct));
 
 app.Run();
