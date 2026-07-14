@@ -1,10 +1,12 @@
 using Harmonia.Application;
+using Harmonia.Application.Directory;
 using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
 using Harmonia.Application.Reservations;
 using Harmonia.Domain;
+using Harmonia.Domain.Directory;
 using Harmonia.Domain.Expenses;
 using Harmonia.Domain.MaintenanceFees;
 using Harmonia.Domain.Notifications;
@@ -304,4 +306,70 @@ public sealed class FailingNotificationDispatcher : INotificationDispatcher
 
     public Task BroadcastAsync(string title, string body, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated dispatcher failure");
+}
+
+public sealed class FakeDirectoryStore : IDirectoryStore
+{
+    private readonly List<HouseholdContact> _contacts = [];
+
+    public List<HouseholdContact> Contacts => _contacts;
+
+    public Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<HouseholdContact>>([.. _contacts]);
+
+    public Task<UpdateContactResult> UpsertContactAsync(
+        HouseholdRef householdRef, string? displayName, string? phone, string? email,
+        CancellationToken ct = default)
+    {
+        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
+        if (idx >= 0)
+        {
+            var e = _contacts[idx];
+            _contacts[idx] = e with
+            {
+                DisplayName = displayName ?? e.DisplayName,
+                Phone       = phone       ?? e.Phone,
+                Email       = email       ?? e.Email,
+                UpdatedAt   = DateTimeOffset.UtcNow
+            };
+        }
+        else
+        {
+            _contacts.Add(new HouseholdContact(
+                householdRef, displayName, phone, email, null, DateTimeOffset.UtcNow));
+        }
+        return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
+    }
+
+    public Task<UpdateNotesResult> UpsertNotesAsync(
+        HouseholdRef householdRef, string? notes, CancellationToken ct = default)
+    {
+        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
+        if (idx >= 0)
+        {
+            var e = _contacts[idx];
+            _contacts[idx] = e with { Notes = notes, UpdatedAt = DateTimeOffset.UtcNow };
+        }
+        else
+        {
+            _contacts.Add(new HouseholdContact(
+                householdRef, null, null, null, notes, DateTimeOffset.UtcNow));
+        }
+        return Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Ok());
+    }
+}
+
+public sealed class FailingDirectoryStore : IDirectoryStore
+{
+    public Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<UpdateContactResult> UpsertContactAsync(
+        HouseholdRef householdRef, string? displayName, string? phone, string? email,
+        CancellationToken ct = default)
+        => Task.FromResult<UpdateContactResult>(new UpdateContactResult.Failed());
+
+    public Task<UpdateNotesResult> UpsertNotesAsync(
+        HouseholdRef householdRef, string? notes, CancellationToken ct = default)
+        => Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Failed());
 }
