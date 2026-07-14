@@ -10,6 +10,14 @@ public sealed class UpdateMyContact(ISession session, IDirectoryStore store)
         if (ctx is not { IsResident: true, HouseholdRef: not null })
             return new UpdateContactResult.Refused();
 
-        return await store.UpsertContactAsync(ctx.HouseholdRef.Value, displayName, phone, email, ct);
+        try
+        {
+            return await store.UpsertContactAsync(ctx.HouseholdRef.Value, displayName, phone, email, ct);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception)
+        {
+            return new UpdateContactResult.Failed();
+        }
     }
 }
