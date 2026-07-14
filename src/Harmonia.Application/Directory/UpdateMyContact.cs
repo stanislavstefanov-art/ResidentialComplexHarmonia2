@@ -1,5 +1,10 @@
 namespace Harmonia.Application.Directory;
 
+/// <summary>
+/// Lets a resident update their own contact details.
+/// R2: the target <see cref="HouseholdRef"/> is always taken from <see cref="ISession.Resolve()"/>
+/// — never from any caller-supplied parameter.
+/// </summary>
 public sealed class UpdateMyContact(ISession session, IDirectoryStore store)
 {
     public async Task<UpdateContactResult> ExecuteAsync(

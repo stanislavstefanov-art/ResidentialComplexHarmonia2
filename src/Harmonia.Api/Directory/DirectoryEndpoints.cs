@@ -5,8 +5,10 @@ using Harmonia.Domain.Directory;
 
 namespace Harmonia.Api.Directory;
 
+/// <summary>Resident-facing view — name only, no PII (R3).</summary>
 public sealed record DirectoryEntryPublicDto(string HouseholdRef, string? DisplayName);
 
+/// <summary>Board-facing view — full contact details including phone, email, and notes.</summary>
 public sealed record DirectoryEntryFullDto(
     string         HouseholdRef,
     string?        DisplayName,
@@ -15,10 +17,16 @@ public sealed record DirectoryEntryFullDto(
     string?        Notes,
     DateTimeOffset UpdatedAt);
 
+/// <summary>Request body for contact-detail updates (phone/email are PII — R3).</summary>
 public sealed record UpdateContactRequest(string? DisplayName, string? Phone, string? Email);
 
 public sealed record UpdateNotesRequest(string? Notes);
 
+/// <summary>
+/// HTTP translation layer for the member directory feature.
+/// Maps use-case outcomes to HTTP status codes and DTOs; contains no business logic.
+/// R3: phone and email values are never passed to any logger in this class.
+/// </summary>
 public static class DirectoryEndpoints
 {
     public static async Task<IResult> GetDirectoryEndpoint(

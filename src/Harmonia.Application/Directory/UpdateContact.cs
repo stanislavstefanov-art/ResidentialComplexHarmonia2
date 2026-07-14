@@ -2,6 +2,7 @@ using Harmonia.Domain;
 
 namespace Harmonia.Application.Directory;
 
+/// <summary>Board use case — updates contact details for any household by URL-path reference.</summary>
 public sealed class UpdateContact(ISession session, IDirectoryStore store)
 {
     public async Task<UpdateContactResult> ExecuteAsync(

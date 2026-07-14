@@ -2,6 +2,11 @@ using Harmonia.Domain.Directory;
 
 namespace Harmonia.Application.Directory;
 
+/// <summary>
+/// Returns the directory list with a role-differentiated projection.
+/// Admin sessions receive the full <see cref="GetDirectoryResult.BoardView"/>;
+/// resident sessions receive the name-only <see cref="GetDirectoryResult.ResidentView"/>.
+/// </summary>
 public sealed class GetDirectory(ISession session, IDirectoryStore store)
 {
     public async Task<GetDirectoryResult> ExecuteAsync(CancellationToken ct = default)

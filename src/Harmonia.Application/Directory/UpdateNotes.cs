@@ -2,6 +2,7 @@ using Harmonia.Domain;
 
 namespace Harmonia.Application.Directory;
 
+/// <summary>Board use case — manages operational notes for any household by URL-path reference.</summary>
 public sealed class UpdateNotes(ISession session, IDirectoryStore store)
 {
     public async Task<UpdateNotesResult> ExecuteAsync(
