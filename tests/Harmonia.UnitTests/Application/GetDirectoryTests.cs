@@ -46,4 +46,20 @@ public class GetDirectoryTests
         var useCase = new GetDirectory(new FakeSession(ctx), new FakeDirectoryStore());
         Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
     }
+
+    [Fact]
+    public async Task No_role_session_returns_Refused()
+    {
+        var ctx = new SessionContext(IsResident: false, IsAdmin: false, HouseholdRef: null);
+        var useCase = new GetDirectory(new FakeSession(ctx), new FakeDirectoryStore());
+        Assert.IsType<GetDirectoryResult.Refused>(await useCase.ExecuteAsync());
+    }
+
+    [Fact]
+    public async Task Admin_wins_over_resident_returns_BoardView()
+    {
+        var ctx = new SessionContext(IsResident: true, IsAdmin: true, HouseholdRef: new HouseholdRef("HH-BOTH-1"));
+        var useCase = new GetDirectory(new FakeSession(ctx), new FakeDirectoryStore());
+        Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
+    }
 }
