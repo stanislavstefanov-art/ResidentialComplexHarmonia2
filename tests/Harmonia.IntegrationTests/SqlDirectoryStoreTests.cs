@@ -96,4 +96,42 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
             relevant[1].HouseholdRef.Value,
             StringComparison.Ordinal) < 0);
     }
+
+    [Fact, Trait("Category", "Rel")]
+    public async Task DeleteContact_existing_row_returns_Ok_and_row_is_gone()
+    {
+        var hh = new HouseholdRef($"HH-DEL-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Dave", null, null, isOptedOut: null);
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.Ok>(result);
+        var all = await Store.ListAllAsync();
+        Assert.DoesNotContain(all, e => e.HouseholdRef == hh);
+    }
+
+    [Fact, Trait("Category", "Rel")]
+    public async Task DeleteContact_nonexistent_row_returns_NotFound()
+    {
+        var hh = new HouseholdRef($"HH-DEL-NF-{Guid.NewGuid():N}");
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.NotFound>(result);
+    }
+
+    [Fact, Trait("Category", "Rel")]
+    public async Task DeleteContact_does_not_affect_other_rows()
+    {
+        var target = new HouseholdRef($"HH-DEL-TGT-{Guid.NewGuid():N}");
+        var other  = new HouseholdRef($"HH-DEL-OTH-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(target, "Eve",   null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(other,  "Frank", null, null, isOptedOut: null);
+
+        await Store.DeleteContactAsync(target);
+
+        var all = await Store.ListAllAsync();
+        Assert.DoesNotContain(all, e => e.HouseholdRef == target);
+        Assert.Contains(all,       e => e.HouseholdRef == other);
+    }
 }

@@ -100,9 +100,25 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         }
     }
 
-    public Task<EraseContactResult> DeleteContactAsync(
+    public async Task<EraseContactResult> DeleteContactAsync(
         HouseholdRef householdRef, CancellationToken ct = default)
-        => throw new NotImplementedException("Implemented in Task 4");
+    {
+        try
+        {
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText =
+                "DELETE FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef;";
+            cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            var rows = await cmd.ExecuteNonQueryAsync(ct);
+            return rows == 0
+                ? new EraseContactResult.NotFound()
+                : new EraseContactResult.Ok();
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return new EraseContactResult.Failed(); }
+    }
 
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
