@@ -51,7 +51,7 @@ public static class DirectoryEndpoints
     public static async Task<IResult> UpdateMyContactEndpoint(
         UpdateMyContact useCase, UpdateContactRequest body, ILogger logger, CancellationToken ct)
     {
-        var result = await useCase.ExecuteAsync(body.DisplayName, body.Phone, body.Email, ct);
+        var result = await useCase.ExecuteAsync(body.DisplayName, body.Phone, body.Email, null, ct);
         return result switch
         {
             UpdateContactResult.Refused => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
@@ -66,7 +66,7 @@ public static class DirectoryEndpoints
         ILogger logger, CancellationToken ct)
     {
         var result = await useCase.ExecuteAsync(
-            householdRef, body.DisplayName, body.Phone, body.Email, ct);
+            householdRef, body.DisplayName, body.Phone, body.Email, null, ct);
         return result switch
         {
             UpdateContactResult.Refused => TypedResults.StatusCode(StatusCodes.Status403Forbidden),

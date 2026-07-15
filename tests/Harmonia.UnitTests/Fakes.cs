@@ -319,7 +319,7 @@ public sealed class FakeDirectoryStore : IDirectoryStore
 
     public Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef, string? displayName, string? phone, string? email,
-        CancellationToken ct = default)
+        bool? isOptedOut, CancellationToken ct = default)
     {
         var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
         if (idx >= 0)
@@ -330,13 +330,15 @@ public sealed class FakeDirectoryStore : IDirectoryStore
                 DisplayName = displayName ?? e.DisplayName,
                 Phone       = phone       ?? e.Phone,
                 Email       = email       ?? e.Email,
+                IsOptedOut  = isOptedOut  ?? e.IsOptedOut,
                 UpdatedAt   = DateTimeOffset.UtcNow
             };
         }
         else
         {
             _contacts.Add(new HouseholdContact(
-                householdRef, displayName, phone, email, null, IsOptedOut: false, DateTimeOffset.UtcNow));
+                householdRef, displayName, phone, email, null,
+                IsOptedOut: isOptedOut ?? false, DateTimeOffset.UtcNow));
         }
         return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
     }
@@ -366,7 +368,7 @@ public sealed class FailingDirectoryStore : IDirectoryStore
 
     public Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef, string? displayName, string? phone, string? email,
-        CancellationToken ct = default)
+        bool? isOptedOut, CancellationToken ct = default)
         => Task.FromResult<UpdateContactResult>(new UpdateContactResult.Failed());
 
     public Task<UpdateNotesResult> UpsertNotesAsync(

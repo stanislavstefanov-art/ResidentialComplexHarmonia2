@@ -27,7 +27,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
 
     public async Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef, string? displayName, string? phone, string? email,
-        CancellationToken ct = default)
+        bool? isOptedOut, CancellationToken ct = default)
     {
         try
         {

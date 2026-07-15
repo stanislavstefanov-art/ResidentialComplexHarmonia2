@@ -54,4 +54,15 @@ public class UpdateContactTests
         Assert.Single(store.Contacts);
         Assert.Equal(new HouseholdRef("HH-FORWARDED-1"), store.Contacts[0].HouseholdRef);
     }
+
+    [Fact]
+    public async Task OptOut_flag_is_forwarded_to_store()
+    {
+        var store = new FakeDirectoryStore();
+        var useCase = new UpdateContact(new FakeSession(AdminCtx), store);
+        await useCase.ExecuteAsync("HH-OPT-FWD-1", null, null, null, isOptedOut: true);
+
+        Assert.Single(store.Contacts);
+        Assert.True(store.Contacts[0].IsOptedOut);
+    }
 }

@@ -7,7 +7,7 @@ public sealed class UpdateContact(ISession session, IDirectoryStore store)
 {
     public async Task<UpdateContactResult> ExecuteAsync(
         string householdRef, string? displayName, string? phone, string? email,
-        CancellationToken ct = default)
+        bool? isOptedOut = null, CancellationToken ct = default)
     {
         var ctx = session.Resolve();
         if (ctx is not { IsAdmin: true })
@@ -16,7 +16,7 @@ public sealed class UpdateContact(ISession session, IDirectoryStore store)
         try
         {
             return await store.UpsertContactAsync(
-                new HouseholdRef(householdRef), displayName, phone, email, ct);
+                new HouseholdRef(householdRef), displayName, phone, email, isOptedOut, ct);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception)

@@ -49,7 +49,7 @@ public interface IDirectoryStore
     Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Upserts display name, phone, and email for <paramref name="householdRef"/>.
+    /// Upserts display name, phone, email, and opt-out flag for <paramref name="householdRef"/>.
     /// Passing <see langword="null"/> for any field preserves the existing stored value (COALESCE semantics).
     /// R3: never log <paramref name="phone"/> or <paramref name="email"/> values.
     /// </summary>
@@ -58,6 +58,7 @@ public interface IDirectoryStore
         string?      displayName,
         string?      phone,
         string?      email,
+        bool?        isOptedOut,
         CancellationToken ct = default);
 
     /// <summary>
