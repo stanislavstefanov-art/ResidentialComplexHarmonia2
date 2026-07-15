@@ -8,15 +8,16 @@ namespace Harmonia.Api.Directory;
 /// <summary>Resident-facing view — name only, no PII (R3).</summary>
 public sealed record DirectoryEntryPublicDto(string HouseholdRef, string? DisplayName);
 
-/// <summary>Board-facing view — full contact details including phone, email, notes, and opt-out status.</summary>
+/// <summary>Board-facing view — full contact details including phone, email, notes, opt-out status, and departure date.</summary>
 public sealed record DirectoryEntryFullDto(
-    string         HouseholdRef,
-    string?        DisplayName,
-    string?        Phone,
-    string?        Email,
-    string?        Notes,
-    bool           IsOptedOut,
-    DateTimeOffset UpdatedAt);
+    string          HouseholdRef,
+    string?         DisplayName,
+    string?         Phone,
+    string?         Email,
+    string?         Notes,
+    bool            IsOptedOut,
+    DateTimeOffset  UpdatedAt,
+    DateTimeOffset? DepartedAt);
 
 /// <summary>Request body for contact-detail updates (phone/email are PII — R3).</summary>
 public sealed record UpdateContactRequest(
@@ -132,6 +133,41 @@ public static class DirectoryEndpoints
         };
     }
 
+    /// <summary>
+    /// PUT /directory/{householdRef}/departed — board sets departure date.
+    /// R3: householdRef never logged here.
+    /// </summary>
+    public static async Task<IResult> MarkDepartedEndpoint(
+        MarkDeparted useCase, string householdRef, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(householdRef, ct);
+        return result switch
+        {
+            MarkDepartedResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            MarkDepartedResult.Ok       => TypedResults.Ok(),
+            MarkDepartedResult.NotFound => TypedResults.NotFound(),
+            MarkDepartedResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
+    /// <summary>
+    /// DELETE /directory/purge-expired — board triggers annual retention sweep.
+    /// Returns { deleted: N } — 0 when no rows are eligible.
+    /// </summary>
+    public static async Task<IResult> PurgeExpiredContactsEndpoint(
+        PurgeExpiredContacts useCase, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(ct);
+        return result switch
+        {
+            PurgeExpiredContactsResult.Refused       => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            PurgeExpiredContactsResult.Ok ok         => TypedResults.Ok<object>(new { deleted = ok.Deleted }),
+            PurgeExpiredContactsResult.Failed        => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                                        => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
     private static DirectoryEntryFullDto ToFullDto(HouseholdContact c) =>
-        new(c.HouseholdRef.Value, c.DisplayName, c.Phone, c.Email, c.Notes, c.IsOptedOut, c.UpdatedAt);
+        new(c.HouseholdRef.Value, c.DisplayName, c.Phone, c.Email, c.Notes, c.IsOptedOut, c.UpdatedAt, c.DepartedAt);
 }
