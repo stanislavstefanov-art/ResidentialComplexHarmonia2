@@ -90,3 +90,19 @@ CREATE TABLE dbo.NotificationHistory
     CONSTRAINT PK_NotificationHistory PRIMARY KEY (Id),
     INDEX IX_NotificationHistory_HouseholdRef_SentAt (HouseholdRef, SentAt DESC)
 );
+
+-- Member directory contacts (one row per household; UPSERT semantics).
+-- Phone and Email are personal data (R3) — never logged.
+IF OBJECT_ID(N'dbo.HouseholdContacts', N'U') IS NULL
+CREATE TABLE dbo.HouseholdContacts
+(
+    HouseholdRef  nvarchar(128)     NOT NULL,
+    DisplayName   nvarchar(256)     NULL,
+    Phone         nvarchar(32)      NULL,
+    Email         nvarchar(320)     NULL,
+    Notes         nvarchar(2048)    NULL,
+    IsOptedOut    bit               NOT NULL
+        CONSTRAINT DF_HouseholdContacts_IsOptedOut DEFAULT 0,
+    UpdatedAt     datetimeoffset(3) NOT NULL,
+    CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef)
+);
