@@ -15,7 +15,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         var hh = new HouseholdRef($"HH-DIR-{Guid.NewGuid():N}");
 
-        var result = await Store.UpsertContactAsync(hh, "Alice Smith", "555-0100", "alice@example.com");
+        var result = await Store.UpsertContactAsync(hh, "Alice Smith", "555-0100", "alice@example.com", isOptedOut: null);
         Assert.IsType<UpdateContactResult.Ok>(result);
 
         var all = await Store.ListAllAsync();
@@ -31,9 +31,9 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task UpsertContact_partial_update_preserves_existing_phone()
     {
         var hh = new HouseholdRef($"HH-DIR-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Bob", "555-0200", null);
+        await Store.UpsertContactAsync(hh, "Bob", "555-0200", null, isOptedOut: null);
 
-        await Store.UpsertContactAsync(hh, "Robert", null, null);
+        await Store.UpsertContactAsync(hh, "Robert", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var entry = all.First(e => e.HouseholdRef == hh);
@@ -84,8 +84,8 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         var prefix = $"HH-DIR-ORD-{Guid.NewGuid():N}";
         var a = new HouseholdRef($"{prefix}-A");
         var b = new HouseholdRef($"{prefix}-B");
-        await Store.UpsertContactAsync(b, "Zara", null, null);
-        await Store.UpsertContactAsync(a, "Alice", null, null);
+        await Store.UpsertContactAsync(b, "Zara", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(a, "Alice", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var relevant = all.Where(e => e.HouseholdRef == a || e.HouseholdRef == b).ToList();

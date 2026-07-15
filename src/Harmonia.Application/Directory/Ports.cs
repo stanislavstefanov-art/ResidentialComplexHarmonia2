@@ -39,6 +39,20 @@ public abstract record UpdateNotesResult
     public sealed record Failed  : UpdateNotesResult;
 }
 
+/// <summary>Outcome of a contact-erasure request (GDPR Art. 17).</summary>
+public abstract record EraseContactResult
+{
+    private EraseContactResult() { }
+    /// <summary>No valid session or insufficient role.</summary>
+    public sealed record Refused  : EraseContactResult;
+    /// <summary>Row deleted successfully.</summary>
+    public sealed record Ok       : EraseContactResult;
+    /// <summary>No row with that HouseholdRef exists.</summary>
+    public sealed record NotFound : EraseContactResult;
+    /// <summary>Store error; details are in the server log.</summary>
+    public sealed record Failed   : EraseContactResult;
+}
+
 /// <summary>
 /// Directory store port — SQL adapter lives in <c>Harmonia.Api.Reservations.Adapters</c>.
 /// R3: <paramref name="phone"/> and <paramref name="email"/> values must never appear in log output;
@@ -68,5 +82,14 @@ public interface IDirectoryStore
     Task<UpdateNotesResult> UpsertNotesAsync(
         HouseholdRef householdRef,
         string?      notes,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Hard-deletes the contact record for <paramref name="householdRef"/> (GDPR Art. 17).
+    /// Returns <see cref="EraseContactResult.NotFound"/> when no row exists.
+    /// R3: never log <paramref name="householdRef"/> value.
+    /// </summary>
+    Task<EraseContactResult> DeleteContactAsync(
+        HouseholdRef householdRef,
         CancellationToken ct = default);
 }

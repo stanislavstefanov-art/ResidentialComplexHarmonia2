@@ -100,6 +100,10 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         }
     }
 
+    public Task<EraseContactResult> DeleteContactAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new NotImplementedException("Implemented in Task 4");
+
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
             DisplayName:  r.IsDBNull(1) ? null : r.GetString(1),
