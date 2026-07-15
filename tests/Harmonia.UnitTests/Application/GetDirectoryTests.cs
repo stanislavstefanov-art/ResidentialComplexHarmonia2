@@ -1,6 +1,7 @@
 using Harmonia.Application;
 using Harmonia.Application.Directory;
 using Harmonia.Domain;
+using Harmonia.Domain.Directory;
 
 namespace Harmonia.UnitTests.Application;
 
@@ -61,5 +62,17 @@ public class GetDirectoryTests
         var ctx = new SessionContext(IsResident: true, IsAdmin: true, HouseholdRef: new HouseholdRef("HH-BOTH-1"));
         var useCase = new GetDirectory(new FakeSession(ctx), new FakeDirectoryStore());
         Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
+    }
+
+    [Fact]
+    public async Task OptedOut_household_is_hidden_in_ResidentView()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-OPT-1"), "Alice", null, null, null,
+            IsOptedOut: true, DateTimeOffset.UtcNow));
+        var useCase = new GetDirectory(new FakeSession(ResidentCtx), store);
+        var result = Assert.IsType<GetDirectoryResult.ResidentView>(await useCase.ExecuteAsync());
+        Assert.Empty(result.Entries);
     }
 }

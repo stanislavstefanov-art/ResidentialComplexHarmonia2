@@ -101,6 +101,8 @@ CREATE TABLE dbo.HouseholdContacts
     Phone         nvarchar(32)      NULL,
     Email         nvarchar(320)     NULL,
     Notes         nvarchar(2048)    NULL,
+    IsOptedOut    bit               NOT NULL
+        CONSTRAINT DF_HouseholdContacts_IsOptedOut DEFAULT 0,
     UpdatedAt     datetimeoffset(3) NOT NULL,
     CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef)
 );

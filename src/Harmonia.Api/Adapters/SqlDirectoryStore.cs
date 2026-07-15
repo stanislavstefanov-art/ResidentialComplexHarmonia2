@@ -98,10 +98,11 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
     }
 
     private static HouseholdContact ReadRow(SqlDataReader r) =>
-        new(HouseholdRef:  new HouseholdRef(r.GetString(0)),
-            DisplayName:   r.IsDBNull(1) ? null : r.GetString(1),
-            Phone:         r.IsDBNull(2) ? null : r.GetString(2),
-            Email:         r.IsDBNull(3) ? null : r.GetString(3),
-            Notes:         r.IsDBNull(4) ? null : r.GetString(4),
-            UpdatedAt:     r.GetDateTimeOffset(5));
+        new(HouseholdRef: new HouseholdRef(r.GetString(0)),
+            DisplayName:  r.IsDBNull(1) ? null : r.GetString(1),
+            Phone:        r.IsDBNull(2) ? null : r.GetString(2),
+            Email:        r.IsDBNull(3) ? null : r.GetString(3),
+            Notes:        r.IsDBNull(4) ? null : r.GetString(4),
+            IsOptedOut:   false,
+            UpdatedAt:    r.GetDateTimeOffset(5));
 }

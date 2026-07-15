@@ -162,7 +162,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-PII"), "Alice", "555-9999", "alice@test.com", "secret",
-            DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow));
         var uc = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 

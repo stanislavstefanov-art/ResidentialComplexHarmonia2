@@ -10,4 +10,5 @@ public sealed record HouseholdContact(
     string?        Phone,
     string?        Email,
     string?        Notes,
+    bool           IsOptedOut,
     DateTimeOffset UpdatedAt);
