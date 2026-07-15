@@ -127,5 +127,6 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             Email:        r.IsDBNull(3) ? null : r.GetString(3),
             Notes:        r.IsDBNull(4) ? null : r.GetString(4),
             IsOptedOut:   r.GetBoolean(5),
-            UpdatedAt:    r.GetDateTimeOffset(6));
+            UpdatedAt:    r.GetDateTimeOffset(6),
+            DepartedAt:   null);
 }

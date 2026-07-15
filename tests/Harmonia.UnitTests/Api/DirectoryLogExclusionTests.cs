@@ -34,7 +34,7 @@ public class DirectoryLogExclusionTests
         {
             store.Contacts.Add(new HouseholdContact(
                 new HouseholdRef(SecretResidentRef), "Alice", null, null, null,
-                IsOptedOut: false, DateTimeOffset.UtcNow));
+                IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         }
 
         var session = scenario == "refused"
@@ -64,7 +64,7 @@ public class DirectoryLogExclusionTests
         {
             store.Contacts.Add(new HouseholdContact(
                 new HouseholdRef(SecretBoardRef), "Bob", null, null, null,
-                IsOptedOut: false, DateTimeOffset.UtcNow));
+                IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         }
 
         var session = scenario == "refused"

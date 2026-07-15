@@ -70,7 +70,7 @@ public class GetDirectoryTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-1"), "Alice", null, null, null,
-            IsOptedOut: true, DateTimeOffset.UtcNow));
+            IsOptedOut: true, DateTimeOffset.UtcNow, DepartedAt: null));
         var useCase = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = Assert.IsType<GetDirectoryResult.ResidentView>(await useCase.ExecuteAsync());
         Assert.Empty(result.Entries);
@@ -82,9 +82,18 @@ public class GetDirectoryTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-2"), "Bob", null, null, null,
-            IsOptedOut: true, DateTimeOffset.UtcNow));
+            IsOptedOut: true, DateTimeOffset.UtcNow, DepartedAt: null));
         var useCase = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
         Assert.Single(result.Entries);
+    }
+
+    [Fact]
+    public void HouseholdContact_has_DepartedAt()
+    {
+        var contact = new HouseholdContact(
+            new HouseholdRef("HH-1"), null, null, null, null,
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null);
+        Assert.Null(contact.DepartedAt);
     }
 }

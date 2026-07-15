@@ -162,7 +162,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-PII"), "Alice", "555-9999", "alice@test.com", "secret",
-            IsOptedOut: false, DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -178,7 +178,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-DTO"), "Carol", null, null, null,
-            IsOptedOut: true, DateTimeOffset.UtcNow));
+            IsOptedOut: true, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -208,7 +208,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-1"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status204NoContent,
@@ -250,7 +250,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-TARGET-1"), "Bob", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new EraseContact(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.EraseContactEndpoint(
             uc, "HH-TARGET-1", NullLogger.Instance, default);

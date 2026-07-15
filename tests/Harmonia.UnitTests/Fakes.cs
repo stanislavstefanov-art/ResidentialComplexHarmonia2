@@ -338,7 +338,7 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         {
             _contacts.Add(new HouseholdContact(
                 householdRef, displayName, phone, email, null,
-                IsOptedOut: isOptedOut ?? false, DateTimeOffset.UtcNow));
+                IsOptedOut: isOptedOut ?? false, DateTimeOffset.UtcNow, DepartedAt: null));
         }
         return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
     }
@@ -355,7 +355,7 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         else
         {
             _contacts.Add(new HouseholdContact(
-                householdRef, null, null, null, notes, IsOptedOut: false, DateTimeOffset.UtcNow));
+                householdRef, null, null, null, notes, IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         }
         return Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Ok());
     }
