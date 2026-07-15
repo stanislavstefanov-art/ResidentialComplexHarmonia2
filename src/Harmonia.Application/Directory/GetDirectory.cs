@@ -4,8 +4,9 @@ namespace Harmonia.Application.Directory;
 
 /// <summary>
 /// Returns the directory list with a role-differentiated projection.
-/// Admin sessions receive the full <see cref="GetDirectoryResult.BoardView"/>;
-/// resident sessions receive the name-only <see cref="GetDirectoryResult.ResidentView"/>.
+/// Admin sessions receive the full <see cref="GetDirectoryResult.BoardView"/> (all households,
+/// including opted-out ones). Resident sessions receive the name-only
+/// <see cref="GetDirectoryResult.ResidentView"/> with opted-out households excluded (GDPR Art. 21).
 /// </summary>
 public sealed class GetDirectory(ISession session, IDirectoryStore store)
 {
@@ -22,7 +23,10 @@ public sealed class GetDirectory(ISession session, IDirectoryStore store)
                 return new GetDirectoryResult.BoardView(entries);
 
             if (ctx.IsResident)
-                return new GetDirectoryResult.ResidentView(entries);
+            {
+                var visible = entries.Where(e => !e.IsOptedOut).ToList();
+                return new GetDirectoryResult.ResidentView(visible);
+            }
 
             return new GetDirectoryResult.Refused();
         }

@@ -75,4 +75,16 @@ public class GetDirectoryTests
         var result = Assert.IsType<GetDirectoryResult.ResidentView>(await useCase.ExecuteAsync());
         Assert.Empty(result.Entries);
     }
+
+    [Fact]
+    public async Task OptedOut_household_IS_visible_in_BoardView()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-OPT-2"), "Bob", null, null, null,
+            IsOptedOut: true, DateTimeOffset.UtcNow));
+        var useCase = new GetDirectory(new FakeSession(AdminCtx), store);
+        var result = Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
+        Assert.Single(result.Entries);
+    }
 }
