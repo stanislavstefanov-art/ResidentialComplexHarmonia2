@@ -134,4 +134,50 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         Assert.DoesNotContain(all, e => e.HouseholdRef == target);
         Assert.Contains(all,       e => e.HouseholdRef == other);
     }
+
+    [Fact]
+    public async Task MarkDeparted_sets_DepartedAt_and_row_appears_in_ListAll()
+    {
+        var hh = new HouseholdRef($"HH-DEP-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Departed Dave", null, null, isOptedOut: null);
+
+        var result = await Store.MarkDepartedAsync(hh);
+
+        Assert.IsType<MarkDepartedResult.Ok>(result);
+        var all = await Store.ListAllAsync();
+        var entry = all.First(e => e.HouseholdRef == hh);
+        Assert.NotNull(entry.DepartedAt);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_nonexistent_row_returns_NotFound()
+    {
+        var hh = new HouseholdRef($"HH-DEP-NF-{Guid.NewGuid():N}");
+
+        var result = await Store.MarkDepartedAsync(hh);
+
+        Assert.IsType<MarkDepartedResult.NotFound>(result);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_already_departed_is_idempotent_and_preserves_original_date()
+    {
+        var hh = new HouseholdRef($"HH-DEP-IDEM-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Eve", null, null, isOptedOut: null);
+
+        // First call sets the date
+        await Store.MarkDepartedAsync(hh);
+        var all = await Store.ListAllAsync();
+        var firstDate = all.First(e => e.HouseholdRef == hh).DepartedAt;
+        Assert.NotNull(firstDate);
+
+        // Small delay to ensure clock would advance if not preserved
+        await Task.Delay(10);
+
+        // Second call must return Ok and must NOT update DepartedAt
+        var result = await Store.MarkDepartedAsync(hh);
+        Assert.IsType<MarkDepartedResult.Ok>(result);
+        all = await Store.ListAllAsync();
+        Assert.Equal(firstDate, all.First(e => e.HouseholdRef == hh).DepartedAt);
+    }
 }
