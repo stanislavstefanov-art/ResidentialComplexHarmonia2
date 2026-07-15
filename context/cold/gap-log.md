@@ -8,8 +8,7 @@ Things the code/agent cannot infer — decided by a human, not assumed.
   is the port it plugs into (`docs/context/architecture.md`).
   **refresh_trigger:** N/A — decided and shipped.
 
-- **status: CLOSED** — decided by ADR-0004 (`docs/architecture/decisions/ADR-0004-householdcontacts-retention.md`); 2026-07-16.
-  **description:** 1-year retention after `DepartedAt` (board-set). Lawful basis: Art. 6(1)(f) Legitimate Interest. Purge: `PurgeExpiredContacts` board-admin endpoint, hard DELETE where `DepartedAt < NOW() - 1 year`. Slice 2 can now be engineered.
+- **status: CLOSED** — closed by ADR-0004 (2026-07-16). Retention = 1 year after DepartedAt. DepartedAt set by board admin on departure. PurgeExpiredContacts sweeps annually.
   **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; closed 2026-07-16.
   **refresh_trigger:** N/A — decided.
 
