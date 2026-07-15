@@ -171,4 +171,32 @@ public class DirectoryEndpointsTests
         Assert.Single(json.Value);
         Assert.Equal("Alice", json.Value[0].DisplayName);
     }
+
+    [Fact]
+    public async Task GetDirectory_board_view_includes_IsOptedOut_flag()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-OPT-DTO"), "Carol", null, null, null,
+            IsOptedOut: true, DateTimeOffset.UtcNow));
+        var uc = new GetDirectory(new FakeSession(AdminCtx), store);
+        var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
+
+        var json = Assert.IsType<JsonHttpResult<List<DirectoryEntryFullDto>>>(result);
+        Assert.NotNull(json.Value);
+        Assert.Single(json.Value);
+        Assert.True(json.Value[0].IsOptedOut);
+    }
+
+    [Fact]
+    public async Task UpdateMyContact_opt_out_is_forwarded()
+    {
+        var store = new FakeDirectoryStore();
+        var uc = new UpdateMyContact(new FakeSession(ResidentCtx), store);
+        await DirectoryEndpoints.UpdateMyContactEndpoint(
+            uc, new UpdateContactRequest(null, null, null, OptedOut: true), NullLogger.Instance, default);
+
+        Assert.Single(store.Contacts);
+        Assert.True(store.Contacts[0].IsOptedOut);
+    }
 }
