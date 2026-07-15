@@ -81,4 +81,34 @@ public class DirectoryLogExclusionTests
 
         Assert.All(logger.Lines, line => Assert.DoesNotContain(SecretBoardRef, line));
     }
+
+    [Theory]
+    [InlineData("ok")]
+    [InlineData("not_found")]
+    [InlineData("refused")]
+    [InlineData("failed")]
+    public async Task MarkDeparted_endpoint_never_logs_householdRef(string scenario)
+    {
+        var store = new FakeDirectoryStore();
+        if (scenario == "ok")
+        {
+            store.Contacts.Add(new HouseholdContact(
+                new HouseholdRef(SecretBoardRef), "Dave", null, null, null,
+                IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+        }
+
+        var session = scenario == "refused"
+            ? new FakeSession(ResidentCtx)
+            : new FakeSession(AdminCtx);
+        IDirectoryStore storeToUse = scenario == "failed"
+            ? new FailingDirectoryStore()
+            : store;
+
+        var logger = new CapturingLogger();
+        var uc = new MarkDeparted(session, storeToUse);
+
+        await DirectoryEndpoints.MarkDepartedEndpoint(uc, SecretBoardRef, logger, default);
+
+        Assert.All(logger.Lines, line => Assert.DoesNotContain(SecretBoardRef, line));
+    }
 }
