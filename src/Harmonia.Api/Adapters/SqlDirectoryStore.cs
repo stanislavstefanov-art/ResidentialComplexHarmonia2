@@ -14,7 +14,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, UpdatedAt " +
+            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt " +
             "FROM dbo.HouseholdContacts " +
             "ORDER BY HouseholdRef ASC;";
 
@@ -43,10 +43,11 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                         DisplayName = COALESCE(@DisplayName, target.DisplayName),
                         Phone       = COALESCE(@Phone,       target.Phone),
                         Email       = COALESCE(@Email,       target.Email),
+                        IsOptedOut  = COALESCE(@IsOptedOut,  target.IsOptedOut),
                         UpdatedAt   = SYSUTCDATETIMEOFFSET()
                 WHEN NOT MATCHED THEN
-                    INSERT (HouseholdRef, DisplayName, Phone, Email, Notes, UpdatedAt)
-                    VALUES (@HouseholdRef, @DisplayName, @Phone, @Email, NULL, SYSUTCDATETIMEOFFSET());
+                    INSERT (HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt)
+                    VALUES (@HouseholdRef, @DisplayName, @Phone, @Email, NULL, COALESCE(@IsOptedOut, 0), SYSUTCDATETIMEOFFSET());
                 """;
             cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
             cmd.Parameters.Add(new SqlParameter("@DisplayName", SqlDbType.NVarChar, 256)
@@ -55,6 +56,8 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                 { Value = (object?)phone ?? DBNull.Value });
             cmd.Parameters.Add(new SqlParameter("@Email", SqlDbType.NVarChar, 320)
                 { Value = (object?)email ?? DBNull.Value });
+            cmd.Parameters.Add(new SqlParameter("@IsOptedOut", SqlDbType.Bit)
+                { Value = (object?)isOptedOut ?? DBNull.Value });
             await cmd.ExecuteNonQueryAsync(ct);
             return new UpdateContactResult.Ok();
         }
@@ -103,6 +106,6 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             Phone:        r.IsDBNull(2) ? null : r.GetString(2),
             Email:        r.IsDBNull(3) ? null : r.GetString(3),
             Notes:        r.IsDBNull(4) ? null : r.GetString(4),
-            IsOptedOut:   false,
-            UpdatedAt:    r.GetDateTimeOffset(5));
+            IsOptedOut:   r.GetBoolean(5),
+            UpdatedAt:    r.GetDateTimeOffset(6));
 }

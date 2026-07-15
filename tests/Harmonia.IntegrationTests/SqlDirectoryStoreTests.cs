@@ -54,6 +54,31 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task UpsertContact_sets_IsOptedOut_and_ListAll_returns_it()
+    {
+        var hh = new HouseholdRef($"HH-DIR-OPT-{Guid.NewGuid():N}");
+
+        await Store.UpsertContactAsync(hh, "Dave", null, null, isOptedOut: true);
+
+        var all = await Store.ListAllAsync();
+        var entry = all.First(e => e.HouseholdRef == hh);
+        Assert.True(entry.IsOptedOut);
+    }
+
+    [Fact]
+    public async Task UpsertContact_null_isOptedOut_preserves_existing_value()
+    {
+        var hh = new HouseholdRef($"HH-DIR-OPT-PRES-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Eve", null, null, isOptedOut: true);
+
+        await Store.UpsertContactAsync(hh, "Eve Updated", null, null, isOptedOut: null);
+
+        var all = await Store.ListAllAsync();
+        var entry = all.First(e => e.HouseholdRef == hh);
+        Assert.True(entry.IsOptedOut);
+    }
+
+    [Fact]
     public async Task ListAll_returns_rows_ordered_by_household_ref()
     {
         var prefix = $"HH-DIR-ORD-{Guid.NewGuid():N}";
