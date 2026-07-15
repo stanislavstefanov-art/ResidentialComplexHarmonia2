@@ -8,14 +8,10 @@ Things the code/agent cannot infer — decided by a human, not assumed.
   is the port it plugs into (`docs/context/architecture.md`).
   **refresh_trigger:** N/A — decided and shipped.
 
-- **status: TRIGGER FIRED — overdue** — `dbo.HouseholdContacts` (PR #10, 2026-07-15) now stores
-  `DisplayName`, `Phone`, `Email`, `Notes` for real residents. Real personal data is being stored.
-  DPO decision on retention period and data-classification is required before member directory
-  ships to production.
-  **description:** `householdRef` retention + data-classification policy undecided.
-  **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; not closed.
-  **refresh_trigger:** before any real personal data is stored. ← **trigger fired** (PR #10).
-  **blocking:** member directory production release; erasure/DSAR workflow for HouseholdContacts.
+- **status: CLOSED** — decided by ADR-0004 (`docs/architecture/decisions/ADR-0004-householdcontacts-retention.md`); 2026-07-16.
+  **description:** 1-year retention after `DepartedAt` (board-set). Lawful basis: Art. 6(1)(f) Legitimate Interest. Purge: `PurgeExpiredContacts` board-admin endpoint, hard DELETE where `DepartedAt < NOW() - 1 year`. Slice 2 can now be engineered.
+  **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; closed 2026-07-16.
+  **refresh_trigger:** N/A — decided.
 
 - **description:** Admin role not wired to a real IdP — `DevAdminSession` is a dev-only stand-in
   yielding `SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null)` controlled by
