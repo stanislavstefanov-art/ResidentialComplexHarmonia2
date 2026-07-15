@@ -143,9 +143,25 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         catch (Exception) { return new MarkDepartedResult.Failed(); }
     }
 
-    public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
+    public async Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
         CancellationToken ct = default)
-        => throw new NotImplementedException("Task 5 implements this");
+    {
+        try
+        {
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                DELETE FROM dbo.HouseholdContacts
+                WHERE DepartedAt IS NOT NULL
+                  AND DepartedAt < DATEADD(year, -1, SYSUTCDATETIMEOFFSET());
+                """;
+            var rows = await cmd.ExecuteNonQueryAsync(ct);
+            return new PurgeExpiredContactsResult.Ok(rows);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return new PurgeExpiredContactsResult.Failed(); }
+    }
 
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
