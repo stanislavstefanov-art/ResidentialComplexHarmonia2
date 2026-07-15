@@ -8,9 +8,9 @@ Things the code/agent cannot infer — decided by a human, not assumed.
   is the port it plugs into (`docs/context/architecture.md`).
   **refresh_trigger:** N/A — decided and shipped.
 
-- **description:** `householdRef` retention + data-classification policy undecided.
-  **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; not closed.
-  **refresh_trigger:** before any real personal data is stored.
+- **status: CLOSED** — closed by ADR-0004 (2026-07-16). Retention = 1 year after DepartedAt. DepartedAt set by board admin on departure. PurgeExpiredContacts sweeps annually.
+  **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; closed 2026-07-16.
+  **refresh_trigger:** N/A — decided.
 
 - **description:** Admin role not wired to a real IdP — `DevAdminSession` is a dev-only stand-in
   yielding `SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null)` controlled by

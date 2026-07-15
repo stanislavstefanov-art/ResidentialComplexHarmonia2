@@ -15,7 +15,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         var hh = new HouseholdRef($"HH-DIR-{Guid.NewGuid():N}");
 
-        var result = await Store.UpsertContactAsync(hh, "Alice Smith", "555-0100", "alice@example.com");
+        var result = await Store.UpsertContactAsync(hh, "Alice Smith", "555-0100", "alice@example.com", isOptedOut: null);
         Assert.IsType<UpdateContactResult.Ok>(result);
 
         var all = await Store.ListAllAsync();
@@ -31,9 +31,9 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task UpsertContact_partial_update_preserves_existing_phone()
     {
         var hh = new HouseholdRef($"HH-DIR-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Bob", "555-0200", null);
+        await Store.UpsertContactAsync(hh, "Bob", "555-0200", null, isOptedOut: null);
 
-        await Store.UpsertContactAsync(hh, "Robert", null, null);
+        await Store.UpsertContactAsync(hh, "Robert", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var entry = all.First(e => e.HouseholdRef == hh);
@@ -84,8 +84,8 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         var prefix = $"HH-DIR-ORD-{Guid.NewGuid():N}";
         var a = new HouseholdRef($"{prefix}-A");
         var b = new HouseholdRef($"{prefix}-B");
-        await Store.UpsertContactAsync(b, "Zara", null, null);
-        await Store.UpsertContactAsync(a, "Alice", null, null);
+        await Store.UpsertContactAsync(b, "Zara", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(a, "Alice", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var relevant = all.Where(e => e.HouseholdRef == a || e.HouseholdRef == b).ToList();
@@ -95,5 +95,43 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
             relevant[0].HouseholdRef.Value,
             relevant[1].HouseholdRef.Value,
             StringComparison.Ordinal) < 0);
+    }
+
+    [Fact, Trait("Category", "Rel")]
+    public async Task DeleteContact_existing_row_returns_Ok_and_row_is_gone()
+    {
+        var hh = new HouseholdRef($"HH-DEL-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Dave", null, null, isOptedOut: null);
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.Ok>(result);
+        var all = await Store.ListAllAsync();
+        Assert.DoesNotContain(all, e => e.HouseholdRef == hh);
+    }
+
+    [Fact, Trait("Category", "Rel")]
+    public async Task DeleteContact_nonexistent_row_returns_NotFound()
+    {
+        var hh = new HouseholdRef($"HH-DEL-NF-{Guid.NewGuid():N}");
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.NotFound>(result);
+    }
+
+    [Fact, Trait("Category", "Rel")]
+    public async Task DeleteContact_does_not_affect_other_rows()
+    {
+        var target = new HouseholdRef($"HH-DEL-TGT-{Guid.NewGuid():N}");
+        var other  = new HouseholdRef($"HH-DEL-OTH-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(target, "Eve",   null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(other,  "Frank", null, null, isOptedOut: null);
+
+        await Store.DeleteContactAsync(target);
+
+        var all = await Store.ListAllAsync();
+        Assert.DoesNotContain(all, e => e.HouseholdRef == target);
+        Assert.Contains(all,       e => e.HouseholdRef == other);
     }
 }

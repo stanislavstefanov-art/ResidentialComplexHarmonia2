@@ -359,6 +359,15 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         }
         return Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Ok());
     }
+
+    public Task<EraseContactResult> DeleteContactAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
+        if (idx < 0) return Task.FromResult<EraseContactResult>(new EraseContactResult.NotFound());
+        _contacts.RemoveAt(idx);
+        return Task.FromResult<EraseContactResult>(new EraseContactResult.Ok());
+    }
 }
 
 public sealed class FailingDirectoryStore : IDirectoryStore
@@ -374,4 +383,8 @@ public sealed class FailingDirectoryStore : IDirectoryStore
     public Task<UpdateNotesResult> UpsertNotesAsync(
         HouseholdRef householdRef, string? notes, CancellationToken ct = default)
         => Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Failed());
+
+    public Task<EraseContactResult> DeleteContactAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => Task.FromResult<EraseContactResult>(new EraseContactResult.Failed());
 }
