@@ -199,4 +199,92 @@ public class DirectoryEndpointsTests
         Assert.Single(store.Contacts);
         Assert.True(store.Contacts[0].IsOptedOut);
     }
+
+    // ── DELETE /directory/contact (resident self-erase) ───────────────────────
+
+    [Fact]
+    public async Task EraseMyContact_ok_returns_204()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-EP-1"), "Alice", null, null, null,
+            IsOptedOut: false, DateTimeOffset.UtcNow));
+        var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
+        var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status204NoContent,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task EraseMyContact_not_found_returns_204()
+    {
+        var uc = new EraseMyContact(new FakeSession(ResidentCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status204NoContent,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task EraseMyContact_refused_returns_403()
+    {
+        var uc = new EraseMyContact(new FakeSession(null), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status403Forbidden,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task EraseMyContact_store_failure_returns_500()
+    {
+        var uc = new EraseMyContact(new FakeSession(ResidentCtx), new FailingDirectoryStore());
+        var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status500InternalServerError,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    // ── DELETE /directory/{householdRef}/contact (board DSAR) ────────────────
+
+    [Fact]
+    public async Task EraseContact_ok_returns_204()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-TARGET-1"), "Bob", null, null, null,
+            IsOptedOut: false, DateTimeOffset.UtcNow));
+        var uc = new EraseContact(new FakeSession(AdminCtx), store);
+        var result = await DirectoryEndpoints.EraseContactEndpoint(
+            uc, "HH-TARGET-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status204NoContent,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task EraseContact_not_found_returns_404()
+    {
+        var uc = new EraseContact(new FakeSession(AdminCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.EraseContactEndpoint(
+            uc, "HH-TARGET-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status404NotFound,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task EraseContact_refused_returns_403()
+    {
+        var uc = new EraseContact(new FakeSession(ResidentCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.EraseContactEndpoint(
+            uc, "HH-TARGET-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status403Forbidden,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task EraseContact_store_failure_returns_500()
+    {
+        var uc = new EraseContact(new FakeSession(AdminCtx), new FailingDirectoryStore());
+        var result = await DirectoryEndpoints.EraseContactEndpoint(
+            uc, "HH-TARGET-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status500InternalServerError,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
 }

@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "task": "Add GDPR Art. 17 right-to-erasure and retention enforcement for dbo.HouseholdContacts with resident self-erase, board DSAR hard-delete, retention purge sweep, new port methods, SQL adapter DELETE methods, two new DELETE endpoints, schema migration for DepartedAt column, and full unit and integration test coverage.",
+  "generated": "2026-07-15T00:00:00Z",
+  "dimensions": {
+    "component_scope":      { "score": 6, "label": "XXL" },
+    "requirements_clarity": { "score": 6, "label": "XXL" },
+    "technical_risk":       { "score": 6, "label": "XXL" },
+    "file_change_estimate": { "score": 6, "label": "XXL" },
+    "dependencies":         { "score": 2, "label": "S" },
+    "affected_layers":      { "score": 5, "label": "XL" }
+  },
+  "total": 31,
+  "size": "XXL",
+  "routing": "split-required",
+  "key_reasoning": [
+    {
+      "dimension": "component_scope",
+      "reason": "Extends IDirectoryStore port (interface change propagates to FakeDirectoryStore and FailingDirectoryStore in Fakes.cs), adds 3 use-case classes, 2 new result type families to Ports.cs, 2 SQL adapter methods in SqlDirectoryStore, 2 endpoint methods in DirectoryEndpoints, 2 MapDelete routes in Program.cs, and a potential MarkDepartedAsync port. IDirectoryStore is the shared port contract consumed by BbqReminderService as well, making this a multi-workflow port change."
+    },
+    {
+      "dimension": "requirements_clarity",
+      "reason": "GATE-DATA-1 is explicitly open: the DPO retention period (days after departure or opt-out) is unknown and is a DPO-owned decision that cannot be engineered around. The purge trigger mechanism is an open architectural fork (admin endpoint vs BackgroundService). The departure-event signal is ambiguous (external BMS event vs IsOptedOut flag vs new DepartedAt column). Scope of 'full Art. 17 erasure' is contested — PushSubscriptions and NotificationHistory contain personal data but are declared out of scope, requiring a DPO decision. Multiple stakeholders (DPO, engineering, board) hold partially conflicting expectations."
+    },
+    {
+      "dimension": "technical_risk",
+      "reason": "GDPR Art. 17 is a compliance requirement where incorrect implementation creates regulatory liability, not just a quality defect. Hard DELETE is irreversible — no soft-delete safety net. R3 log-exclusion risk: erase endpoints handle HouseholdRef as a URL path parameter; no directory log-exclusion test exists (only ReservationEndpoints is covered). R2 risk on EraseMyContact: HouseholdRef must come from session only. Schema migration risk: SqlDirectoryStore.ReadRow uses ordinal-position access (columns 0–6); adding DepartedAt mid-SELECT shifts ordinals silently. PurgeExpiredContacts is the novel element — configurable cutoff, trigger mechanism, and bulk DELETE are new patterns for this codebase."
+    },
+    {
+      "dimension": "file_change_estimate",
+      "reason": "13–16 files total: 8–10 modified (Ports.cs, SqlDirectoryStore.cs, DirectoryEndpoints.cs, Program.cs, Fakes.cs, appsettings.json, db/schema.sql, SqlDirectoryStoreTests.cs, DirectoryEndpointsTests.cs, LogExclusionTests.cs) plus 5–6 new files (EraseMyContact.cs, EraseContact.cs, PurgeExpiredContacts.cs, EraseMyContactTests.cs, EraseContactTests.cs, PurgeExpiredContactsTests.cs). Schema migration file adds one more if written separately."
+    },
+    {
+      "dimension": "affected_layers",
+      "reason": "API layer (DirectoryEndpoints, Program.cs), Service/Application layer (Ports.cs, 3 new use cases), Repository/Adapter layer (SqlDirectoryStore), DB-Persistence layer (schema.sql DepartedAt migration). Four distinct architectural layers plus test infrastructure."
+    }
+  ],
+  "red_flags_applied": [
+    "Technical Risk bumped from L to XL: GDPR Art. 17 is a compliance/security requirement — incorrect erasure creates regulatory liability",
+    "Technical Risk bumped from XL to XXL (capped): schema change (DepartedAt column) required for retention enforcement",
+    "Affected Layers bumped from L to XL: schema change adds DB-Persistence as a distinct affected layer",
+    "File Change Estimate bumped from XL to XXL (capped): schema migration (ALTER TABLE) counts as a data migration artifact requiring an additional changed file",
+    "Requirements Clarity bumped from L to XL: GATE-DATA-1 is open — retention period is undefined; purge trigger mechanism is an open architectural fork (vague acceptance criteria)",
+    "Requirements Clarity bumped from XL to XXL (capped): DPO, engineering, and board stakeholders hold partially conflicting expectations on erasure scope (PushSubscriptions in/out of scope)",
+    "Component Scope bumped from L to XL: IDirectoryStore is a core shared port contract; Fakes.cs is a shared test utility — both touched by this task",
+    "Component Scope bumped from XL to XXL (capped): BbqReminderService reads IDirectoryStore; the purge running concurrently affects multiple application workflows"
+  ],
+  "split_recommendation": "Split into three slices delivered in order: (1) Erasure core — EraseMyContact and EraseContact use cases with their port methods, SQL adapter single-row DELETE, two new DELETE endpoints, unit tests, integration tests, and R3 log-exclusion tests. No schema migration in this slice; DepartedAt is deferred. Routing: brainstorming. (2) Retention schema and purge logic — after GATE-DATA-1 (DPO retention period) is resolved: add DepartedAt column migration, MarkDepartedAsync port method if needed, PurgeExpiredContacts use case with configurable cutoff, integration tests for bulk DELETE. Trigger mechanism (admin endpoint vs BackgroundService) must be decided as a human gate before this slice starts. Routing: brainstorming. (3) Compliance hardening — R3 log-exclusion tests for all directory erase endpoints, PushSubscriptions erasure scope decision (ADR or documented out-of-scope), legal-basis documentation for financial ledger retention under Art. 17(3)(b). Routing: writing-plans (low code, high governance). Do not start slice 2 until GATE-DATA-1 is closed."
+}
