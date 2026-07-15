@@ -153,6 +153,8 @@ builder.Services.AddScoped<GetDirectory>();
 builder.Services.AddScoped<UpdateMyContact>();
 builder.Services.AddScoped<UpdateContact>();
 builder.Services.AddScoped<UpdateNotes>();
+builder.Services.AddScoped<EraseMyContact>();
+builder.Services.AddScoped<EraseContact>();
 
 var app = builder.Build();
 
@@ -283,5 +285,19 @@ app.MapPut(
      ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.UpdateNotesEndpoint(
             uc, householdRef, body, loggers.CreateLogger("Directory"), ct));
+
+app.MapDelete(
+    "/directory/contact",
+    (EraseMyContact uc, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.EraseMyContactEndpoint(
+            uc, loggers.CreateLogger("Directory"), ct))
+   .RequireAuthorization();
+
+app.MapDelete(
+    "/directory/{householdRef}/contact",
+    (EraseContact uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.EraseContactEndpoint(
+            uc, householdRef, loggers.CreateLogger("Directory"), ct))
+   .RequireAuthorization();
 
 app.Run();

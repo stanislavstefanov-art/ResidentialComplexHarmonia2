@@ -95,6 +95,43 @@ public static class DirectoryEndpoints
         };
     }
 
+    /// <summary>
+    /// DELETE /directory/contact — resident Art. 17 self-erase.
+    /// HouseholdRef is resolved from session inside the use case (R2).
+    /// R3: householdRef never logged here.
+    /// </summary>
+    public static async Task<IResult> EraseMyContactEndpoint(
+        EraseMyContact useCase, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(ct);
+        return result switch
+        {
+            EraseContactResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            EraseContactResult.Ok       => TypedResults.NoContent(),
+            EraseContactResult.NotFound => TypedResults.NoContent(),   // 204 — idempotent Art. 17
+            EraseContactResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
+    /// <summary>
+    /// DELETE /directory/{householdRef}/contact — board DSAR hard-delete.
+    /// R3: householdRef never logged here.
+    /// </summary>
+    public static async Task<IResult> EraseContactEndpoint(
+        EraseContact useCase, string householdRef, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(householdRef, ct);
+        return result switch
+        {
+            EraseContactResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            EraseContactResult.Ok       => TypedResults.NoContent(),
+            EraseContactResult.NotFound => TypedResults.NotFound(),    // 404 — board DSAR confirmation
+            EraseContactResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
     private static DirectoryEntryFullDto ToFullDto(HouseholdContact c) =>
         new(c.HouseholdRef.Value, c.DisplayName, c.Phone, c.Email, c.Notes, c.IsOptedOut, c.UpdatedAt);
 }
