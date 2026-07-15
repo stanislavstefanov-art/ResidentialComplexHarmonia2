@@ -96,4 +96,28 @@ public class GetDirectoryTests
             IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null);
         Assert.Null(contact.DepartedAt);
     }
+
+    [Fact]
+    public async Task Departed_household_is_hidden_in_ResidentView()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-DEP-HIDE"), "Departed Alice", null, null, null,
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: DateTimeOffset.UtcNow.AddDays(-30)));
+        var useCase = new GetDirectory(new FakeSession(ResidentCtx), store);
+        var result = Assert.IsType<GetDirectoryResult.ResidentView>(await useCase.ExecuteAsync());
+        Assert.Empty(result.Entries);
+    }
+
+    [Fact]
+    public async Task Departed_household_IS_visible_in_BoardView()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-DEP-BOARD"), "Departed Bob", null, null, null,
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: DateTimeOffset.UtcNow.AddDays(-30)));
+        var useCase = new GetDirectory(new FakeSession(AdminCtx), store);
+        var result = Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
+        Assert.Single(result.Entries);
+    }
 }
