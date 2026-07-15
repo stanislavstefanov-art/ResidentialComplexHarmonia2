@@ -8,9 +8,14 @@ Things the code/agent cannot infer — decided by a human, not assumed.
   is the port it plugs into (`docs/context/architecture.md`).
   **refresh_trigger:** N/A — decided and shipped.
 
-- **description:** `householdRef` retention + data-classification policy undecided.
+- **status: TRIGGER FIRED — overdue** — `dbo.HouseholdContacts` (PR #10, 2026-07-15) now stores
+  `DisplayName`, `Phone`, `Email`, `Notes` for real residents. Real personal data is being stored.
+  DPO decision on retention period and data-classification is required before member directory
+  ships to production.
+  **description:** `householdRef` retention + data-classification policy undecided.
   **discovery_event:** GATE-DATA-1 (#4) — DPO-owned; not closed.
-  **refresh_trigger:** before any real personal data is stored.
+  **refresh_trigger:** before any real personal data is stored. ← **trigger fired** (PR #10).
+  **blocking:** member directory production release; erasure/DSAR workflow for HouseholdContacts.
 
 - **description:** Admin role not wired to a real IdP — `DevAdminSession` is a dev-only stand-in
   yielding `SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null)` controlled by
