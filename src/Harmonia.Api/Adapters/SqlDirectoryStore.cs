@@ -120,6 +120,14 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         catch (Exception) { return new EraseContactResult.Failed(); }
     }
 
+    public Task<MarkDepartedResult> MarkDepartedAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new NotImplementedException("Task 4 implements this");
+
+    public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
+        CancellationToken ct = default)
+        => throw new NotImplementedException("Task 5 implements this");
+
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
             DisplayName:  r.IsDBNull(1) ? null : r.GetString(1),
