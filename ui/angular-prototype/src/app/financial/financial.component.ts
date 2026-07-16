@@ -64,7 +64,7 @@ function formatEur(n: number): string {
                 <input
                   type="month"
                   [(ngModel)]="period"
-                  (ngModelChange)="onPeriodChange()"
+                  (ngModelChange)="loadAll()"
                   class="period-input"
                 />
               </div>
@@ -93,7 +93,7 @@ function formatEur(n: number): string {
                 </thead>
                 <tbody>
                   @for (c of charges(); track c.id) {
-                    <tr data-testid="charge-row">
+                    <tr [attr.data-testid]="'charge-row-' + c.id">
                       <td>{{ c.chargedAt | date:'yyyy-MM-dd' }}</td>
                       <td>{{ c.description }}</td>
                       <td>{{ c.period }}</td>
@@ -113,7 +113,7 @@ function formatEur(n: number): string {
                 </thead>
                 <tbody>
                   @for (p of payments(); track p.id) {
-                    <tr data-testid="payment-row">
+                    <tr [attr.data-testid]="'payment-row-' + p.id">
                       <td>{{ p.dateReceived }}</td>
                       <td>{{ p.period }}</td>
                       <td>{{ formatEur(p.amountEur) }}</td>
@@ -220,10 +220,4 @@ export class FinancialComponent implements OnInit {
     });
   }
 
-  onPeriodChange(): void {
-    this.svc.getPeriodSummary(this.period).subscribe({
-      next: s => this.summary.set(s),
-      error: () => {},
-    });
-  }
 }

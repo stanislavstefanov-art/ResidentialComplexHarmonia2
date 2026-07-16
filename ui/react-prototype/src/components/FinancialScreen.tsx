@@ -161,7 +161,7 @@ export default function FinancialScreen() {
         </TableBody>
       </Table>
 
-      <Button variant="contained" onClick={() => setShowPayDialog(true)}>
+      <Button data-testid="pay-btn" variant="contained" onClick={() => setShowPayDialog(true)}>
         Request Payment
       </Button>
 

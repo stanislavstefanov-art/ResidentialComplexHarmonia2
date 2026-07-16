@@ -51,7 +51,7 @@ test('renders payment rows from API', async () => {
 
 test('pay button opens stub dialog', async () => {
   renderScreen();
-  await waitFor(() => screen.getByRole('button', { name: /request payment/i }));
-  fireEvent.click(screen.getByRole('button', { name: /request payment/i }));
+  await waitFor(() => screen.getByTestId('pay-btn'));
+  fireEvent.click(screen.getByTestId('pay-btn'));
   expect(screen.getByTestId('pay-dialog')).toBeInTheDocument();
 });

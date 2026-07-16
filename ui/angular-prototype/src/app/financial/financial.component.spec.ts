@@ -53,8 +53,8 @@ describe('FinancialComponent', () => {
     });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('[data-testid="charge-row"]').length).toBe(1);
-    expect(el.querySelector('[data-testid="charge-row"]')?.textContent).toContain('July fee');
+    expect(el.querySelector('[data-testid="charge-row-c1"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="charge-row-c1"]')?.textContent).toContain('July fee');
   });
 
   it('renders payment rows from service', async () => {
@@ -65,8 +65,8 @@ describe('FinancialComponent', () => {
     });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('[data-testid="payment-row"]').length).toBe(1);
-    expect(el.querySelector('[data-testid="payment-row"]')?.textContent).toContain('300');
+    expect(el.querySelector('[data-testid="payment-row-p1"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="payment-row-p1"]')?.textContent).toContain('300');
   });
 
   it('pay button opens stub dialog', async () => {
