@@ -243,4 +243,114 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         var all = await Store.ListAllAsync();
         Assert.Contains(all, e => e.HouseholdRef == hh); // row still present
     }
+
+    [Fact]
+    public async Task DeleteContact_cascade_deletes_subscription_and_history()
+    {
+        var hh = new HouseholdRef($"HH-CASCADE-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Alice", null, null, isOptedOut: null);
+        await SeedSubscriptionAsync(hh);
+        await SeedHistoryAsync(hh);
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.Ok>(result);
+        Assert.Equal(0, await CountAsync("HouseholdContacts",   hh));
+        Assert.Equal(0, await CountAsync("PushSubscriptions",   hh));
+        Assert.Equal(0, await CountAsync("NotificationHistory", hh));
+    }
+
+    [Fact]
+    public async Task DeleteContact_cascade_does_not_affect_other_households()
+    {
+        var target = new HouseholdRef($"HH-CASCADE-TGT-{Guid.NewGuid():N}");
+        var other  = new HouseholdRef($"HH-CASCADE-OTH-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(target, "Target", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(other,  "Other",  null, null, isOptedOut: null);
+        await SeedSubscriptionAsync(target);
+        await SeedSubscriptionAsync(other);
+        await SeedHistoryAsync(target);
+        await SeedHistoryAsync(other);
+
+        await Store.DeleteContactAsync(target);
+
+        Assert.Equal(0, await CountAsync("HouseholdContacts",   target));
+        Assert.Equal(0, await CountAsync("PushSubscriptions",   target));
+        Assert.Equal(0, await CountAsync("NotificationHistory", target));
+        Assert.Equal(1, await CountAsync("HouseholdContacts",   other));
+        Assert.Equal(1, await CountAsync("PushSubscriptions",   other));
+        Assert.Equal(1, await CountAsync("NotificationHistory", other));
+    }
+
+    [Fact]
+    public async Task DeleteContact_cascade_succeeds_when_no_subscription_or_history()
+    {
+        var hh = new HouseholdRef($"HH-CASCADE-NOANCIL-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Bob", null, null, isOptedOut: null);
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.Ok>(result);
+        Assert.Equal(0, await CountAsync("HouseholdContacts", hh));
+    }
+
+    [Fact]
+    public async Task DeleteContact_notfound_with_orphan_rows_still_erases_ancillary_data()
+    {
+        var hh = new HouseholdRef($"HH-CASCADE-ORPHAN-{Guid.NewGuid():N}");
+        // Seed subscription and history only — no contact row
+        await SeedSubscriptionAsync(hh);
+        await SeedHistoryAsync(hh);
+
+        var result = await Store.DeleteContactAsync(hh);
+
+        Assert.IsType<EraseContactResult.NotFound>(result);
+        Assert.Equal(0, await CountAsync("PushSubscriptions",   hh));
+        Assert.Equal(0, await CountAsync("NotificationHistory", hh));
+    }
+
+    private async Task<int> CountAsync(string table, HouseholdRef hh)
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT COUNT(*) FROM dbo.{table} WHERE HouseholdRef = @HouseholdRef;";
+        cmd.Parameters.AddWithValue("@HouseholdRef", hh.Value);
+        return (int)(await cmd.ExecuteScalarAsync())!;
+    }
+
+    private async Task SeedSubscriptionAsync(HouseholdRef hh)
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO dbo.PushSubscriptions
+                (HouseholdRef, Endpoint, P256dhKey, AuthKey, CreatedAt, UpdatedAt)
+            VALUES
+                (@HouseholdRef, @Endpoint, @P256dhKey, @AuthKey,
+                 SYSUTCDATETIMEOFFSET(), SYSUTCDATETIMEOFFSET());
+            """;
+        cmd.Parameters.AddWithValue("@HouseholdRef", hh.Value);
+        cmd.Parameters.AddWithValue("@Endpoint",     "https://push.example.com/test");
+        cmd.Parameters.AddWithValue("@P256dhKey",    "test-key-p256dh");
+        cmd.Parameters.AddWithValue("@AuthKey",      "test-key-auth");
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task SeedHistoryAsync(HouseholdRef hh)
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO dbo.NotificationHistory (Id, HouseholdRef, Title, SentAt, Channel)
+            VALUES (@Id, @HouseholdRef, @Title, SYSUTCDATETIMEOFFSET(), @Channel);
+            """;
+        cmd.Parameters.AddWithValue("@Id",           Guid.NewGuid());
+        cmd.Parameters.AddWithValue("@HouseholdRef", hh.Value);
+        cmd.Parameters.AddWithValue("@Title",        "Test notification");
+        cmd.Parameters.AddWithValue("@Channel",      "push");
+        await cmd.ExecuteNonQueryAsync();
+    }
 }
