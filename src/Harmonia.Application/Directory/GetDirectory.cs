@@ -24,7 +24,7 @@ public sealed class GetDirectory(ISession session, IDirectoryStore store)
 
             if (ctx.IsResident)
             {
-                var visible = entries.Where(e => !e.IsOptedOut).ToList();
+                var visible = entries.Where(e => e.DepartedAt is null && !e.IsOptedOut).ToList();
                 return new GetDirectoryResult.ResidentView(visible);
             }
 

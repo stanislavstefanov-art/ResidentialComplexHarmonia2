@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -162,7 +163,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-PII"), "Alice", "555-9999", "alice@test.com", "secret",
-            IsOptedOut: false, DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -178,7 +179,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-DTO"), "Carol", null, null, null,
-            IsOptedOut: true, DateTimeOffset.UtcNow));
+            IsOptedOut: true, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -208,7 +209,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-1"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status204NoContent,
@@ -250,7 +251,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-TARGET-1"), "Bob", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow));
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         var uc = new EraseContact(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.EraseContactEndpoint(
             uc, "HH-TARGET-1", NullLogger.Instance, default);
@@ -284,6 +285,89 @@ public class DirectoryEndpointsTests
         var uc = new EraseContact(new FakeSession(AdminCtx), new FailingDirectoryStore());
         var result = await DirectoryEndpoints.EraseContactEndpoint(
             uc, "HH-TARGET-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status500InternalServerError,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    // ── PUT /directory/{householdRef}/departed ────────────────────────────
+
+    [Fact]
+    public async Task MarkDeparted_ok_returns_200()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-MD-1"), "Alice", null, null, null,
+            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+        var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
+        var result = await DirectoryEndpoints.MarkDepartedEndpoint(
+            uc, "HH-MD-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status200OK,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_not_found_returns_404()
+    {
+        var uc = new MarkDeparted(new FakeSession(AdminCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.MarkDepartedEndpoint(
+            uc, "HH-MD-NF", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status404NotFound,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_refused_returns_403()
+    {
+        var uc = new MarkDeparted(new FakeSession(ResidentCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.MarkDepartedEndpoint(
+            uc, "HH-MD-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status403Forbidden,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_store_failure_returns_500()
+    {
+        var uc = new MarkDeparted(new FakeSession(AdminCtx), new FailingDirectoryStore());
+        var result = await DirectoryEndpoints.MarkDepartedEndpoint(
+            uc, "HH-MD-1", NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status500InternalServerError,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    // ── DELETE /directory/purge-expired ──────────────────────────────────
+
+    [Fact]
+    public async Task PurgeExpired_ok_returns_200_with_deleted_count()
+    {
+        var uc = new PurgeExpiredContacts(new FakeSession(AdminCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.PurgeExpiredContactsEndpoint(
+            uc, NullLogger.Instance, default);
+        var jsonResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
+        Assert.Equal(StatusCodes.Status200OK, jsonResult.StatusCode);
+
+        // Verify body has { deleted: 0 }
+        var okResult = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.HttpResults.Ok<object>>(result);
+        var json = JsonSerializer.Serialize(okResult.Value);
+        Assert.Contains("\"deleted\"", json);
+    }
+
+    [Fact]
+    public async Task PurgeExpired_refused_returns_403()
+    {
+        var uc = new PurgeExpiredContacts(new FakeSession(ResidentCtx), new FakeDirectoryStore());
+        var result = await DirectoryEndpoints.PurgeExpiredContactsEndpoint(
+            uc, NullLogger.Instance, default);
+        Assert.Equal(StatusCodes.Status403Forbidden,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task PurgeExpired_store_failure_returns_500()
+    {
+        var uc = new PurgeExpiredContacts(new FakeSession(AdminCtx), new FailingDirectoryStore());
+        var result = await DirectoryEndpoints.PurgeExpiredContactsEndpoint(
+            uc, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status500InternalServerError,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }

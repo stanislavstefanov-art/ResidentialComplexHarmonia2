@@ -14,7 +14,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt " +
+            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt, DepartedAt " +
             "FROM dbo.HouseholdContacts " +
             "ORDER BY HouseholdRef ASC;";
 
@@ -120,6 +120,49 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         catch (Exception) { return new EraseContactResult.Failed(); }
     }
 
+    public async Task<MarkDepartedResult> MarkDepartedAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        try
+        {
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                UPDATE dbo.HouseholdContacts
+                SET DepartedAt = ISNULL(DepartedAt, SYSUTCDATETIMEOFFSET())
+                WHERE HouseholdRef = @HouseholdRef;
+                """;
+            cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            var rows = await cmd.ExecuteNonQueryAsync(ct);
+            return rows == 0
+                ? new MarkDepartedResult.NotFound()
+                : new MarkDepartedResult.Ok();
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return new MarkDepartedResult.Failed(); }
+    }
+
+    public async Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
+        CancellationToken ct = default)
+    {
+        try
+        {
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                DELETE FROM dbo.HouseholdContacts
+                WHERE DepartedAt IS NOT NULL
+                  AND DepartedAt < DATEADD(year, -1, SYSUTCDATETIMEOFFSET());
+                """;
+            var rows = await cmd.ExecuteNonQueryAsync(ct);
+            return new PurgeExpiredContactsResult.Ok(rows);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return new PurgeExpiredContactsResult.Failed(); }
+    }
+
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
             DisplayName:  r.IsDBNull(1) ? null : r.GetString(1),
@@ -127,5 +170,6 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             Email:        r.IsDBNull(3) ? null : r.GetString(3),
             Notes:        r.IsDBNull(4) ? null : r.GetString(4),
             IsOptedOut:   r.GetBoolean(5),
-            UpdatedAt:    r.GetDateTimeOffset(6));
+            UpdatedAt:    r.GetDateTimeOffset(6),
+            DepartedAt:   r.IsDBNull(7) ? null : r.GetDateTimeOffset(7));
 }

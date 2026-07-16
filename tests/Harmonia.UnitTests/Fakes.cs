@@ -338,7 +338,7 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         {
             _contacts.Add(new HouseholdContact(
                 householdRef, displayName, phone, email, null,
-                IsOptedOut: isOptedOut ?? false, DateTimeOffset.UtcNow));
+                IsOptedOut: isOptedOut ?? false, DateTimeOffset.UtcNow, DepartedAt: null));
         }
         return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
     }
@@ -355,7 +355,7 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         else
         {
             _contacts.Add(new HouseholdContact(
-                householdRef, null, null, null, notes, IsOptedOut: false, DateTimeOffset.UtcNow));
+                householdRef, null, null, null, notes, IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
         }
         return Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Ok());
     }
@@ -367,6 +367,23 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         if (idx < 0) return Task.FromResult<EraseContactResult>(new EraseContactResult.NotFound());
         _contacts.RemoveAt(idx);
         return Task.FromResult<EraseContactResult>(new EraseContactResult.Ok());
+    }
+
+    public Task<MarkDepartedResult> MarkDepartedAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
+        if (idx < 0) return Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.NotFound());
+        var c = _contacts[idx];
+        _contacts[idx] = c with { DepartedAt = c.DepartedAt ?? DateTimeOffset.UtcNow };
+        return Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.Ok());
+    }
+
+    public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(CancellationToken ct = default)
+    {
+        var cutoff  = DateTimeOffset.UtcNow.AddYears(-1);
+        var removed = _contacts.RemoveAll(c => c.DepartedAt.HasValue && c.DepartedAt.Value < cutoff);
+        return Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Ok(removed));
     }
 }
 
@@ -387,4 +404,11 @@ public sealed class FailingDirectoryStore : IDirectoryStore
     public Task<EraseContactResult> DeleteContactAsync(
         HouseholdRef householdRef, CancellationToken ct = default)
         => Task.FromResult<EraseContactResult>(new EraseContactResult.Failed());
+
+    public Task<MarkDepartedResult> MarkDepartedAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+        => Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.Failed());
+
+    public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(CancellationToken ct = default)
+        => Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Failed());
 }

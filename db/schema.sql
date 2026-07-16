@@ -106,3 +106,8 @@ CREATE TABLE dbo.HouseholdContacts
     UpdatedAt     datetimeoffset(3) NOT NULL,
     CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef)
 );
+
+-- GDPR Art. 6(1)(f) departure marker — retention clock start (ADR-0004).
+-- Idempotent: SqlServerFixture applies schema.sql on every integration test run.
+IF COL_LENGTH('dbo.HouseholdContacts', 'DepartedAt') IS NULL
+    ALTER TABLE dbo.HouseholdContacts ADD DepartedAt datetimeoffset NULL;

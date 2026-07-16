@@ -1,6 +1,7 @@
 using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application.Directory;
 using Harmonia.Domain;
+using Microsoft.Data.SqlClient;
 
 namespace Harmonia.IntegrationTests;
 
@@ -133,5 +134,113 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         var all = await Store.ListAllAsync();
         Assert.DoesNotContain(all, e => e.HouseholdRef == target);
         Assert.Contains(all,       e => e.HouseholdRef == other);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_sets_DepartedAt_and_row_appears_in_ListAll()
+    {
+        var hh = new HouseholdRef($"HH-DEP-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Departed Dave", null, null, isOptedOut: null);
+
+        var result = await Store.MarkDepartedAsync(hh);
+
+        Assert.IsType<MarkDepartedResult.Ok>(result);
+        var all = await Store.ListAllAsync();
+        var entry = all.First(e => e.HouseholdRef == hh);
+        Assert.NotNull(entry.DepartedAt);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_nonexistent_row_returns_NotFound()
+    {
+        var hh = new HouseholdRef($"HH-DEP-NF-{Guid.NewGuid():N}");
+
+        var result = await Store.MarkDepartedAsync(hh);
+
+        Assert.IsType<MarkDepartedResult.NotFound>(result);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_already_departed_is_idempotent_and_preserves_original_date()
+    {
+        var hh = new HouseholdRef($"HH-DEP-IDEM-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Eve", null, null, isOptedOut: null);
+
+        // First call sets the date
+        await Store.MarkDepartedAsync(hh);
+        var all = await Store.ListAllAsync();
+        var firstDate = all.First(e => e.HouseholdRef == hh).DepartedAt;
+        Assert.NotNull(firstDate);
+
+        // Small delay to ensure clock would advance if not preserved
+        await Task.Delay(10);
+
+        // Second call must return Ok and must NOT update DepartedAt
+        var result = await Store.MarkDepartedAsync(hh);
+        Assert.IsType<MarkDepartedResult.Ok>(result);
+        all = await Store.ListAllAsync();
+        Assert.Equal(firstDate, all.First(e => e.HouseholdRef == hh).DepartedAt);
+    }
+
+    [Fact]
+    public async Task PurgeExpired_deletes_rows_past_cutoff_and_returns_count()
+    {
+        // Two rows with DepartedAt > 1 year ago — both should be deleted
+        var hh1 = new HouseholdRef($"HH-PG-OLD-{Guid.NewGuid():N}");
+        var hh2 = new HouseholdRef($"HH-PG-OLD2-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh1, "Old1", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh2, "Old2", null, null, isOptedOut: null);
+
+        // Manually set DepartedAt to > 1 year ago using direct SQL
+        // (MarkDepartedAsync would set it to NOW; we need a past date for this test)
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            UPDATE dbo.HouseholdContacts
+            SET DepartedAt = DATEADD(year, -2, SYSUTCDATETIMEOFFSET())
+            WHERE HouseholdRef IN (@HH1, @HH2);
+            """;
+        cmd.Parameters.AddWithValue("@HH1", hh1.Value);
+        cmd.Parameters.AddWithValue("@HH2", hh2.Value);
+        await cmd.ExecuteNonQueryAsync();
+
+        var result = await Store.PurgeExpiredContactsAsync();
+
+        var ok = Assert.IsType<PurgeExpiredContactsResult.Ok>(result);
+        Assert.True(ok.Deleted >= 2, $"Expected at least 2 deleted, got {ok.Deleted}");
+
+        var all = await Store.ListAllAsync();
+        Assert.DoesNotContain(all, e => e.HouseholdRef == hh1);
+        Assert.DoesNotContain(all, e => e.HouseholdRef == hh2);
+    }
+
+    [Fact]
+    public async Task PurgeExpired_spares_rows_inside_retention_window()
+    {
+        // Row with DepartedAt set recently — NOT past the 1-year cutoff
+        var hh = new HouseholdRef($"HH-PG-RECENT-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Recent", null, null, isOptedOut: null);
+        await Store.MarkDepartedAsync(hh); // DepartedAt = NOW (within 1 year)
+
+        var result = await Store.PurgeExpiredContactsAsync();
+
+        Assert.IsType<PurgeExpiredContactsResult.Ok>(result);
+        var all = await Store.ListAllAsync();
+        Assert.Contains(all, e => e.HouseholdRef == hh); // row still present
+    }
+
+    [Fact]
+    public async Task PurgeExpired_spares_rows_with_null_DepartedAt()
+    {
+        // Active resident — DepartedAt is NULL
+        var hh = new HouseholdRef($"HH-PG-ACTIVE-{Guid.NewGuid():N}");
+        await Store.UpsertContactAsync(hh, "Active", null, null, isOptedOut: null);
+
+        var result = await Store.PurgeExpiredContactsAsync();
+
+        Assert.IsType<PurgeExpiredContactsResult.Ok>(result);
+        var all = await Store.ListAllAsync();
+        Assert.Contains(all, e => e.HouseholdRef == hh); // row still present
     }
 }

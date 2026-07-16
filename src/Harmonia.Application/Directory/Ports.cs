@@ -53,6 +53,32 @@ public abstract record EraseContactResult
     public sealed record Failed   : EraseContactResult;
 }
 
+/// <summary>Outcome of marking a household as departed (GDPR Art. 6(1)(f) retention clock start).</summary>
+public abstract record MarkDepartedResult
+{
+    private MarkDepartedResult() { }
+    /// <summary>Caller lacks the required role or session.</summary>
+    public sealed record Refused  : MarkDepartedResult;
+    /// <summary>DepartedAt set (or already set — idempotent).</summary>
+    public sealed record Ok       : MarkDepartedResult;
+    /// <summary>No row with that HouseholdRef exists.</summary>
+    public sealed record NotFound : MarkDepartedResult;
+    /// <summary>Store error; details are in the server log.</summary>
+    public sealed record Failed   : MarkDepartedResult;
+}
+
+/// <summary>Outcome of the annual retention purge sweep.</summary>
+public abstract record PurgeExpiredContactsResult
+{
+    private PurgeExpiredContactsResult() { }
+    /// <summary>Caller lacks the required role or session.</summary>
+    public sealed record Refused            : PurgeExpiredContactsResult;
+    /// <summary>Sweep completed; <see cref="Deleted"/> rows were hard-deleted.</summary>
+    public sealed record Ok(int Deleted)    : PurgeExpiredContactsResult;
+    /// <summary>Store error; details are in the server log.</summary>
+    public sealed record Failed             : PurgeExpiredContactsResult;
+}
+
 /// <summary>
 /// Directory store port — SQL adapter lives in <c>Harmonia.Api.Reservations.Adapters</c>.
 /// R3: <paramref name="phone"/> and <paramref name="email"/> values must never appear in log output;
@@ -91,5 +117,22 @@ public interface IDirectoryStore
     /// </summary>
     Task<EraseContactResult> DeleteContactAsync(
         HouseholdRef householdRef,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Sets <c>DepartedAt</c> for <paramref name="householdRef"/> to the current UTC time.
+    /// Idempotent — preserves the original departure date if already set.
+    /// Returns <see cref="MarkDepartedResult.NotFound"/> when no row exists.
+    /// R3: never log <paramref name="householdRef"/> value.
+    /// </summary>
+    Task<MarkDepartedResult> MarkDepartedAsync(
+        HouseholdRef householdRef,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Hard-deletes all rows where <c>DepartedAt</c> is older than 1 year (GDPR Art. 6(1)(f) retention cutoff).
+    /// Returns the count of deleted rows.
+    /// </summary>
+    Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
         CancellationToken ct = default);
 }
