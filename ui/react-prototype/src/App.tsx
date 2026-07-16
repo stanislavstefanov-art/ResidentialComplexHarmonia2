@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import DirectoryList from './components/DirectoryList';
+import ExpensesScreen from './components/ExpensesScreen';
 import FinancialScreen from './components/FinancialScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
@@ -19,7 +20,7 @@ const theme = createTheme({
   typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
 });
 
-type Screen = 'directory' | 'reservations' | 'financial';
+type Screen = 'directory' | 'reservations' | 'financial' | 'expenses';
 
 function App() {
   const [role, setRole] = useState<Role>('resident');
@@ -51,8 +52,9 @@ function App() {
             <Tab label="Directory" value="directory" />
             <Tab label="Reservations" value="reservations" />
             <Tab label="Finance" value="financial" />
+            <Tab label="Expenses" value="expenses" />
           </Tabs>
-          {screen === 'directory' && (
+          {(screen === 'directory' || screen === 'expenses') && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
                 View as:
@@ -91,7 +93,7 @@ function App() {
       </AppBar>
       <Box
         sx={{
-          maxWidth: screen === 'directory' && role === 'admin' ? 1200 : 900,
+          maxWidth: (screen === 'directory' || screen === 'expenses') && role === 'admin' ? 1200 : 900,
           mx: 'auto',
           px: 2,
           py: 4,
@@ -101,6 +103,7 @@ function App() {
         {screen === 'directory' && <DirectoryList role={role} />}
         {screen === 'reservations' && <ReservationScreen />}
         {screen === 'financial' && <FinancialScreen />}
+        {screen === 'expenses' && <ExpensesScreen role={role} />}
       </Box>
     </ThemeProvider>
   );
