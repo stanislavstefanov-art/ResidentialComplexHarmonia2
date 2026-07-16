@@ -30,6 +30,21 @@ Defined in `src/Harmonia.Application/Ports.cs`; implemented in `src/Harmonia.Api
 | **R2** — identity from verified session only | `_session.Resolve()` before any store access; never body/query/header | `src/Harmonia.Application/ReserveSlot.cs`; ADR-0001 |
 | **R3** — `householdRef` is PII, never logged | One log line per claim: `Day/SlotKey/Outcome` only | `src/Harmonia.Api/ReservationEndpoints.cs`; `tests/Harmonia.UnitTests/Api/LogExclusionTests.cs` |
 
+## Frontend
+
+The canonical Harmonia frontend is Blazor WASM (separate repository). This repository also hosts
+parallel UI prototypes for a framework comparison exercise (ADR-0005).
+
+| Path | Framework | Library | Status |
+|---|---|---|---|
+| `ui/angular-prototype/` | Angular | PrimeNG or NG-ZORRO | In progress |
+| `ui/react-prototype/` | React | MUI or shadcn/ui | Planned |
+
+**Prototype scope:** member directory listing (resident view, opted-out hidden), edit own contact
+form, opt-out toggle. Both prototypes call the local Harmonia API — no auth integration.
+Evaluation criteria: component library richness, visual quality, developer experience.
+Framework selection for a full build is deferred to a future ADR.
+
 ## Open Gaps
 
 From `context/cold/gap-log.md` — do not implement behind these without the named owner:
