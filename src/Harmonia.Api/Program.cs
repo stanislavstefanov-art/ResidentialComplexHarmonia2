@@ -155,6 +155,8 @@ builder.Services.AddScoped<UpdateContact>();
 builder.Services.AddScoped<UpdateNotes>();
 builder.Services.AddScoped<EraseMyContact>();
 builder.Services.AddScoped<EraseContact>();
+builder.Services.AddScoped<MarkDeparted>();
+builder.Services.AddScoped<PurgeExpiredContacts>();
 
 var app = builder.Build();
 
@@ -298,6 +300,20 @@ app.MapDelete(
     (EraseContact uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.EraseContactEndpoint(
             uc, householdRef, loggers.CreateLogger("Directory"), ct))
+   .RequireAuthorization();
+
+app.MapDelete(
+    "/directory/{householdRef}/departed",
+    (MarkDeparted uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.MarkDepartedEndpoint(
+            uc, householdRef, loggers.CreateLogger("Directory"), ct))
+   .RequireAuthorization();
+
+app.MapDelete(
+    "/directory/purge-expired",
+    (PurgeExpiredContacts uc, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.PurgeExpiredContactsEndpoint(
+            uc, loggers.CreateLogger("Directory"), ct))
    .RequireAuthorization();
 
 app.Run();
