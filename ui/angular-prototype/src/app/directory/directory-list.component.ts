@@ -46,6 +46,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
         <div class="flex-spacer"></div>
         <a routerLink="/directory" class="nav-link nav-active">Directory</a>
         <a routerLink="/reservations" class="nav-link">Reservations</a>
+        <a routerLink="/financial" class="nav-link">Finance</a>
         <span class="role-label">View as:</span>
         <p-selectbutton
           [options]="roleOptions"

@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import DirectoryList from './components/DirectoryList';
+import FinancialScreen from './components/FinancialScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
 
@@ -18,7 +19,7 @@ const theme = createTheme({
   typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
 });
 
-type Screen = 'directory' | 'reservations';
+type Screen = 'directory' | 'reservations' | 'financial';
 
 function App() {
   const [role, setRole] = useState<Role>('resident');
@@ -49,6 +50,7 @@ function App() {
           >
             <Tab label="Directory" value="directory" />
             <Tab label="Reservations" value="reservations" />
+            <Tab label="Finance" value="financial" />
           </Tabs>
           {screen === 'directory' && (
             <>
@@ -96,7 +98,9 @@ function App() {
           transition: 'max-width 0.2s',
         }}
       >
-        {screen === 'directory' ? <DirectoryList role={role} /> : <ReservationScreen />}
+        {screen === 'directory' && <DirectoryList role={role} />}
+        {screen === 'reservations' && <ReservationScreen />}
+        {screen === 'financial' && <FinancialScreen />}
       </Box>
     </ThemeProvider>
   );
