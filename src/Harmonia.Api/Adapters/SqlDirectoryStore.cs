@@ -107,11 +107,31 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         {
             await using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText =
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync(ct);
+
+            await using var histCmd = conn.CreateCommand();
+            histCmd.Transaction = tx;
+            histCmd.CommandText =
+                "DELETE FROM dbo.NotificationHistory WHERE HouseholdRef = @HouseholdRef;";
+            histCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            await histCmd.ExecuteNonQueryAsync(ct);
+
+            await using var subCmd = conn.CreateCommand();
+            subCmd.Transaction = tx;
+            subCmd.CommandText =
+                "DELETE FROM dbo.PushSubscriptions WHERE HouseholdRef = @HouseholdRef;";
+            subCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            await subCmd.ExecuteNonQueryAsync(ct);
+
+            await using var contactCmd = conn.CreateCommand();
+            contactCmd.Transaction = tx;
+            contactCmd.CommandText =
                 "DELETE FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef;";
-            cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
-            var rows = await cmd.ExecuteNonQueryAsync(ct);
+            contactCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            var rows = await contactCmd.ExecuteNonQueryAsync(ct);
+
+            await tx.CommitAsync(ct);
+
             return rows == 0
                 ? new EraseContactResult.NotFound()
                 : new EraseContactResult.Ok();
