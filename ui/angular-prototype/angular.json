@@ -95,7 +95,8 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "buildTarget": "angular-prototype:build",
-            "runner": "vitest"
+            "runner": "vitest",
+            "setupFiles": ["src/test-setup.ts"]
           }
         }
       }
