@@ -7,6 +7,20 @@ export interface DirectoryListResponse {
   entries: DirectoryEntry[];
 }
 
+export interface DirectoryEntryAdmin {
+  householdRef: string;
+  displayName: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+  isOptedOut: boolean;
+  deactivatedAt: string | null;
+}
+
+export interface AdminDirectoryListResponse {
+  entries: DirectoryEntryAdmin[];
+}
+
 export interface UpdateContactRequest {
   displayName?: string | null;
   phone?: string | null;
@@ -14,10 +28,25 @@ export interface UpdateContactRequest {
   isOptedOut?: boolean | null;
 }
 
-/** Resident's own contact details — pre-populated in the edit form. */
+export interface AdminUpdateContactRequest {
+  displayName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  notes?: string | null;
+  isOptedOut?: boolean | null;
+}
+
 export interface MyContact {
   displayName: string;
   phone: string;
   email: string;
+  isOptedOut: boolean;
+}
+
+export interface AdminContact {
+  displayName: string;
+  phone: string;
+  email: string;
+  notes: string;
   isOptedOut: boolean;
 }
