@@ -37,6 +37,7 @@ import { Slot } from './models';
         <a routerLink="/directory" class="nav-link">Directory</a>
         <a routerLink="/reservations" class="nav-link nav-active">Reservations</a>
         <a routerLink="/financial" class="nav-link">Finance</a>
+        <a routerLink="/expenses" class="nav-link">Expenses</a>
       </header>
 
       <main class="harmonia-content">
