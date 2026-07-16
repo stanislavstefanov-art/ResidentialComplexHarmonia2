@@ -1,0 +1,16 @@
+@use "primeicons/primeicons.css";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--p-font-family, system-ui, -apple-system, sans-serif);
+  font-size: 14px;
+  color: var(--p-text-color);
+  background: var(--p-surface-ground);
+}
+
+.w-full { width: 100%; }
