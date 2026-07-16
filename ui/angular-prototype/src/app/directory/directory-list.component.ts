@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import { TableModule, SortIcon } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -22,6 +23,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
   imports: [
     CommonModule,
     FormsModule,
+    RouterModule,
     TableModule,
     SortIcon,
     ButtonModule,
@@ -42,6 +44,8 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
         <span class="harmonia-logo">🏡 Harmonia</span>
         <span class="harmonia-subtitle">Resident Portal</span>
         <div class="flex-spacer"></div>
+        <a routerLink="/directory" class="nav-link nav-active">Directory</a>
+        <a routerLink="/reservations" class="nav-link">Reservations</a>
         <span class="role-label">View as:</span>
         <p-selectbutton
           [options]="roleOptions"
@@ -359,6 +363,9 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
     .harmonia-logo   { font-size: 1.25rem; font-weight: 700; letter-spacing: -.5px; }
     .harmonia-subtitle { font-size: 0.875rem; opacity: .8; }
     .flex-spacer     { flex: 1; }
+    .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; }
+    .nav-link:hover { background: rgba(255,255,255,.1); }
+    .nav-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
     .role-label      { font-size: 0.8125rem; opacity: 0.75; white-space: nowrap; }
 
     ::ng-deep .role-toggle .p-selectbutton { border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; overflow: hidden; }
