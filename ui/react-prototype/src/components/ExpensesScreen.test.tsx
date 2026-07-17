@@ -54,6 +54,9 @@ test('submit calls recordExpense and reloads list', async () => {
   mockGetExpenses.mockResolvedValue([EXPENSE]);
   render(<ExpensesScreen role="admin" />, wrap('admin'));
   await waitFor(() => screen.getByTestId('record-form'));
+  fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: '200' } });
   fireEvent.submit(screen.getByTestId('record-form'));
   await waitFor(() => expect(mockRecordExpense).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(mockGetExpenses).toHaveBeenCalledTimes(2));
+  expect(screen.getByTestId('submit-success')).toBeInTheDocument();
 });

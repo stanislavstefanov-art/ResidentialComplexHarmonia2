@@ -70,6 +70,10 @@ describe('ExpenseComponent', () => {
     const submitBtn = el.querySelector<HTMLButtonElement>('[data-testid="submit-btn"]');
     submitBtn?.click();
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
     expect(recordFn).toHaveBeenCalledOnce();
+    expect(getExpenses).toHaveBeenCalledTimes(2);
+    expect(el.querySelector('[data-testid="submit-success"]')).not.toBeNull();
   });
 });

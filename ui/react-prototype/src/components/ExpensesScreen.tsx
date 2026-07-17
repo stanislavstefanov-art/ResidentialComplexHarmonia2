@@ -51,10 +51,15 @@ export default function ExpensesScreen({ role }: Props) {
     e.preventDefault();
     setSubmitSuccess(false);
     setSubmitError(null);
+    const parsed = parseFloat(amount);
+    if (!amount || isNaN(parsed) || parsed <= 0) {
+      setSubmitError('Enter a valid amount greater than zero.');
+      return;
+    }
     setSubmitting(true);
     try {
       await recordExpense({
-        amountEur:      parseFloat(amount),
+        amountEur:      parsed,
         description,
         category,
         expenseDate,
