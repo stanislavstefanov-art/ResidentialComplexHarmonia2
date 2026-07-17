@@ -25,6 +25,7 @@ import { NotificationRecordDto } from './models';
         <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
         <a routerLink="/payments" class="nav-link">Payments</a>
         <a routerLink="/notifications" class="nav-link nav-active">Notifications</a>
+        <a routerLink="/privacy" class="nav-link">Privacy</a>
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>
