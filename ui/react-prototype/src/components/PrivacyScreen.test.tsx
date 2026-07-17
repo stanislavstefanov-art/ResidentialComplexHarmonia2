@@ -67,6 +67,24 @@ test('erase-form shows not-found result when eraseContact returns not-found', as
   expect(screen.getByTestId('erase-result').textContent).toContain('not found');
 });
 
+test('depart-form calls markDeparted and shows ok result', async () => {
+  render(<PrivacyScreen role="admin" />, wrap('admin'));
+  fireEvent.change(screen.getByTestId('depart-ref-input'), { target: { value: 'H001' } });
+  fireEvent.submit(screen.getByTestId('depart-form'));
+  await waitFor(() => screen.getByTestId('depart-result'));
+  expect(mockMarkDeparted).toHaveBeenCalledTimes(1);
+  expect(screen.getByTestId('depart-result')).toBeInTheDocument();
+});
+
+test('depart-form shows not-found result when markDeparted returns not-found', async () => {
+  mockMarkDeparted.mockResolvedValue('not-found');
+  render(<PrivacyScreen role="admin" />, wrap('admin'));
+  fireEvent.change(screen.getByTestId('depart-ref-input'), { target: { value: 'H999' } });
+  fireEvent.submit(screen.getByTestId('depart-form'));
+  await waitFor(() => screen.getByTestId('depart-result'));
+  expect(screen.getByTestId('depart-result').textContent).toContain('not found');
+});
+
 test('purge-btn calls purgeExpired and shows deleted count', async () => {
   mockPurgeExpired.mockResolvedValue({ deleted: 5 });
   render(<PrivacyScreen role="admin" />, wrap('admin'));

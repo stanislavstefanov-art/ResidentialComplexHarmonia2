@@ -52,6 +52,14 @@ describe('PrivacyService', () => {
     expect(result).toBe('ok');
   });
 
+  it('PUT /directory/{ref}/departed returns not-found on 404', () => {
+    let result: string | undefined;
+    svc.markDeparted('H999').subscribe(v => (result = v));
+    const req = http.expectOne('http://localhost:5000/directory/H999/departed');
+    req.flush('', { status: 404, statusText: 'Not Found' });
+    expect(result).toBe('not-found');
+  });
+
   it('DELETE /directory/purge-expired returns deleted count', () => {
     let result: { deleted: number } | undefined;
     svc.purgeExpired().subscribe(v => (result = v));

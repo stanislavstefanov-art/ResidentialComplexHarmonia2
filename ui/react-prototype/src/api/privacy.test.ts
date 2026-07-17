@@ -37,6 +37,12 @@ test('markDeparted calls PUT /directory/{ref}/departed and returns ok', async ()
   expect(result).toBe('ok');
 });
 
+test('markDeparted returns not-found for 404', async () => {
+  (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 404 });
+  const result = await markDeparted('H999');
+  expect(result).toBe('not-found');
+});
+
 test('purgeExpired calls DELETE /directory/purge-expired and returns count', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ deleted: 3 }) });
   const result = await purgeExpired();

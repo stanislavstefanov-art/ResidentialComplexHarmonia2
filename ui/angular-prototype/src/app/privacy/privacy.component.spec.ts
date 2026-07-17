@@ -104,6 +104,45 @@ describe('PrivacyComponent', () => {
     expect(el.querySelector('[data-testid="erase-result"]')).not.toBeNull();
   });
 
+  it('onMarkDeparted calls markDeparted and shows ok result', async () => {
+    const departFn = vi.fn().mockReturnValue(of('ok'));
+    const fixture = await setup({
+      eraseMyContact: () => of(undefined),
+      eraseContact: () => of('erased'),
+      markDeparted: departFn,
+      purgeExpired: () => of({ deleted: 0 }),
+    }, 'admin');
+    fixture.componentInstance.departRef = 'H001';
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = el.querySelector<HTMLButtonElement>('[data-testid="depart-btn"]');
+    btn?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(departFn).toHaveBeenCalledOnce();
+    expect(el.querySelector('[data-testid="depart-result"]')).not.toBeNull();
+  });
+
+  it('onMarkDeparted shows not-found result when household does not exist', async () => {
+    const departFn = vi.fn().mockReturnValue(of('not-found'));
+    const fixture = await setup({
+      eraseMyContact: () => of(undefined),
+      eraseContact: () => of('erased'),
+      markDeparted: departFn,
+      purgeExpired: () => of({ deleted: 0 }),
+    }, 'admin');
+    fixture.componentInstance.departRef = 'H999';
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = el.querySelector<HTMLButtonElement>('[data-testid="depart-btn"]');
+    btn?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="depart-result"]')?.textContent).toContain('not found');
+  });
+
   it('onPurgeExpired calls purgeExpired and shows deleted count', async () => {
     const purgeFn = vi.fn().mockReturnValue(of({ deleted: 3 }));
     const fixture = await setup({
