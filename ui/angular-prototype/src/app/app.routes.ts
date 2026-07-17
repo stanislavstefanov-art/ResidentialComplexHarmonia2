@@ -7,6 +7,7 @@ import { MaintenanceFeeComponent } from './maintenance-fees/maintenance-fee.comp
 import { PaymentComponent } from './payments/payment.component';
 import { NotificationComponent } from './notifications/notification.component';
 import { PrivacyComponent } from './privacy/privacy.component';
+import { ContactEditComponent } from './contact-edit/contact-edit.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'directory', pathMatch: 'full' },
@@ -18,4 +19,5 @@ export const routes: Routes = [
   { path: 'payments', component: PaymentComponent },
   { path: 'notifications', component: NotificationComponent },
   { path: 'privacy', component: PrivacyComponent },
+  { path: 'contact-edit', component: ContactEditComponent },
 ];
