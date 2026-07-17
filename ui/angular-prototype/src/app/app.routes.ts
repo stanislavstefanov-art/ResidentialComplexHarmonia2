@@ -3,6 +3,7 @@ import { DirectoryListComponent } from './directory/directory-list.component';
 import { ReservationsComponent } from './reservations/reservations.component';
 import { FinancialComponent } from './financial/financial.component';
 import { ExpenseComponent } from './expenses/expense.component';
+import { MaintenanceFeeComponent } from './maintenance-fees/maintenance-fee.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'directory', pathMatch: 'full' },
@@ -10,4 +11,5 @@ export const routes: Routes = [
   { path: 'reservations', component: ReservationsComponent },
   { path: 'financial', component: FinancialComponent },
   { path: 'expenses', component: ExpenseComponent },
+  { path: 'maintenance-fees', component: MaintenanceFeeComponent },
 ];

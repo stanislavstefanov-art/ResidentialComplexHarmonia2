@@ -39,6 +39,7 @@ function formatEur(n: number): string {
         <a routerLink="/reservations" class="nav-link">Reservations</a>
         <a routerLink="/financial" class="nav-link nav-active">Finance</a>
         <a routerLink="/expenses" class="nav-link">Expenses</a>
+        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
       </header>
 
       <main class="harmonia-content">
