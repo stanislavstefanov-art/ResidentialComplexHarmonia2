@@ -105,7 +105,7 @@ export default function PaymentsScreen({ role }: Props) {
             >
               <TextField
                 label="Household Ref"
-                inputProps={{ 'aria-label': 'Household Ref' }}
+                slotProps={{ htmlInput: { 'aria-label': 'Household Ref' } }}
                 value={householdRef}
                 onChange={e => setHouseholdRef(e.target.value)}
                 required
@@ -114,7 +114,7 @@ export default function PaymentsScreen({ role }: Props) {
               />
               <TextField
                 label="Amount (€)"
-                inputProps={{ step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' }}
+                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' } }}
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
@@ -128,7 +128,7 @@ export default function PaymentsScreen({ role }: Props) {
                 onChange={e => setPeriod(e.target.value)}
                 required
                 size="small"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
                 label="Date received"
@@ -137,7 +137,7 @@ export default function PaymentsScreen({ role }: Props) {
                 onChange={e => setDateReceived(e.target.value)}
                 required
                 size="small"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Button data-testid="submit-btn" type="submit" variant="contained" disabled={submitting}>

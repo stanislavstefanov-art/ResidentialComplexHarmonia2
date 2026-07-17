@@ -27,12 +27,12 @@ test('eraseContact returns not-found for 404', async () => {
   expect(result).toBe('not-found');
 });
 
-test('markDeparted calls PUT /directory/{ref}/departed and returns ok', async () => {
+test('markDeparted calls DELETE /directory/{ref}/departed and returns ok', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200 });
   const result = await markDeparted('H001');
   expect(global.fetch).toHaveBeenCalledWith(
     'http://localhost:5000/directory/H001/departed',
-    expect.objectContaining({ method: 'PUT' }),
+    expect.objectContaining({ method: 'DELETE' }),
   );
   expect(result).toBe('ok');
 });

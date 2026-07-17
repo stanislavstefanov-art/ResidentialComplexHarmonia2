@@ -93,7 +93,7 @@ export default function ExpensesScreen({ role }: Props) {
               <TextField
                 label="Amount (€)"
                 type="number"
-                inputProps={{ step: '0.01', min: '0.01' }}
+                slotProps={{ htmlInput: { step: '0.01', min: '0.01' } }}
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 required
@@ -122,7 +122,7 @@ export default function ExpensesScreen({ role }: Props) {
                 onChange={e => setExpDate(e.target.value)}
                 required
                 size="small"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <Button
                 data-testid="submit-btn"
