@@ -52,6 +52,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
         <a routerLink="/payments" class="nav-link">Payments</a>
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
+        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
         <span class="role-label">View as:</span>
         <p-selectbutton
           [options]="roleOptions"

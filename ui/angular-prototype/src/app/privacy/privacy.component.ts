@@ -25,6 +25,7 @@ import { PurgeExpiredResult } from './models';
         <a routerLink="/payments" class="nav-link">Payments</a>
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link nav-active">Privacy</a>
+        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">Admin</button>

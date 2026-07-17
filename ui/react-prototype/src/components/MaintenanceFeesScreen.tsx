@@ -91,7 +91,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
             >
               <TextField
                 label="Household Ref"
-                inputProps={{ 'aria-label': 'Household Ref' }}
+                slotProps={{ htmlInput: { 'aria-label': 'Household Ref' } }}
                 value={householdRef}
                 onChange={e => setHouseholdRef(e.target.value)}
                 required
@@ -100,7 +100,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
               />
               <TextField
                 label="Amount (€)"
-                inputProps={{ step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' }}
+                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' } }}
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
@@ -120,7 +120,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
                 onChange={e => setPeriod(e.target.value)}
                 required
                 size="small"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <Button
                 data-testid="submit-btn"

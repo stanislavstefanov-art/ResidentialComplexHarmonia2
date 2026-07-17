@@ -77,7 +77,7 @@ export default function NotificationsScreen({ role }: Props) {
             >
               <TextField
                 label="Title"
-                inputProps={{ 'aria-label': 'Title' }}
+                slotProps={{ htmlInput: { 'aria-label': 'Title' } }}
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 required
@@ -86,7 +86,7 @@ export default function NotificationsScreen({ role }: Props) {
               />
               <TextField
                 label="Body"
-                inputProps={{ 'aria-label': 'Body' }}
+                slotProps={{ htmlInput: { 'aria-label': 'Body' } }}
                 value={body}
                 onChange={e => setBody(e.target.value)}
                 required

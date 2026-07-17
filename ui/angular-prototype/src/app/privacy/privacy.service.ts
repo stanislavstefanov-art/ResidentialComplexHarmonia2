@@ -28,10 +28,10 @@ export class PrivacyService {
       );
   }
 
-  /** Board sets departure date on a household. 200 = ok, 404 = not found. */
+  /** Board sets departure date on a household. DELETE 200 = ok, 404 = not found. */
   markDeparted(householdRef: string): Observable<MarkDepartedOutcome> {
     return this.http
-      .put(`${this.base}/directory/${encodeURIComponent(householdRef)}/departed`, null, { responseType: 'text' })
+      .delete(`${this.base}/directory/${encodeURIComponent(householdRef)}/departed`, { responseType: 'text' })
       .pipe(
         map(() => 'ok' as MarkDepartedOutcome),
         catchError(err => {

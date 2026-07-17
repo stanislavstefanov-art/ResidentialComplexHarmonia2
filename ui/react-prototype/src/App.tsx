@@ -12,6 +12,7 @@ import MaintenanceFeesScreen from './components/MaintenanceFeesScreen';
 import NotificationsScreen from './components/NotificationsScreen';
 import PaymentsScreen from './components/PaymentsScreen';
 import PrivacyScreen from './components/PrivacyScreen';
+import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
 
@@ -24,7 +25,7 @@ const theme = createTheme({
   typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
 });
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy';
+type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit';
 
 function App() {
   const [role, setRole] = useState<Role>('resident');
@@ -61,8 +62,9 @@ function App() {
             <Tab label="Payments" value="payments" />
             <Tab label="Notifications" value="notifications" />
             <Tab label="Privacy" value="privacy" />
+            <Tab label="Edit Contact" value="contact-edit" />
           </Tabs>
-          {(screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy') && (
+          {(screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy' || screen === 'contact-edit') && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
                 View as:
@@ -101,7 +103,7 @@ function App() {
       </AppBar>
       <Box
         sx={{
-          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy') && role === 'admin' ? 1200 : 900,
+          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy' || screen === 'contact-edit') && role === 'admin' ? 1200 : 900,
           mx: 'auto',
           px: 2,
           py: 4,
@@ -116,6 +118,7 @@ function App() {
         {screen === 'payments' && <PaymentsScreen role={role} />}
         {screen === 'notifications' && <NotificationsScreen role={role} />}
         {screen === 'privacy' && <PrivacyScreen role={role} />}
+        {screen === 'contact-edit' && <ContactEditScreen role={role} />}
       </Box>
     </ThemeProvider>
   );

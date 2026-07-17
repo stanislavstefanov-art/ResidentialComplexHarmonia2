@@ -38,6 +38,7 @@ function currentMonth(): string {
         <a routerLink="/payments" class="nav-link nav-active">Payments</a>
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
+        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>

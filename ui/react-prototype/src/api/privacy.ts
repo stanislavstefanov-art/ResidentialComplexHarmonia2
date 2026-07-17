@@ -13,7 +13,7 @@ export async function eraseContact(householdRef: string): Promise<'erased' | 'no
 }
 
 export async function markDeparted(householdRef: string): Promise<'ok' | 'not-found'> {
-  const res = await fetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/departed`, { method: 'PUT' });
+  const res = await fetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/departed`, { method: 'DELETE' });
   if (res.ok) return 'ok';
   if (res.status === 404) return 'not-found';
   throw new Error(`markDeparted failed: ${res.status}`);

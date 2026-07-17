@@ -43,16 +43,16 @@ describe('PrivacyService', () => {
     expect(result).toBe('not-found');
   });
 
-  it('PUT /directory/{ref}/departed marks household as departed', () => {
+  it('DELETE /directory/{ref}/departed marks household as departed', () => {
     let result: string | undefined;
     svc.markDeparted('H001').subscribe(v => (result = v));
     const req = http.expectOne('http://localhost:5000/directory/H001/departed');
-    expect(req.request.method).toBe('PUT');
+    expect(req.request.method).toBe('DELETE');
     req.flush('', { status: 200, statusText: 'OK' });
     expect(result).toBe('ok');
   });
 
-  it('PUT /directory/{ref}/departed returns not-found on 404', () => {
+  it('DELETE /directory/{ref}/departed returns not-found on 404', () => {
     let result: string | undefined;
     svc.markDeparted('H999').subscribe(v => (result = v));
     const req = http.expectOne('http://localhost:5000/directory/H999/departed');
