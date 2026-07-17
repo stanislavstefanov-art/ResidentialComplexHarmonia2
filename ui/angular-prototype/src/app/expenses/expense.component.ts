@@ -26,6 +26,7 @@ function formatEur(n: number): string {
         <a routerLink="/reservations" class="nav-link">Reservations</a>
         <a routerLink="/financial" class="nav-link">Finance</a>
         <a routerLink="/expenses" class="nav-link nav-active">Expenses</a>
+        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
         <span class="role-toggle">
           <button
             [class.role-active]="role === 'resident'"
