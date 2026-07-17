@@ -50,6 +50,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
         <a routerLink="/expenses" class="nav-link">Expenses</a>
         <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
         <a routerLink="/payments" class="nav-link">Payments</a>
+        <a routerLink="/notifications" class="nav-link">Notifications</a>
         <span class="role-label">View as:</span>
         <p-selectbutton
           [options]="roleOptions"
