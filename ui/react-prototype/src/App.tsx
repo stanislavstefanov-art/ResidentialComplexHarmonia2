@@ -11,6 +11,7 @@ import FinancialScreen from './components/FinancialScreen';
 import MaintenanceFeesScreen from './components/MaintenanceFeesScreen';
 import NotificationsScreen from './components/NotificationsScreen';
 import PaymentsScreen from './components/PaymentsScreen';
+import PrivacyScreen from './components/PrivacyScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
 
@@ -23,7 +24,7 @@ const theme = createTheme({
   typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
 });
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications';
+type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy';
 
 function App() {
   const [role, setRole] = useState<Role>('resident');
@@ -59,8 +60,9 @@ function App() {
             <Tab label="Fees" value="fees" />
             <Tab label="Payments" value="payments" />
             <Tab label="Notifications" value="notifications" />
+            <Tab label="Privacy" value="privacy" />
           </Tabs>
-          {(screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications') && (
+          {(screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy') && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
                 View as:
@@ -99,7 +101,7 @@ function App() {
       </AppBar>
       <Box
         sx={{
-          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications') && role === 'admin' ? 1200 : 900,
+          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy') && role === 'admin' ? 1200 : 900,
           mx: 'auto',
           px: 2,
           py: 4,
@@ -113,6 +115,7 @@ function App() {
         {screen === 'fees' && <MaintenanceFeesScreen role={role} />}
         {screen === 'payments' && <PaymentsScreen role={role} />}
         {screen === 'notifications' && <NotificationsScreen role={role} />}
+        {screen === 'privacy' && <PrivacyScreen role={role} />}
       </Box>
     </ThemeProvider>
   );

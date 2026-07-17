@@ -41,6 +41,7 @@ import { Slot } from './models';
         <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
         <a routerLink="/payments" class="nav-link">Payments</a>
         <a routerLink="/notifications" class="nav-link">Notifications</a>
+        <a routerLink="/privacy" class="nav-link">Privacy</a>
       </header>
 
       <main class="harmonia-content">
