@@ -48,11 +48,26 @@ acceptance criteria, enabling a direct comparison.
 
 ## Consequences
 
-- Angular prototype lives under `ui/angular-prototype/`.
-- React prototype lives under `ui/react-prototype/`.
+- Angular app lives under `ui/angular-prototype/`.
+- React app lives under `ui/react-prototype/`.
 - Both connect to the Harmonia API (`GET /directory`, `PUT /directory/contact`,
   `PUT /directory/contact` with `isOptedOut`) running locally.
-- Neither prototype is production-grade; no auth integration, no error boundary, no CI pipeline.
+- Neither app has auth integration or error boundaries yet.
 - Framework selection for a full UI build is a separate decision, recorded in a future ADR after
-  both prototypes are reviewed.
+  both apps are reviewed.
 - The Blazor WASM frontend (separate repo) is unaffected by this exercise.
+
+---
+
+## Amendment — 2026-07-17
+
+**Status:** Amended
+
+The scope of both Angular and React apps has grown well beyond the original member-directory
+comparison. As of 2026-07-17, both apps implement the full resident/admin feature set across
+Reservations, Maintenance Fees, Expenses, Payments, Notifications, Privacy (GDPR), Financial
+Summary, and Contact Edit screens.
+
+**Decision:** Include both apps in the Azure CI/CD pipeline (GitHub Actions → Azure Static Web
+Apps). This supersedes the "no CI pipeline" consequence recorded above. The apps are treated as
+production-ready screens for the purposes of deployment.
