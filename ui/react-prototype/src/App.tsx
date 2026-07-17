@@ -9,6 +9,7 @@ import DirectoryList from './components/DirectoryList';
 import ExpensesScreen from './components/ExpensesScreen';
 import FinancialScreen from './components/FinancialScreen';
 import MaintenanceFeesScreen from './components/MaintenanceFeesScreen';
+import PaymentsScreen from './components/PaymentsScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
 
@@ -21,7 +22,7 @@ const theme = createTheme({
   typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
 });
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees';
+type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments';
 
 function App() {
   const [role, setRole] = useState<Role>('resident');
@@ -55,8 +56,9 @@ function App() {
             <Tab label="Finance" value="financial" />
             <Tab label="Expenses" value="expenses" />
             <Tab label="Fees" value="fees" />
+            <Tab label="Payments" value="payments" />
           </Tabs>
-          {(screen === 'directory' || screen === 'expenses' || screen === 'fees') && (
+          {(screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments') && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
                 View as:
@@ -95,7 +97,7 @@ function App() {
       </AppBar>
       <Box
         sx={{
-          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees') && role === 'admin' ? 1200 : 900,
+          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments') && role === 'admin' ? 1200 : 900,
           mx: 'auto',
           px: 2,
           py: 4,
@@ -107,6 +109,7 @@ function App() {
         {screen === 'financial' && <FinancialScreen />}
         {screen === 'expenses' && <ExpensesScreen role={role} />}
         {screen === 'fees' && <MaintenanceFeesScreen role={role} />}
+        {screen === 'payments' && <PaymentsScreen role={role} />}
       </Box>
     </ThemeProvider>
   );
