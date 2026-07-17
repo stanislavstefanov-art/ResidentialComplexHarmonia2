@@ -99,7 +99,7 @@ function App() {
       </AppBar>
       <Box
         sx={{
-          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments') && role === 'admin' ? 1200 : 900,
+          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications') && role === 'admin' ? 1200 : 900,
           mx: 'auto',
           px: 2,
           py: 4,

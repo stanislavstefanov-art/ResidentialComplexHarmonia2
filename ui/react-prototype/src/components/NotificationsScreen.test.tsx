@@ -42,6 +42,31 @@ test('hides announce form for resident role', async () => {
   expect(screen.queryByTestId('announce-form')).not.toBeInTheDocument();
 });
 
+test('shows error state when getHistory fails', async () => {
+  mockGetHistory.mockRejectedValue(new Error('network error'));
+  render(<NotificationsScreen role="resident" />, wrap('resident'));
+  await waitFor(() => screen.getByText(/Could not load notifications/i));
+  expect(screen.getByText(/Could not load notifications/i)).toBeInTheDocument();
+});
+
+test('renders empty state when no notifications', async () => {
+  mockGetHistory.mockResolvedValue([]);
+  render(<NotificationsScreen role="resident" />, wrap('resident'));
+  await waitFor(() => screen.getByText(/No notifications on record/i));
+  expect(screen.getByText(/No notifications on record/i)).toBeInTheDocument();
+});
+
+test('shows submit-error when sendAnnouncement fails', async () => {
+  mockSendAnnouncement.mockRejectedValue(new Error('server error'));
+  render(<NotificationsScreen role="admin" />, wrap('admin'));
+  await waitFor(() => screen.getByTestId('announce-form'));
+  fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Test Title' } });
+  fireEvent.change(screen.getByLabelText(/Body/i), { target: { value: 'Test body text' } });
+  fireEvent.submit(screen.getByTestId('announce-form'));
+  await waitFor(() => screen.getByTestId('submit-error'));
+  expect(screen.getByTestId('submit-error')).toBeInTheDocument();
+});
+
 test('submit calls sendAnnouncement and reloads list', async () => {
   mockGetHistory.mockResolvedValue([NOTIFICATION]);
   render(<NotificationsScreen role="admin" />, wrap('admin'));
