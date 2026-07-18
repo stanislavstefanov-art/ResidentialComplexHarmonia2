@@ -1,4 +1,6 @@
-const BASE = 'http://localhost:5000';
+import { API_BASE } from './config';
+
+const BASE = API_BASE;
 
 export async function eraseMyContact(): Promise<void> {
   const res = await fetch(`${BASE}/directory/contact`, { method: 'DELETE' });

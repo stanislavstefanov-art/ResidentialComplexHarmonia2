@@ -1,6 +1,7 @@
+import { API_BASE } from './config';
 import { NotificationRecordDto, AnnouncementRequest } from '../types';
 
-const BASE = 'http://localhost:5000';
+const BASE = API_BASE;
 
 export async function getHistory(): Promise<NotificationRecordDto[]> {
   const res = await fetch(`${BASE}/notifications`);

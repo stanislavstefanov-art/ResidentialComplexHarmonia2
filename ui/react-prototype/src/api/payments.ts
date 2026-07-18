@@ -1,6 +1,7 @@
+import { API_BASE } from './config';
 import { PaymentDto, RecordPaymentRequest, BalanceDto } from '../types';
 
-const BASE = 'http://localhost:5000';
+const BASE = API_BASE;
 
 export async function getMyPayments(): Promise<PaymentDto[]> {
   const res = await fetch(`${BASE}/payments`);

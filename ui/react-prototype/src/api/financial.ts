@@ -1,6 +1,7 @@
+import { API_BASE } from './config';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from '../types';
 
-const BASE = 'http://localhost:5000';
+const BASE = API_BASE;
 
 export async function getPeriodSummary(period: string): Promise<PeriodSummaryDto> {
   const res = await fetch(`${BASE}/financial-summary?period=${period}`);
