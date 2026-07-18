@@ -1,3 +1,4 @@
+@minLength(2)
 param namePrefix string
 param location string
 param identityPrincipalId string
