@@ -9,7 +9,6 @@ $ErrorActionPreference = 'Stop'
 # ── Constants ────────────────────────────────────────────────────────────────
 $ResourceGroup  = 'rg-residence-harmonia-prod'
 $Location       = 'westeurope'
-$KeyVaultName   = 'harmoniakv'
 $AngularSwaName = 'harmonia-angular-swa'
 $ReactSwaName   = 'harmonia-react-swa'
 $DeploymentName = 'harmonia-main'
@@ -58,10 +57,15 @@ try {
 # ── Phase 1: Collect inputs ───────────────────────────────────────────────────
 Write-Phase 'Phase 1: Collecting inputs'
 
-$SqlAdminPasswordSecure = Read-Host 'SQL admin password' -AsSecureString
-$VapidSubject           = Read-Host 'VAPID subject (e.g. mailto:ops@harmonia.example)'
-$AcsConnectionString    = Read-Host 'ACS connection string'
-$AcsSenderAddress       = Read-Host 'ACS sender address'
+try {
+    $SqlAdminPasswordSecure = Read-Host 'SQL admin password' -AsSecureString
+    $VapidSubject           = Read-Host 'VAPID subject (e.g. mailto:ops@harmonia.example)'
+    $AcsConnectionString    = Read-Host 'ACS connection string'
+    $AcsSenderAddress       = Read-Host 'ACS sender address'
+} catch {
+    Write-Error "Phase 1 (collect inputs) failed: $_"
+    throw
+}
 
 # ── Phase 2: Bicep deployment ─────────────────────────────────────────────────
 Write-Phase 'Phase 2: Deploying infrastructure (this may take several minutes)'
