@@ -52,7 +52,7 @@ jobs:
             harmoniaacr.azurecr.io/harmonia-api:latest
 
   deploy-api:
-    needs: [build-push-api]
+    needs: [build-push-api, run-schema]
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -133,3 +133,51 @@ jobs:
           app_location: ui/react-prototype
           output_location: build
           skip_app_build: true
+
+  run-schema:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install sqlcmd
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+            | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
+          curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list \
+            | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
+          sudo apt-get update -q
+          sudo ACCEPT_EULA=Y apt-get install -yq mssql-tools18 unixodbc
+          echo '/opt/mssql-tools18/bin' >> "$GITHUB_PATH"
+
+      - name: Apply schema
+        run: |
+          CONN_STR=$(az keyvault secret show \
+            --vault-name harmoniakv \
+            --name ConnectionStrings--Default \
+            --query value -o tsv)
+          echo "::add-mask::$CONN_STR"
+
+          SQL_SERVER=$(CONN_VAR="$CONN_STR" python3 -c \
+            "import os; cs=os.environ['CONN_VAR']; d={p.split('=',1)[0].strip():p.split('=',1)[1].strip() for p in cs.rstrip(';').split(';') if '=' in p}; print(d['Server'].replace('tcp:','').rsplit(',',1)[0])")
+
+          SQL_PASS=$(CONN_VAR="$CONN_STR" python3 -c \
+            "import os; cs=os.environ['CONN_VAR']; d={p.split('=',1)[0].strip():p.split('=',1)[1].strip() for p in cs.rstrip(';').split(';') if '=' in p}; print(d['Password'])")
+
+          echo "::add-mask::$SQL_PASS"
+
+          SQLCMDPASSWORD="$SQL_PASS" sqlcmd \
+            -S "$SQL_SERVER" \
+            -d harmonia-db \
+            -U harmonia-admin \
+            -i db/schema.sql \
+            -b
