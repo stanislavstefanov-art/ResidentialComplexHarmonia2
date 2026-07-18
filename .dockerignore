@@ -1,0 +1,11 @@
+.claude/
+.git/
+ui/angular-prototype/node_modules/
+ui/react-prototype/node_modules/
+**/bin/
+**/obj/
+docs/
+*.md
+.gitignore
+.gitattributes
+dev-start.ps1
