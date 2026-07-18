@@ -25,63 +25,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Development.local.json", optional: true);
 
 // The store connection comes from config/env only — never committed (CLAUDE.md).
-var connectionString = builder.Configuration.GetConnectionString("Reservations");
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:Reservations is not configured. Supply it via environment " +
-        "(ConnectionStrings__Reservations) or a git-ignored local config file.");
-}
+var defaultConn = builder.Configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:Default is not configured. Supply it via environment " +
+        "(ConnectionStrings__Default) or a git-ignored local config file.");
 
-builder.Services.AddSingleton<IReservationStore>(new SqlReservationStore(connectionString));
+builder.Services.AddSingleton<IReservationStore>(new SqlReservationStore(defaultConn));
 builder.Services.AddSingleton<ISlotGrid>(new ConfigSlotGrid(
     builder.Configuration.GetSection("SlotGrid:SlotKeys").Get<string[]>() ?? ["DAY"]));
-
-var feeConnString = builder.Configuration.GetConnectionString("MaintenanceFees");
-if (string.IsNullOrWhiteSpace(feeConnString))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:MaintenanceFees is not configured. Supply it via environment " +
-        "(ConnectionStrings__MaintenanceFees) or a git-ignored local config file.");
-}
-builder.Services.AddSingleton<IMaintenanceFeeStore>(new SqlMaintenanceFeeStore(feeConnString));
-
-var expConnString = builder.Configuration.GetConnectionString("Expenses");
-if (string.IsNullOrWhiteSpace(expConnString))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:Expenses is not configured. Supply it via environment " +
-        "(ConnectionStrings__Expenses) or a git-ignored local config file.");
-}
-builder.Services.AddSingleton<IExpenseStore>(new SqlExpenseStore(expConnString));
-
-var payConnString = builder.Configuration.GetConnectionString("Payments");
-if (string.IsNullOrWhiteSpace(payConnString))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:Payments is not configured. Supply it via environment " +
-        "(ConnectionStrings__Payments) or a git-ignored local config file.");
-}
-builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(payConnString));
-
-// ── Notifications ─────────────────────────────────────────────────────────
-var notifConnString = builder.Configuration.GetConnectionString("Notifications");
-if (string.IsNullOrWhiteSpace(notifConnString))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:Notifications is not configured. Supply it via environment " +
-        "(ConnectionStrings__Notifications) or a git-ignored local config file.");
-}
-builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(notifConnString));
-
-var dirConnString = builder.Configuration.GetConnectionString("Directory");
-if (string.IsNullOrWhiteSpace(dirConnString))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:Directory is not configured. Supply it via environment " +
-        "(ConnectionStrings__Directory) or a git-ignored local config file.");
-}
-builder.Services.AddSingleton<IDirectoryStore>(new SqlDirectoryStore(dirConnString));
+builder.Services.AddSingleton<IMaintenanceFeeStore>(new SqlMaintenanceFeeStore(defaultConn));
+builder.Services.AddSingleton<IExpenseStore>(new SqlExpenseStore(defaultConn));
+builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(defaultConn));
+builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(defaultConn));
+builder.Services.AddSingleton<IDirectoryStore>(new SqlDirectoryStore(defaultConn));
 
 var vapidSubject = builder.Configuration["Vapid:Subject"];
 var vapidPublic  = builder.Configuration["Vapid:PublicKey"];
