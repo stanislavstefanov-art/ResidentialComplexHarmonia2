@@ -2,11 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { UpdateContactRequest } from './models';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ContactEditService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:5000';
+  private readonly base = environment.apiUrl;
 
   /** Resident updates their own contact — householdRef is session-derived (R2). */
   updateMyContact(body: UpdateContactRequest): Observable<void> {

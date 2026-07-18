@@ -6,8 +6,9 @@ import {
   DirectoryListResponse,
   UpdateContactRequest,
 } from '../types';
+import { API_BASE } from './config';
 
-const API = 'http://localhost:5000';
+const API = API_BASE;
 
 export async function getDirectory(): Promise<DirectoryEntry[]> {
   const res = await fetch(`${API}/directory`);

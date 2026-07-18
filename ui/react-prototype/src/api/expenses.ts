@@ -1,6 +1,7 @@
+import { API_BASE } from './config';
 import { ExpenseDto, RecordExpenseRequest } from '../types';
 
-const BASE = 'http://localhost:5000';
+const BASE = API_BASE;
 
 export async function getExpenses(): Promise<ExpenseDto[]> {
   const res = await fetch(`${BASE}/expenses`);

@@ -1,6 +1,7 @@
+import { API_BASE } from './config';
 import { ChargeDto, RecordChargeRequest } from '../types';
 
-const BASE = 'http://localhost:5000';
+const BASE = API_BASE;
 
 export async function getMyCharges(): Promise<ChargeDto[]> {
   const res = await fetch(`${BASE}/maintenance-fees/charges`);

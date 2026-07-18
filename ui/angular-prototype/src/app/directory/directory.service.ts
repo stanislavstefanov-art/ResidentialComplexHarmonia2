@@ -10,8 +10,9 @@ import {
   DirectoryListResponse,
   UpdateContactRequest,
 } from './models';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:5000';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class DirectoryService {

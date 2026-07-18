@@ -57,6 +57,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -94,7 +100,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "buildTarget": "angular-prototype:build",
+            "buildTarget": "angular-prototype:build:development",
             "runner": "vitest",
             "setupFiles": ["src/test-setup.ts"]
           }

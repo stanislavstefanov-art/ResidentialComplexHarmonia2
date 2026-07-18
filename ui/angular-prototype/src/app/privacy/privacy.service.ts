@@ -2,11 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { EraseContactOutcome, MarkDepartedOutcome, PurgeExpiredResult } from './models';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PrivacyService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:5000';
+  private readonly base = environment.apiUrl;
 
   /** Resident Art. 17 self-erase — householdRef is session-derived (R2). */
   eraseMyContact(): Observable<void> {
