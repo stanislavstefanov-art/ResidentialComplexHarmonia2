@@ -23,6 +23,7 @@ $SA_PASSWORD = 'Dev_Password1'
 $DB_NAME     = 'Harmonia'
 $CONTAINER   = 'harmonia-sql'
 $SQLCMD      = '/opt/mssql-tools18/bin/sqlcmd'
+$SQL_PORT    = 14330   # non-default to avoid clash with any existing SQL Server on 1433
 
 function Write-Step([string]$Label) {
     Write-Host "`n$Label" -ForegroundColor Cyan
@@ -38,18 +39,23 @@ function Invoke-SqlCmd([string]$Query, [string]$Database = 'master') {
 # ── 1. SQL Server container ────────────────────────────────────────────────
 Write-Step '[1/5] SQL Server container'
 
+$freshStart = $false
 $state = podman inspect --format '{{.State.Status}}' $CONTAINER 2>$null
 if ($LASTEXITCODE -ne 0) {
     Write-Host '  Container not found — creating...'
     podman run -d --name $CONTAINER `
         -e ACCEPT_EULA=Y `
-        -e MSSQL_SA_PASSWORD=$SA_PASSWORD `
-        -p 127.0.0.1:1433:1433 `
-        mcr.microsoft.com/mssql/server:2022-latest | Out-Null
+        -e "MSSQL_SA_PASSWORD=$SA_PASSWORD" `
+        -p "127.0.0.1:${SQL_PORT}:1433" `
+        mcr.microsoft.com/mssql/server:2022-latest
+    if ($LASTEXITCODE -ne 0) { throw "Failed to create container '$CONTAINER'. See error above." }
+    $freshStart = $true
     Write-Host '  Created.'
 } elseif ($state.Trim() -ne 'running') {
     Write-Host '  Container exists but is stopped — starting...'
     podman start $CONTAINER | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Failed to start container '$CONTAINER'." }
+    $freshStart = $true
     Write-Host '  Started.'
 } else {
     Write-Host '  Already running.'
@@ -58,15 +64,29 @@ if ($LASTEXITCODE -ne 0) {
 # ── 2. Wait for SQL Server to accept connections ───────────────────────────
 Write-Step '[2/5] Waiting for SQL Server'
 
+# On a fresh container, SQL Server sets the SA password during a ~10 s init phase.
+# Connecting before that phase completes produces transient "Login failed" errors.
+if ($freshStart) {
+    Write-Host '  Fresh start — waiting 12 s for SQL Server to initialize...'
+    Start-Sleep 12
+}
+
 $ready = $false
-for ($i = 1; $i -le 30; $i++) {
-    podman exec $CONTAINER $SQLCMD `
-        -S localhost -U sa -P $SA_PASSWORD -No -Q 'SELECT 1' 2>$null | Out-Null
+for ($i = 1; $i -le 60; $i++) {
+    $null = podman exec $CONTAINER $SQLCMD `
+        -S localhost -U sa -P $SA_PASSWORD -No -Q 'SELECT 1' 2>&1
     if ($LASTEXITCODE -eq 0) { $ready = $true; break }
-    Write-Host "  Not ready yet ($i/30) — retrying in 2 s..."
+    Write-Host "  Not ready yet ($i/60) — retrying in 2 s..."
     Start-Sleep 2
 }
-if (-not $ready) { throw 'SQL Server did not become ready within 60 s.' }
+if (-not $ready) {
+    throw @"
+SQL Server did not accept connections after 132 s.
+Possible causes: wrong SA password in an old volume, or container startup failure.
+Diagnose: podman logs $CONTAINER
+Fix:       podman rm -fv $CONTAINER  then re-run this script.
+"@
+}
 Write-Host '  Ready.'
 
 # ── 3. Database + schema ───────────────────────────────────────────────────
@@ -101,7 +121,7 @@ if (Test-Path $LocalConfig) {
         throw 'Could not parse VAPID keys from web-push output.'
     }
 
-    $cs = "Server=127.0.0.1,1433;Database=$DB_NAME;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True;"
+    $cs = "Server=127.0.0.1,$SQL_PORT;Database=$DB_NAME;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True;"
 
     @{
         ConnectionStrings = @{

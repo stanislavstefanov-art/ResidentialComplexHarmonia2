@@ -106,6 +106,14 @@ if (string.IsNullOrWhiteSpace(acsConnStr) || string.IsNullOrWhiteSpace(acsSender
 }
 var acsConfig = new AcsEmailConfig(acsConnStr, acsSender);
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
+
 builder.Services.AddSingleton<INotificationDispatcher>(sp =>
     new VapidPushDispatcher(
         sp.GetRequiredService<INotificationStore>(),
@@ -166,6 +174,8 @@ if (!app.Environment.IsDevelopment())
     app.UseAuthentication();
     app.UseAuthorization();
 }
+
+app.UseCors();
 
 app.MapGet(
     "/days/{day}/slots",
@@ -315,5 +325,7 @@ app.MapDelete(
         DirectoryEndpoints.PurgeExpiredContactsEndpoint(
             uc, loggers.CreateLogger("Directory"), ct))
    .RequireAuthorization();
+
+app.MapGet("/healthz", () => Results.Ok());
 
 app.Run();
