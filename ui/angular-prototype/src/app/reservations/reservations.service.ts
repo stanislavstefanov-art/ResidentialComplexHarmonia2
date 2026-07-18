@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ClaimResponse, DaySlotsResponse } from './models';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:5000';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class ReservationsService {
