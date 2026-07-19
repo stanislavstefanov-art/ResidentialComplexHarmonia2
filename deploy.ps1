@@ -65,8 +65,6 @@ Write-Phase 'Phase 1: Collecting inputs'
 try {
     $SqlAdminPasswordSecure = Read-Host 'SQL admin password' -AsSecureString
     $VapidSubject           = Read-Host 'VAPID subject (e.g. mailto:ops@harmonia.example)'
-    $AcsConnectionString    = Read-Host 'ACS connection string'
-    $AcsSenderAddress       = Read-Host 'ACS sender address'
 } catch {
     Write-Error "Phase 1 (collect inputs) failed: $_"
     throw
@@ -153,16 +151,7 @@ if ($skipVapid) {
     }
 }
 
-try {
-    az keyvault secret set --vault-name $kvName --name 'Acs--ConnectionString' --value $AcsConnectionString --output none
-    Assert-NativeSuccess 'az keyvault secret set Acs--ConnectionString'
-    az keyvault secret set --vault-name $kvName --name 'Acs--SenderAddress'    --value $AcsSenderAddress    --output none
-    Assert-NativeSuccess 'az keyvault secret set Acs--SenderAddress'
-    Write-Ok '2 ACS secrets written'
-} catch {
-    Write-Error "Phase 3 (ACS secrets) failed: $_"
-    throw
-}
+Write-Ok 'ACS secrets written by Bicep deployment'
 
 # ── Phase 4: GitHub secrets ───────────────────────────────────────────────────
 Write-Phase 'Phase 4: Setting GitHub secrets'
