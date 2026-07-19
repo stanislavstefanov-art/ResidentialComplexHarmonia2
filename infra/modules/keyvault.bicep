@@ -6,6 +6,12 @@ param sqlAdminPassword string
 param serverFqdn string
 param databaseName string
 param identityPrincipalId string
+@secure()
+param vapidSubject string
+@secure()
+param vapidPublicKey string
+@secure()
+param vapidPrivateKey string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: '${namePrefix}kv'
@@ -41,6 +47,24 @@ resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =
     principalId: identityPrincipalId
     principalType: 'ServicePrincipal'
   }
+}
+
+resource vapidSubjectSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Vapid--Subject'
+  properties: { value: vapidSubject }
+}
+
+resource vapidPublicKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Vapid--PublicKey'
+  properties: { value: vapidPublicKey }
+}
+
+resource vapidPrivateKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Vapid--PrivateKey'
+  properties: { value: vapidPrivateKey }
 }
 
 output keyVaultName string = keyVault.name

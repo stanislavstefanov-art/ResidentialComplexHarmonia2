@@ -11,6 +11,7 @@ $ResourceGroup  = 'rg-residence-harmonia-prod'
 $Location       = 'westeurope'
 $AngularSwaName = 'residenceharmonia-angular-swa'
 $ReactSwaName   = 'residenceharmonia-react-swa'
+$KeyVaultName   = 'residenceharmoniakv'
 $DeploymentName = 'harmonia-main'
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -73,15 +74,60 @@ try {
 # ── Phase 2: Bicep deployment ─────────────────────────────────────────────────
 Write-Phase 'Phase 2: Deploying infrastructure (this may take several minutes)'
 
+# VAPID keys must exist in Key Vault before the Container App revision is created,
+# so we generate (or re-read) them here and pass as Bicep secure parameters.
+az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey' --output none 2>&1 | Out-Null
+$vapidExists = ($LASTEXITCODE -eq 0)
+
+if ($vapidExists -and (-not $Force)) {
+    Write-Host '  Reading existing VAPID keys from Key Vault (use -Force to regenerate).' -ForegroundColor Yellow
+    try {
+        $vapidPublicKey  = az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey'  --query value -o tsv
+        Assert-NativeSuccess 'az keyvault secret show (Vapid--PublicKey)'
+        $vapidPrivateKey = az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PrivateKey' --query value -o tsv
+        Assert-NativeSuccess 'az keyvault secret show (Vapid--PrivateKey)'
+    } catch {
+        Write-Error "Failed to read existing VAPID keys from Key Vault: $_"
+        throw
+    }
+} else {
+    try {
+        $ecdsa  = [System.Security.Cryptography.ECDsa]::Create(
+                      [System.Security.Cryptography.ECCurve]::NamedCurves.nistP256)
+        $ecParams = $ecdsa.ExportParameters($true)
+        $ecdsa.Dispose()
+
+        $buf = [System.Collections.Generic.List[byte]]::new()
+        $buf.Add([byte]0x04)
+        $buf.AddRange([byte[]]$ecParams.Q.X)
+        $buf.AddRange([byte[]]$ecParams.Q.Y)
+        $publicKeyBytes  = $buf.ToArray()
+        $privateKeyBytes = [byte[]]$ecParams.D
+
+        $vapidPublicKey  = ConvertTo-Base64Url $publicKeyBytes
+        $vapidPrivateKey = ConvertTo-Base64Url $privateKeyBytes
+        Remove-Variable publicKeyBytes, privateKeyBytes -ErrorAction SilentlyContinue
+        Write-Ok 'VAPID keys generated'
+    } catch {
+        Write-Error "VAPID key generation failed: $_"
+        throw
+    }
+}
+
 $tmpParam = $null
 try {
-    $sqlPass   = ConvertFrom-SecureString $SqlAdminPasswordSecure -AsPlainText
-    $paramObj  = @{
+    $sqlPass  = ConvertFrom-SecureString $SqlAdminPasswordSecure -AsPlainText
+    $paramObj = @{
         '$schema'      = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#'
         contentVersion = '1.0.0.0'
-        parameters     = @{ sqlAdminPassword = @{ value = $sqlPass } }
+        parameters     = @{
+            sqlAdminPassword = @{ value = $sqlPass }
+            vapidSubject     = @{ value = $VapidSubject }
+            vapidPublicKey   = @{ value = $vapidPublicKey }
+            vapidPrivateKey  = @{ value = $vapidPrivateKey }
+        }
     }
-    Remove-Variable sqlPass
+    Remove-Variable sqlPass, vapidPrivateKey -ErrorAction SilentlyContinue
     $tmpParam = [System.IO.Path]::GetTempFileName() + '.json'
     ConvertTo-Json $paramObj -Depth 5 -Compress | Set-Content -Path $tmpParam -Encoding utf8
     Remove-Variable paramObj
@@ -108,53 +154,10 @@ if ([string]::IsNullOrWhiteSpace($clientId)) {
     throw "Deployment did not return 'managedIdentityClientId' output — check infra/main.bicep outputs."
 }
 Write-Ok "Deployment complete. Key Vault: $kvName, Client ID: $clientId"
+Write-Ok 'All secrets (VAPID + ACS + SQL connection string) written by Bicep'
 
-# ── Phase 3: Key Vault secrets ────────────────────────────────────────────────
-Write-Phase 'Phase 3: Populating Key Vault secrets'
-
-az keyvault secret show --vault-name $kvName --name 'Vapid--PublicKey' --output none 2>&1 | Out-Null
-$skipVapid = ($LASTEXITCODE -eq 0) -and (-not $Force)
-
-if ($skipVapid) {
-    Write-Host '  VAPID secrets already present. Use -Force to regenerate.' -ForegroundColor Yellow
-} else {
-    try {
-        $ecdsa  = [System.Security.Cryptography.ECDsa]::Create(
-                      [System.Security.Cryptography.ECCurve]::NamedCurves.nistP256)
-        $params = $ecdsa.ExportParameters($true)
-        $ecdsa.Dispose()
-
-        $buf = [System.Collections.Generic.List[byte]]::new()
-        $buf.Add([byte]0x04)
-        $buf.AddRange([byte[]]$params.Q.X)
-        $buf.AddRange([byte[]]$params.Q.Y)
-        $publicKeyBytes  = $buf.ToArray()
-        $privateKeyBytes = [byte[]]$params.D
-
-        $vapidPublicKey  = ConvertTo-Base64Url $publicKeyBytes
-        $vapidPrivateKey = ConvertTo-Base64Url $privateKeyBytes
-        Remove-Variable publicKeyBytes, privateKeyBytes -ErrorAction SilentlyContinue
-
-        Write-Ok 'VAPID keys generated'
-
-        az keyvault secret set --vault-name $kvName --name 'Vapid--Subject'    --value $VapidSubject    --output none
-        Assert-NativeSuccess 'az keyvault secret set Vapid--Subject'
-        az keyvault secret set --vault-name $kvName --name 'Vapid--PublicKey'  --value $vapidPublicKey  --output none
-        Assert-NativeSuccess 'az keyvault secret set Vapid--PublicKey'
-        az keyvault secret set --vault-name $kvName --name 'Vapid--PrivateKey' --value $vapidPrivateKey --output none
-        Assert-NativeSuccess 'az keyvault secret set Vapid--PrivateKey'
-        Remove-Variable vapidPrivateKey -ErrorAction SilentlyContinue
-        Write-Ok '3 VAPID secrets written'
-    } catch {
-        Write-Error "Phase 3 (VAPID secrets) failed: $_"
-        throw
-    }
-}
-
-Write-Ok 'ACS secrets written by Bicep deployment'
-
-# ── Phase 4: GitHub secrets ───────────────────────────────────────────────────
-Write-Phase 'Phase 4: Setting GitHub secrets'
+# ── Phase 3: GitHub secrets ───────────────────────────────────────────────────
+Write-Phase 'Phase 3: Setting GitHub secrets'
 
 try {
     $tenantId       = az account show --query tenantId -o tsv
@@ -185,7 +188,7 @@ try {
 
     Write-Ok '5 GitHub secrets set'
 } catch {
-    Write-Error "Phase 4 (GitHub secrets) failed: $_"
+    Write-Error "Phase 3 (GitHub secrets) failed: $_"
     throw
 }
 
