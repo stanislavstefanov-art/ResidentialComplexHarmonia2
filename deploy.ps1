@@ -93,7 +93,7 @@ if ($vapidExists -and (-not $Force)) {
 } else {
     try {
         $ecdsa  = [System.Security.Cryptography.ECDsa]::Create(
-                      [System.Security.Cryptography.ECCurve]::NamedCurves.nistP256)
+                      [System.Security.Cryptography.ECCurve+NamedCurves]::nistP256)
         $ecParams = $ecdsa.ExportParameters($true)
         $ecdsa.Dispose()
 
