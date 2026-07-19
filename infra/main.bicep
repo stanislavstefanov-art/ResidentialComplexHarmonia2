@@ -4,6 +4,12 @@ param location string = 'westeurope'
 param containerImageTag string = 'latest'
 @secure()
 param sqlAdminPassword string
+@secure()
+param vapidSubject string
+@secure()
+param vapidPublicKey string
+@secure()
+param vapidPrivateKey string
 param githubOrg string = 'stanislavstefanov-art'
 param githubRepo string = 'ResidentialComplexHarmonia2'
 
@@ -44,6 +50,9 @@ module keyvault 'modules/keyvault.bicep' = {
     serverFqdn: sql.outputs.serverFqdn
     databaseName: sql.outputs.databaseName
     sqlAdminPassword: sqlAdminPassword
+    vapidSubject: vapidSubject
+    vapidPublicKey: vapidPublicKey
+    vapidPrivateKey: vapidPrivateKey
   }
 }
 
