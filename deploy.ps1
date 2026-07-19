@@ -9,8 +9,8 @@ $ErrorActionPreference = 'Stop'
 # ── Constants ────────────────────────────────────────────────────────────────
 $ResourceGroup  = 'rg-residence-harmonia-prod'
 $Location       = 'westeurope'
-$AngularSwaName = 'harmonia-angular-swa'
-$ReactSwaName   = 'harmonia-react-swa'
+$AngularSwaName = 'residenceharmonia-angular-swa'
+$ReactSwaName   = 'residenceharmonia-react-swa'
 $DeploymentName = 'harmonia-main'
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
