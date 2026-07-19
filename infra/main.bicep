@@ -12,6 +12,7 @@ param vapidPublicKey string
 param vapidPrivateKey string
 param githubOrg string = 'stanislavstefanov-art'
 param githubRepo string = 'ResidentialComplexHarmonia2'
+param useBootstrapImage bool = false
 
 module identity 'modules/identity.bicep' = {
   name: 'identity'
@@ -83,6 +84,7 @@ module api 'modules/api.bicep' = {
     keyVaultUri: keyvault.outputs.keyVaultUri
     angularSwaUrl: frontend.outputs.angularSwaUrl
     reactSwaUrl: frontend.outputs.reactSwaUrl
+    useBootstrapImage: useBootstrapImage
   }
 }
 

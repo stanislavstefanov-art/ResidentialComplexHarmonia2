@@ -12,8 +12,9 @@ permissions:
 
 env:
   RESOURCE_GROUP: rg-residence-harmonia-prod
-  ACR_LOGIN_SERVER: harmoniaacr.azurecr.io
-  CONTAINER_APP_NAME: harmonia-api
+  ACR_NAME: residenceharmoniaacr
+  ACR_LOGIN_SERVER: residenceharmoniaacr.azurecr.io
+  CONTAINER_APP_NAME: residenceharmonia-api
 
 jobs:
   build-push-api:
@@ -34,7 +35,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: ACR login
-        run: az acr login --name harmoniaacr
+        run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Set image tag
         id: tag
@@ -48,8 +49,8 @@ jobs:
           context: .
           push: true
           tags: |
-            harmoniaacr.azurecr.io/harmonia-api:${{ github.event.workflow_run.head_sha }}
-            harmoniaacr.azurecr.io/harmonia-api:latest
+            ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:${{ github.event.workflow_run.head_sha }}
+            ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:latest
 
   deploy-api:
     needs: [build-push-api, run-schema]
@@ -68,7 +69,7 @@ jobs:
           az containerapp update \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_LOGIN_SERVER }}/harmonia-api:${{ needs.build-push-api.outputs.image-tag }}
+            --image ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:${{ needs.build-push-api.outputs.image-tag }}
 
   deploy-angular:
     if: github.event.workflow_run.conclusion == 'success'
@@ -162,7 +163,7 @@ jobs:
       - name: Apply schema
         run: |
           CONN_STR=$(az keyvault secret show \
-            --vault-name harmoniakv \
+            --vault-name residenceharmoniakv \
             --name ConnectionStrings--Default \
             --query value -o tsv)
           echo "::add-mask::$CONN_STR"
@@ -177,7 +178,7 @@ jobs:
 
           SQLCMDPASSWORD="$SQL_PASS" sqlcmd \
             -S "$SQL_SERVER" \
-            -d harmonia-db \
+            -d residenceharmonia-db \
             -U harmonia-admin \
             -i db/schema.sql \
             -b

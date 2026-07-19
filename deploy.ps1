@@ -12,6 +12,8 @@ $Location       = 'westeurope'
 $AngularSwaName = 'residenceharmonia-angular-swa'
 $ReactSwaName   = 'residenceharmonia-react-swa'
 $KeyVaultName   = 'residenceharmoniakv'
+$AcrName        = 'residenceharmoniaacr'
+$AcrImageName   = 'residenceharmonia-api'
 $DeploymentName = 'harmonia-main'
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -114,6 +116,15 @@ if ($vapidExists -and (-not $Force)) {
     }
 }
 
+# Container App requires an image in ACR at revision-creation time.
+# On first deploy ACR is empty, so we use a public placeholder and let CI/CD replace it.
+az acr repository show --name $AcrName --repository $AcrImageName --output none 2>&1 | Out-Null
+$useBootstrapImage = ($LASTEXITCODE -ne 0)
+if ($useBootstrapImage) {
+    Write-Host '  ACR image not found — deploying with placeholder image.' -ForegroundColor Yellow
+    Write-Host '  Push a commit to master after this script completes to trigger CI/CD and deploy the real image.' -ForegroundColor Yellow
+}
+
 $tmpParam = $null
 try {
     $sqlPass  = ConvertFrom-SecureString $SqlAdminPasswordSecure -AsPlainText
@@ -121,10 +132,11 @@ try {
         '$schema'      = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#'
         contentVersion = '1.0.0.0'
         parameters     = @{
-            sqlAdminPassword = @{ value = $sqlPass }
-            vapidSubject     = @{ value = $VapidSubject }
-            vapidPublicKey   = @{ value = $vapidPublicKey }
-            vapidPrivateKey  = @{ value = $vapidPrivateKey }
+            sqlAdminPassword  = @{ value = $sqlPass }
+            vapidSubject      = @{ value = $VapidSubject }
+            vapidPublicKey    = @{ value = $vapidPublicKey }
+            vapidPrivateKey   = @{ value = $vapidPrivateKey }
+            useBootstrapImage = @{ value = $useBootstrapImage }
         }
     }
     Remove-Variable sqlPass, vapidPrivateKey -ErrorAction SilentlyContinue
