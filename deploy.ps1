@@ -37,8 +37,9 @@ function Assert-NativeSuccess([string]$context) {
 Write-Phase 'Phase 0: Pre-flight checks'
 
 try {
-    $account = az account show --output json | ConvertFrom-Json
-    Write-Ok "Azure CLI authenticated (subscription: $($account.name))"
+    $account        = az account show --output json | ConvertFrom-Json
+    $SubscriptionId = $account.id
+    Write-Ok "Azure CLI authenticated (subscription: $($account.name) / $SubscriptionId)"
 } catch {
     Write-Error "Run 'az login' first. ($_)"
     throw
@@ -54,7 +55,7 @@ try {
 }
 
 try {
-    az group create --name $ResourceGroup --location $Location --output none
+    az group create --name $ResourceGroup --location $Location --subscription $SubscriptionId --output none
     Assert-NativeSuccess 'az group create'
     Write-Ok "Resource group '$ResourceGroup' ready"
 } catch {
@@ -78,15 +79,15 @@ Write-Phase 'Phase 2: Deploying infrastructure (this may take several minutes)'
 
 # VAPID keys must exist in Key Vault before the Container App revision is created,
 # so we generate (or re-read) them here and pass as Bicep secure parameters.
-az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey' --output none 2>&1 | Out-Null
+az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey' --subscription $SubscriptionId --output none 2>&1 | Out-Null
 $vapidExists = ($LASTEXITCODE -eq 0)
 
 if ($vapidExists -and (-not $Force)) {
     Write-Host '  Reading existing VAPID keys from Key Vault (use -Force to regenerate).' -ForegroundColor Yellow
     try {
-        $vapidPublicKey  = az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey'  --query value -o tsv
+        $vapidPublicKey  = az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey'  --subscription $SubscriptionId --query value -o tsv
         Assert-NativeSuccess 'az keyvault secret show (Vapid--PublicKey)'
-        $vapidPrivateKey = az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PrivateKey' --query value -o tsv
+        $vapidPrivateKey = az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PrivateKey' --subscription $SubscriptionId --query value -o tsv
         Assert-NativeSuccess 'az keyvault secret show (Vapid--PrivateKey)'
     } catch {
         Write-Error "Failed to read existing VAPID keys from Key Vault: $_"
@@ -118,7 +119,7 @@ if ($vapidExists -and (-not $Force)) {
 
 # Container App requires an image in ACR at revision-creation time.
 # On first deploy ACR is empty, so we use a public placeholder and let CI/CD replace it.
-az acr repository show --name $AcrName --repository $AcrImageName --output none 2>&1 | Out-Null
+az acr repository show --name $AcrName --repository $AcrImageName --subscription $SubscriptionId --output none 2>&1 | Out-Null
 $useBootstrapImage = ($LASTEXITCODE -ne 0)
 if ($useBootstrapImage) {
     Write-Host '  ACR image not found — deploying with placeholder image.' -ForegroundColor Yellow
@@ -146,6 +147,7 @@ try {
     $deployOutput = az deployment group create `
         --name $DeploymentName `
         --resource-group $ResourceGroup `
+        --subscription $SubscriptionId `
         --template-file infra/main.bicep `
         --parameters "@infra/main.parameters.json" `
         --parameters "@$tmpParam" `
@@ -172,18 +174,17 @@ Write-Ok 'All secrets (VAPID + ACS + SQL connection string) written by Bicep'
 Write-Phase 'Phase 3: Setting GitHub secrets'
 
 try {
-    $tenantId       = az account show --query tenantId -o tsv
-    Assert-NativeSuccess 'az account show (tenantId)'
-    $subscriptionId = az account show --query id -o tsv
-    Assert-NativeSuccess 'az account show (subscriptionId)'
+    $tenantId       = $account.tenantId
     $angularToken   = az staticwebapp secrets list `
                           --name $AngularSwaName `
                           --resource-group $ResourceGroup `
+                          --subscription $SubscriptionId `
                           --query 'properties.apiKey' -o tsv
     Assert-NativeSuccess 'az staticwebapp secrets list (angular)'
     $reactToken     = az staticwebapp secrets list `
                           --name $ReactSwaName `
                           --resource-group $ResourceGroup `
+                          --subscription $SubscriptionId `
                           --query 'properties.apiKey' -o tsv
     Assert-NativeSuccess 'az staticwebapp secrets list (react)'
 
@@ -191,7 +192,7 @@ try {
     Assert-NativeSuccess 'gh secret set AZURE_CLIENT_ID'
     gh secret set 'AZURE_TENANT_ID'          --body $tenantId
     Assert-NativeSuccess 'gh secret set AZURE_TENANT_ID'
-    gh secret set 'AZURE_SUBSCRIPTION_ID'    --body $subscriptionId
+    gh secret set 'AZURE_SUBSCRIPTION_ID'    --body $SubscriptionId
     Assert-NativeSuccess 'gh secret set AZURE_SUBSCRIPTION_ID'
     gh secret set 'ANGULAR_SWA_DEPLOY_TOKEN' --body $angularToken
     Assert-NativeSuccess 'gh secret set ANGULAR_SWA_DEPLOY_TOKEN'
