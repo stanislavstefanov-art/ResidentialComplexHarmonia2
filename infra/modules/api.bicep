@@ -7,6 +7,7 @@ param containerImageTag string
 param keyVaultUri string
 param angularSwaUrl string
 param reactSwaUrl string
+param useBootstrapImage bool = false
 
 resource containerAppsEnv 'Microsoft.App/managedEnvironments@2023-05-01' = {
   name: '${namePrefix}-env'
@@ -74,7 +75,7 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           name: '${namePrefix}-api'
-          image: '${acrLoginServer}/${namePrefix}-api:${containerImageTag}'
+          image: useBootstrapImage ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${acrLoginServer}/${namePrefix}-api:${containerImageTag}'
           env: [
             {
               name: 'ASPNETCORE_ENVIRONMENT'
