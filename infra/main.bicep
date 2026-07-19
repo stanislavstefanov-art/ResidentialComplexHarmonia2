@@ -47,6 +47,14 @@ module keyvault 'modules/keyvault.bicep' = {
   }
 }
 
+module acs 'modules/acs.bicep' = {
+  name: 'acs'
+  params: {
+    namePrefix: namePrefix
+    keyVaultName: keyvault.outputs.keyVaultName
+  }
+}
+
 module frontend 'modules/frontend.bicep' = {
   name: 'frontend'
   params: {
