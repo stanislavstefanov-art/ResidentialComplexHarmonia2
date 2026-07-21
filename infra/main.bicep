@@ -90,6 +90,16 @@ module api 'modules/api.bicep' = {
   }
 }
 
+// Contributor on the resource group lets the managed identity update Container Apps in CD.
+resource identityContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, identity.outputs.identityPrincipalId, 'Contributor')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+    principalId: identity.outputs.identityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 output acrLoginServer string = acr.outputs.loginServer
 output containerAppFqdn string = api.outputs.containerAppFqdn
 output angularSwaUrl string = frontend.outputs.angularSwaUrl
