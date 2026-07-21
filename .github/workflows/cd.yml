@@ -150,11 +150,6 @@ jobs:
 
       - name: Install sqlcmd
         run: |
-          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list \
-                     /usr/share/keyrings/microsoft-prod.gpg
-          curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb \
-            -o /tmp/microsoft-prod.deb
-          sudo dpkg -i /tmp/microsoft-prod.deb
           sudo apt-get update -q
           sudo ACCEPT_EULA=Y apt-get install -yq mssql-tools18 unixodbc-dev
           echo '/opt/mssql-tools18/bin' >> "$GITHUB_PATH"

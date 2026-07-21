@@ -44,7 +44,7 @@ function App() {
             value={screen}
             onChange={(_, v) => setScreen(v)}
             textColor="inherit"
-            TabIndicatorProps={{ style: { backgroundColor: 'white' } }}
+            slotProps={{ indicator: { style: { backgroundColor: 'white' } } }}
             sx={{
               flexGrow: 1,
               '& .MuiTab-root': {
