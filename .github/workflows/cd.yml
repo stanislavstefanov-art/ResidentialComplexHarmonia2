@@ -87,7 +87,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ui/angular-prototype
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build Angular
         working-directory: ui/angular-prototype
@@ -152,13 +152,8 @@ jobs:
 
       - name: Install sqlcmd
         run: |
-          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-            | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
-          curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list \
-            | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
-          sudo apt-get update -q
-          sudo ACCEPT_EULA=Y apt-get install -yq mssql-tools18 unixodbc
-          echo '/opt/mssql-tools18/bin' >> "$GITHUB_PATH"
+          curl -fsSL https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.gz \
+            | tar -xz -C /usr/local/bin sqlcmd
 
       - name: Apply schema
         run: |
