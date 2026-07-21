@@ -170,11 +170,17 @@ jobs:
 
           echo "::add-mask::$SQL_PASS"
 
-          SQLCMDPASSWORD="$SQL_PASS" sqlcmd \
-            -S "$SQL_SERVER" \
-            -d residenceharmonia-db \
-            -U harmonia-admin \
-            -i db/schema.sql \
-            -b \
-            -l 60
+          # Serverless DB auto-pauses; retry until it resumes (up to ~3 min)
+          for i in $(seq 1 9); do
+            SQLCMDPASSWORD="$SQL_PASS" sqlcmd \
+              -S "$SQL_SERVER" \
+              -d residenceharmonia-db \
+              -U harmonia-admin \
+              -i db/schema.sql \
+              -b \
+              -l 60 && break
+            [ $i -lt 9 ] || exit 1
+            echo "DB resuming (attempt $i/9), retrying in 20s..."
+            sleep 20
+          done
 
