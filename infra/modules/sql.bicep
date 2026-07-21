@@ -5,7 +5,7 @@ param location string = 'northeurope'
 @secure()
 param sqlAdminPassword string
 
-resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2023-02-01-preview' = {
   name: '${namePrefix}-sql'
   location: location
   properties: {
@@ -15,7 +15,7 @@ resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
   }
 }
 
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
+resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-02-01-preview' = {
   parent: sqlServer
   name: '${namePrefix}-db'
   location: location
@@ -34,7 +34,7 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
   }
 }
 
-resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2022-05-01-preview' = {
+resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-02-01-preview' = {
   parent: sqlServer
   name: 'AllowAzureServices'
   properties: {
