@@ -123,6 +123,8 @@ jobs:
 
       - name: Build React
         working-directory: ui/react-prototype
+        env:
+          REACT_APP_API_URL: https://residenceharmonia-api.bravesea-14332e7f.northeurope.azurecontainerapps.io
         run: npm run build
 
       - name: Deploy to React SWA

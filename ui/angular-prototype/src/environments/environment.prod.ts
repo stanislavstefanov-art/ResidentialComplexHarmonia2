@@ -1,3 +1,3 @@
 export const environment = {
-  apiUrl: ''
+  apiUrl: 'https://residenceharmonia-api.bravesea-14332e7f.northeurope.azurecontainerapps.io'
 };
