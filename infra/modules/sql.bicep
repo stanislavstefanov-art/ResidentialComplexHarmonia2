@@ -43,5 +43,16 @@ resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-02-01-prev
   }
 }
 
+// Dev environment: allow all public IPs so CI/CD runners and developers can
+// connect for schema migration. SQL password authentication still required.
+resource allowAll 'Microsoft.Sql/servers/firewallRules@2023-02-01-preview' = {
+  parent: sqlServer
+  name: 'AllowAll'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '255.255.255.255'
+  }
+}
+
 output serverFqdn string = sqlServer.properties.fullyQualifiedDomainName
 output databaseName string = sqlDatabase.name
