@@ -154,6 +154,16 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -yq mssql-tools18 unixodbc-dev
           echo '/opt/mssql-tools18/bin' >> "$GITHUB_PATH"
 
+      - name: Open SQL firewall for runner
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          az sql server firewall-rule create \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --server residenceharmonia-sql \
+            --name AllowGitHubRunner \
+            --start-ip-address "$RUNNER_IP" \
+            --end-ip-address "$RUNNER_IP"
+
       - name: Apply schema
         run: |
           CONN_STR=$(az keyvault secret show \
@@ -175,4 +185,14 @@ jobs:
             -d residenceharmonia-db \
             -U harmonia-admin \
             -i db/schema.sql \
-            -b
+            -b \
+            -l 60
+
+      - name: Close SQL firewall
+        if: always()
+        run: |
+          az sql server firewall-rule delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --server residenceharmonia-sql \
+            --name AllowGitHubRunner \
+            --yes 2>/dev/null || true
