@@ -35,7 +35,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: ACR login
-        run: az acr login --name ${{ env.ACR_NAME }}
+        run: az acr login --name ${{ env.ACR_NAME }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Set image tag
         id: tag
@@ -69,7 +69,8 @@ jobs:
           az containerapp update \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:${{ needs.build-push-api.outputs.image-tag }}
+            --image ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:${{ needs.build-push-api.outputs.image-tag }} \
+            --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy-angular:
     if: github.event.workflow_run.conclusion == 'success'
