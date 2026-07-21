@@ -73,11 +73,11 @@ module frontend 'modules/frontend.bicep' = {
   }
 }
 
+// location intentionally omitted — api.bicep defaults to northeurope to avoid AKS capacity shortage in westeurope; co-locates with SQL. Both are EU/GDPR compliant (R3).
 module api 'modules/api.bicep' = {
   name: 'api'
   params: {
     namePrefix: namePrefix
-    location: location
     identityId: identity.outputs.identityId
     acrLoginServer: acr.outputs.loginServer
     containerImageTag: containerImageTag
