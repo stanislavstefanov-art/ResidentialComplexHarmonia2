@@ -99,8 +99,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.ANGULAR_SWA_DEPLOY_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: ui/angular-prototype
-          output_location: dist/angular-prototype/browser
+          app_location: ui/angular-prototype/dist/angular-prototype/browser
           skip_app_build: true
 
   deploy-react:
@@ -131,8 +130,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.REACT_SWA_DEPLOY_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: ui/react-prototype
-          output_location: build
+          app_location: ui/react-prototype/build
           skip_app_build: true
 
   run-schema:
@@ -152,8 +150,14 @@ jobs:
 
       - name: Install sqlcmd
         run: |
-          curl -fsSL https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.gz \
-            | tar -xz -C /usr/local/bin sqlcmd
+          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list \
+                     /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb \
+            -o /tmp/microsoft-prod.deb
+          sudo dpkg -i /tmp/microsoft-prod.deb
+          sudo apt-get update -q
+          sudo ACCEPT_EULA=Y apt-get install -yq mssql-tools18 unixodbc-dev
+          echo '/opt/mssql-tools18/bin' >> "$GITHUB_PATH"
 
       - name: Apply schema
         run: |
