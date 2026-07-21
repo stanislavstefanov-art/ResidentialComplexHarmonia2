@@ -1,10 +1,11 @@
 @minLength(2)
 param namePrefix string
-param location string
+// North Europe — useFreeLimit only works in NE for this subscription (WE returns InternalServerError). Both NE and WE are EU/GDPR compliant (R3).
+param location string = 'northeurope'
 @secure()
 param sqlAdminPassword string
 
-resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2023-02-01-preview' = {
   name: '${namePrefix}-sql'
   location: location
   properties: {
@@ -14,7 +15,7 @@ resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
   }
 }
 
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
+resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-02-01-preview' = {
   parent: sqlServer
   name: '${namePrefix}-db'
   location: location
@@ -28,10 +29,12 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
     autoPauseDelay: 60
     minCapacity: json('0.5')
     requestedBackupStorageRedundancy: 'Local'
+    useFreeLimit: true
+    freeLimitExhaustionBehavior: 'AutoPause'
   }
 }
 
-resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2022-05-01-preview' = {
+resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-02-01-preview' = {
   parent: sqlServer
   name: 'AllowAzureServices'
   properties: {

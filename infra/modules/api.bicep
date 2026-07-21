@@ -1,6 +1,7 @@
 @minLength(2)
 param namePrefix string
-param location string
+// North Europe — westeurope AKS capacity exhausted (AKSCapacityHeavyUsage). NE co-locates with SQL and is EU/GDPR compliant (R3).
+param location string = 'northeurope'
 param identityId string
 param acrLoginServer string
 param containerImageTag string

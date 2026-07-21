@@ -33,11 +33,11 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
+// location intentionally omitted — sql.bicep defaults to northeurope where useFreeLimit works; all other resources stay in westeurope (both are EU/GDPR, R3).
 module sql 'modules/sql.bicep' = {
   name: 'sql'
   params: {
     namePrefix: namePrefix
-    location: location
     sqlAdminPassword: sqlAdminPassword
   }
 }
@@ -73,11 +73,13 @@ module frontend 'modules/frontend.bicep' = {
   }
 }
 
+// location intentionally omitted — api.bicep defaults to northeurope to avoid AKS capacity shortage in westeurope; co-locates with SQL. Both are EU/GDPR compliant (R3).
+// dependsOn acs: acs.bicep writes Acs--ConnectionString + Acs--SenderAddress into Key Vault; Container App reads them at revision creation time.
 module api 'modules/api.bicep' = {
   name: 'api'
+  dependsOn: [acs]
   params: {
     namePrefix: namePrefix
-    location: location
     identityId: identity.outputs.identityId
     acrLoginServer: acr.outputs.loginServer
     containerImageTag: containerImageTag
