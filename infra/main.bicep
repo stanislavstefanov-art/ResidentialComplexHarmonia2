@@ -33,11 +33,11 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
+// location intentionally omitted — sql.bicep defaults to northeurope where useFreeLimit works; all other resources stay in westeurope (both are EU/GDPR, R3).
 module sql 'modules/sql.bicep' = {
   name: 'sql'
   params: {
     namePrefix: namePrefix
-    location: location
     sqlAdminPassword: sqlAdminPassword
   }
 }

@@ -1,6 +1,7 @@
 @minLength(2)
 param namePrefix string
-param location string
+// North Europe — useFreeLimit only works in NE for this subscription (WE returns InternalServerError). Both NE and WE are EU/GDPR compliant (R3).
+param location string = 'northeurope'
 @secure()
 param sqlAdminPassword string
 
@@ -28,6 +29,8 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
     autoPauseDelay: 60
     minCapacity: json('0.5')
     requestedBackupStorageRedundancy: 'Local'
+    useFreeLimit: true
+    freeLimitExhaustionBehavior: 'AutoPause'
   }
 }
 
