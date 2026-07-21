@@ -44,10 +44,10 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                         Phone       = COALESCE(@Phone,       target.Phone),
                         Email       = COALESCE(@Email,       target.Email),
                         IsOptedOut  = COALESCE(@IsOptedOut,  target.IsOptedOut),
-                        UpdatedAt   = SYSUTCDATETIMEOFFSET()
+                        UpdatedAt   = SYSUTCDATETIME()
                 WHEN NOT MATCHED THEN
                     INSERT (HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt)
-                    VALUES (@HouseholdRef, @DisplayName, @Phone, @Email, NULL, COALESCE(@IsOptedOut, 0), SYSUTCDATETIMEOFFSET());
+                    VALUES (@HouseholdRef, @DisplayName, @Phone, @Email, NULL, COALESCE(@IsOptedOut, 0), SYSUTCDATETIME());
                 """;
             cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
             cmd.Parameters.Add(new SqlParameter("@DisplayName", SqlDbType.NVarChar, 256)
@@ -82,10 +82,10 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                 USING (VALUES (@HouseholdRef)) AS source (HouseholdRef)
                 ON target.HouseholdRef = source.HouseholdRef
                 WHEN MATCHED THEN
-                    UPDATE SET Notes = @Notes, UpdatedAt = SYSUTCDATETIMEOFFSET()
+                    UPDATE SET Notes = @Notes, UpdatedAt = SYSUTCDATETIME()
                 WHEN NOT MATCHED THEN
                     INSERT (HouseholdRef, DisplayName, Phone, Email, Notes, UpdatedAt)
-                    VALUES (@HouseholdRef, NULL, NULL, NULL, @Notes, SYSUTCDATETIMEOFFSET());
+                    VALUES (@HouseholdRef, NULL, NULL, NULL, @Notes, SYSUTCDATETIME());
                 """;
             cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
             cmd.Parameters.Add(new SqlParameter("@Notes", SqlDbType.NVarChar, 2048)
@@ -150,7 +150,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = """
                 UPDATE dbo.HouseholdContacts
-                SET DepartedAt = ISNULL(DepartedAt, SYSUTCDATETIMEOFFSET())
+                SET DepartedAt = ISNULL(DepartedAt, SYSUTCDATETIME())
                 WHERE HouseholdRef = @HouseholdRef;
                 """;
             cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
@@ -174,7 +174,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             cmd.CommandText = """
                 DELETE FROM dbo.HouseholdContacts
                 WHERE DepartedAt IS NOT NULL
-                  AND DepartedAt < DATEADD(year, -1, SYSUTCDATETIMEOFFSET());
+                  AND DepartedAt < DATEADD(year, -1, SYSUTCDATETIME());
                 """;
             var rows = await cmd.ExecuteNonQueryAsync(ct);
             return new PurgeExpiredContactsResult.Ok(rows);

@@ -198,7 +198,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             UPDATE dbo.HouseholdContacts
-            SET DepartedAt = DATEADD(year, -2, SYSUTCDATETIMEOFFSET())
+            SET DepartedAt = DATEADD(year, -2, SYSUTCDATETIME())
             WHERE HouseholdRef IN (@HH1, @HH2);
             """;
         cmd.Parameters.AddWithValue("@HH1", hh1.Value);
@@ -329,7 +329,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
                 (HouseholdRef, Endpoint, P256dhKey, AuthKey, CreatedAt, UpdatedAt)
             VALUES
                 (@HouseholdRef, @Endpoint, @P256dhKey, @AuthKey,
-                 SYSUTCDATETIMEOFFSET(), SYSUTCDATETIMEOFFSET());
+                 SYSUTCDATETIME(), SYSUTCDATETIME());
             """;
         cmd.Parameters.AddWithValue("@HouseholdRef", hh.Value);
         cmd.Parameters.AddWithValue("@Endpoint",     "https://push.example.com/test");
@@ -345,7 +345,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             INSERT INTO dbo.NotificationHistory (Id, HouseholdRef, Title, SentAt, Channel)
-            VALUES (@Id, @HouseholdRef, @Title, SYSUTCDATETIMEOFFSET(), @Channel);
+            VALUES (@Id, @HouseholdRef, @Title, SYSUTCDATETIME(), @Channel);
             """;
         cmd.Parameters.AddWithValue("@Id",           Guid.NewGuid());
         cmd.Parameters.AddWithValue("@HouseholdRef", hh.Value);
