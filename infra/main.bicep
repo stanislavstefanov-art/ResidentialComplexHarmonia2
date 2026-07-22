@@ -10,6 +10,16 @@ param vapidSubject string
 param vapidPublicKey string
 @secure()
 param vapidPrivateKey string
+@secure()
+param entraInstance string
+@secure()
+param entraClientId string
+@secure()
+param entraDomain string
+@secure()
+param entraSignUpSignInPolicyId string
+@secure()
+param entraTenantId string
 param githubOrg string = 'stanislavstefanov-art'
 param githubRepo string = 'ResidentialComplexHarmonia2'
 param useBootstrapImage bool = false
@@ -54,6 +64,11 @@ module keyvault 'modules/keyvault.bicep' = {
     vapidSubject: vapidSubject
     vapidPublicKey: vapidPublicKey
     vapidPrivateKey: vapidPrivateKey
+    entraInstance: entraInstance
+    entraClientId: entraClientId
+    entraDomain: entraDomain
+    entraSignUpSignInPolicyId: entraSignUpSignInPolicyId
+    entraTenantId: entraTenantId
   }
 }
 
