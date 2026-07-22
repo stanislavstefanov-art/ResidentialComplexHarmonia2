@@ -339,29 +339,31 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <Typography variant="body2" color="text.secondary">Loading directory…</Typography>
           </Box>
         ) : isAdmin ? (
-          <DataGrid
-            rows={filteredAdminRows}
-            columns={adminCols}
-            getRowId={r => r.householdRef}
-            autoHeight
-            pageSizeOptions={[25, 50, 100]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-            disableRowSelectionOnClick
-            slots={{ toolbar: Toolbar }}
-            sx={{ border: 0 }}
-          />
+          <Box sx={{ height: 520 }}>
+            <DataGrid
+              rows={filteredAdminRows}
+              columns={adminCols}
+              getRowId={r => r.householdRef}
+              pageSizeOptions={[25, 50, 100]}
+              initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+              disableRowSelectionOnClick
+              slots={{ toolbar: Toolbar }}
+              sx={{ border: 0 }}
+            />
+          </Box>
         ) : (
-          <DataGrid
-            rows={filteredRows}
-            columns={residentCols}
-            getRowId={r => r.householdRef}
-            autoHeight
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-            disableRowSelectionOnClick
-            slots={{ toolbar: Toolbar }}
-            sx={{ border: 0 }}
-          />
+          <Box sx={{ height: 400 }}>
+            <DataGrid
+              rows={filteredRows}
+              columns={residentCols}
+              getRowId={r => r.householdRef}
+              pageSizeOptions={[10, 25, 50]}
+              initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+              disableRowSelectionOnClick
+              slots={{ toolbar: Toolbar }}
+              sx={{ border: 0 }}
+            />
+          </Box>
         )}
       </Paper>
 
