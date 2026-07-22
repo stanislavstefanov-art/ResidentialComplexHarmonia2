@@ -283,7 +283,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
       </div>
       <ng-template #footer>
         <p-button label="Delete my data" icon="pi pi-trash" severity="danger"
-          [outlined]="true" (onClick)="openEraseMyContact()" style="margin-right:auto" />
+          [outlined]="true" (onClick)="openEraseMyContact()" [style]="{'margin-right': 'auto'}" />
         <p-button label="Cancel" icon="pi pi-times" severity="secondary"
           [outlined]="true" (onClick)="editVisible = false" />
         <p-button label="Save" icon="pi pi-check"
