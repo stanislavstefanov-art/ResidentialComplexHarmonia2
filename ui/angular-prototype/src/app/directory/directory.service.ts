@@ -41,4 +41,12 @@ export class DirectoryService {
   markDeparted(householdRef: string): Observable<void> {
     return this.http.delete<void>(`${API}/directory/${householdRef}/departed`);
   }
+
+  eraseMyContact(): Observable<void> {
+    return this.http.delete<void>(`${API}/directory/contact`);
+  }
+
+  eraseContact(householdRef: string): Observable<void> {
+    return this.http.delete<void>(`${API}/directory/${encodeURIComponent(householdRef)}/contact`);
+  }
 }

@@ -41,6 +41,10 @@ import {
 import AdminEditDialog from './AdminEditDialog';
 import EditContactDialog from './EditContactDialog';
 import MarkDepartedDialog from './MarkDepartedDialog';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForeverOutlined';
+import { eraseMyContact, eraseContact } from '../api/privacy';
+import EraseMyContactDialog from './EraseMyContactDialog';
+import EraseContactDialog from './EraseContactDialog';
 
 const BLANK_RESIDENT: MyContact = { displayName: '', phone: '', email: '', isOptedOut: false };
 const BLANK_ADMIN: AdminContact = { displayName: '', phone: '', email: '', notes: '', isOptedOut: false };
@@ -74,6 +78,14 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
   const [departOpen, setDepartOpen]       = useState(false);
   const [departRef, setDepartRef]         = useState('');
   const [departing, setDeparting]         = useState(false);
+
+  // erase my contact
+  const [eraseMyOpen, setEraseMyOpen]           = useState(false);
+  const [erasingMy, setErasingMy]               = useState(false);
+  // erase contact (admin)
+  const [eraseContactOpen, setEraseContactOpen] = useState(false);
+  const [eraseContactRef, setEraseContactRef]   = useState('');
+  const [erasingContact, setErasingContact]     = useState(false);
 
   // shared
   const [loading, setLoading]             = useState(false);
@@ -173,6 +185,35 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
     }
   };
 
+  const handleEraseMyContact = async () => {
+    setErasingMy(true);
+    try {
+      await eraseMyContact();
+      setEraseMyOpen(false);
+      setResidentDialogOpen(false);
+      setRows([]);
+      showToast('Your data has been permanently deleted.');
+    } catch {
+      setError('Could not delete your data. Please try again.');
+    } finally {
+      setErasingMy(false);
+    }
+  };
+
+  const handleEraseContact = async () => {
+    setErasingContact(true);
+    try {
+      await eraseContact(eraseContactRef);
+      setAdminRows(prev => prev.filter(r => r.householdRef !== eraseContactRef));
+      setEraseContactOpen(false);
+      showToast(`Data for ${eraseContactRef} has been permanently deleted.`);
+    } catch {
+      setError('Could not erase contact data. Please try again.');
+    } finally {
+      setErasingContact(false);
+    }
+  };
+
   // ── columns ────────────────────────────────────────────────────────────────
   const residentCols: GridColDef<DirectoryEntry>[] = useMemo(() => [
     {
@@ -237,7 +278,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
     {
       field: '_actions',
       headerName: '',
-      width: 88,
+      width: 120,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -248,6 +289,10 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
           </IconButton>
           <IconButton size="small" color="error" title="Mark Departed" onClick={() => openDepart(p.row.householdRef)}>
             <PersonOffIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" color="error" title="Erase contact data"
+            onClick={() => { setEraseContactRef(p.row.householdRef); setEraseContactOpen(true); }}>
+            <DeleteForeverIcon fontSize="small" />
           </IconButton>
         </Box>
       ),
@@ -375,6 +420,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         onChange={setResidentForm}
         onSave={handleResidentSave}
         onClose={() => setResidentDialogOpen(false)}
+        onRequestErase={() => { setResidentDialogOpen(false); setEraseMyOpen(true); }}
       />
 
       {/* admin edit */}
@@ -395,6 +441,21 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         departing={departing}
         onConfirm={handleDepart}
         onClose={() => setDepartOpen(false)}
+      />
+
+      <EraseMyContactDialog
+        open={eraseMyOpen}
+        erasing={erasingMy}
+        onConfirm={handleEraseMyContact}
+        onClose={() => setEraseMyOpen(false)}
+      />
+
+      <EraseContactDialog
+        open={eraseContactOpen}
+        householdRef={eraseContactRef}
+        erasing={erasingContact}
+        onConfirm={handleEraseContact}
+        onClose={() => setEraseContactOpen(false)}
       />
     </Box>
   );

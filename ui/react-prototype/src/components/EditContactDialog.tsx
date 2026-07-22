@@ -22,9 +22,10 @@ interface Props {
   onChange: (updated: MyContact) => void;
   onSave: () => void;
   onClose: () => void;
+  onRequestErase: () => void;
 }
 
-const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSave, onClose }) => {
+const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSave, onClose, onRequestErase }) => {
   const set = (field: keyof MyContact, value: string | boolean) =>
     onChange({ ...form, [field]: value });
 
@@ -84,6 +85,9 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onRequestErase} color="error" disabled={saving} sx={{ mr: 'auto' }}>
+          Delete my data
+        </Button>
         <Button onClick={onClose} color="inherit" disabled={saving}>
           Cancel
         </Button>

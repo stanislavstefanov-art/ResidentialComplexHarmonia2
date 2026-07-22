@@ -192,7 +192,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
                   <th pSortableColumn="deactivatedAt" style="width:12rem">
                     Departed <p-sort-icon field="deactivatedAt" />
                   </th>
-                  <th style="width:7rem"></th>
+                  <th style="width:9rem"></th>
                 </tr>
               </ng-template>
 
@@ -223,6 +223,13 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
                         [rounded]="true" [text]="true"
                         severity="danger" size="small"
                         (onClick)="openDepartConfirm(entry.householdRef)"
+                      />
+                      <p-button
+                        icon="pi pi-trash"
+                        [rounded]="true" [text]="true"
+                        severity="danger" size="small"
+                        title="Erase contact data"
+                        (onClick)="openEraseContact(entry.householdRef)"
                       />
                     </div>
                   </td>
@@ -275,6 +282,8 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
         </div>
       </div>
       <ng-template #footer>
+        <p-button label="Delete my data" icon="pi pi-trash" severity="danger"
+          [outlined]="true" (onClick)="openEraseMyContact()" style="margin-right:auto" />
         <p-button label="Cancel" icon="pi pi-times" severity="secondary"
           [outlined]="true" (onClick)="editVisible = false" />
         <p-button label="Save" icon="pi pi-check"
@@ -350,6 +359,62 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
           severity="danger"
           [loading]="departing()"
           (onClick)="confirmDepart()"
+        />
+      </ng-template>
+    </p-dialog>
+
+    <!-- ── Erase my contact dialog ── -->
+    <p-dialog
+      [(visible)]="eraseMyVisible"
+      header="Delete my data?"
+      [modal]="true" [style]="{ width: '28rem' }"
+      [draggable]="false" [resizable]="false"
+      [closable]="!erasing()"
+    >
+      <p class="depart-message">
+        All your contact information will be <strong>permanently deleted</strong>.
+        This cannot be undone.
+      </p>
+      <ng-template #footer>
+        <p-button
+          label="Cancel" icon="pi pi-times"
+          severity="secondary" [outlined]="true"
+          [disabled]="erasing()"
+          (onClick)="eraseMyVisible = false"
+        />
+        <p-button
+          label="Delete my data" icon="pi pi-trash"
+          severity="danger"
+          [loading]="erasing()"
+          (onClick)="confirmEraseMyContact()"
+        />
+      </ng-template>
+    </p-dialog>
+
+    <!-- ── Erase contact dialog (admin) ── -->
+    <p-dialog
+      [(visible)]="eraseContactVisible"
+      header="Erase contact data?"
+      [modal]="true" [style]="{ width: '28rem' }"
+      [draggable]="false" [resizable]="false"
+      [closable]="!erasingContact()"
+    >
+      <p class="depart-message">
+        All data for apartment <strong>{{ eraseContactRef }}</strong> will be
+        <strong>permanently deleted</strong>. This cannot be undone.
+      </p>
+      <ng-template #footer>
+        <p-button
+          label="Cancel" icon="pi pi-times"
+          severity="secondary" [outlined]="true"
+          [disabled]="erasingContact()"
+          (onClick)="eraseContactVisible = false"
+        />
+        <p-button
+          label="Erase contact" icon="pi pi-trash"
+          severity="danger"
+          [loading]="erasingContact()"
+          (onClick)="confirmEraseContact()"
         />
       </ng-template>
     </p-dialog>
@@ -460,6 +525,15 @@ export class DirectoryListComponent implements OnInit {
   departRef     = '';
   departing     = signal(false);
 
+  // ── erase my contact ──
+  eraseMyVisible = false;
+  erasing        = signal(false);
+
+  // ── erase contact (admin) ──
+  eraseContactVisible = false;
+  eraseContactRef     = '';
+  erasingContact      = signal(false);
+
   ngOnInit() { this.load(); }
 
   load() {
@@ -562,6 +636,50 @@ export class DirectoryListComponent implements OnInit {
       error: () => {
         this.departing.set(false);
         this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not mark as departed.' });
+      },
+    });
+  }
+
+  // ── erase my contact handlers ──
+  openEraseMyContact() {
+    this.editVisible    = false;
+    this.eraseMyVisible = true;
+  }
+
+  confirmEraseMyContact() {
+    this.erasing.set(true);
+    this.svc.eraseMyContact().subscribe({
+      next: () => {
+        this.erasing.set(false);
+        this.eraseMyVisible = false;
+        this.entries.set([]);
+        this.msg.add({ severity: 'success', summary: 'Deleted', detail: 'Your data has been permanently deleted.' });
+      },
+      error: () => {
+        this.erasing.set(false);
+        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not delete your data.' });
+      },
+    });
+  }
+
+  // ── erase contact handlers (admin) ──
+  openEraseContact(householdRef: string) {
+    this.eraseContactRef     = householdRef;
+    this.eraseContactVisible = true;
+  }
+
+  confirmEraseContact() {
+    this.erasingContact.set(true);
+    this.svc.eraseContact(this.eraseContactRef).subscribe({
+      next: () => {
+        this.erasingContact.set(false);
+        this.eraseContactVisible = false;
+        this.adminEntries.update(list => list.filter(e => e.householdRef !== this.eraseContactRef));
+        this.msg.add({ severity: 'success', summary: 'Erased', detail: `Data for ${this.eraseContactRef} permanently deleted.` });
+      },
+      error: () => {
+        this.erasingContact.set(false);
+        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not erase contact data.' });
       },
     });
   }
