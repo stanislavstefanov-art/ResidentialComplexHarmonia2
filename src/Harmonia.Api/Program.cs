@@ -16,6 +16,7 @@ using Harmonia.Application.FinancialSummary;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using ISession = Harmonia.Application.ISession;
 
@@ -92,7 +93,10 @@ else
 {
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+        options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build());
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ISession, EntraSession>();
 }
@@ -258,30 +262,29 @@ app.MapDelete(
     "/directory/contact",
     (EraseMyContact uc, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.EraseMyContactEndpoint(
-            uc, loggers.CreateLogger("Directory"), ct))
-   .RequireAuthorization();
+            uc, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
     "/directory/{householdRef}/contact",
     (EraseContact uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.EraseContactEndpoint(
-            uc, householdRef, loggers.CreateLogger("Directory"), ct))
-   .RequireAuthorization();
+            uc, householdRef, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
     "/directory/{householdRef}/departed",
     (MarkDeparted uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.MarkDepartedEndpoint(
-            uc, householdRef, loggers.CreateLogger("Directory"), ct))
-   .RequireAuthorization();
+            uc, householdRef, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
     "/directory/purge-expired",
     (PurgeExpiredContacts uc, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.PurgeExpiredContactsEndpoint(
-            uc, loggers.CreateLogger("Directory"), ct))
-   .RequireAuthorization();
+            uc, loggers.CreateLogger("Directory"), ct));
 
-app.MapGet("/healthz", () => Results.Ok());
+app.MapGet("/healthz", () => Results.Ok()).AllowAnonymous();
 
 app.Run();
+
+// Required so WebApplicationFactory<Program> in test projects can reference this type.
+public partial class Program { }
