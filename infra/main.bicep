@@ -15,10 +15,6 @@ param entraInstance string
 @secure()
 param entraClientId string
 @secure()
-param entraDomain string
-@secure()
-param entraSignUpSignInPolicyId string
-@secure()
 param entraTenantId string
 param githubOrg string = 'stanislavstefanov-art'
 param githubRepo string = 'ResidentialComplexHarmonia2'
@@ -66,8 +62,6 @@ module keyvault 'modules/keyvault.bicep' = {
     vapidPrivateKey: vapidPrivateKey
     entraInstance: entraInstance
     entraClientId: entraClientId
-    entraDomain: entraDomain
-    entraSignUpSignInPolicyId: entraSignUpSignInPolicyId
     entraTenantId: entraTenantId
   }
 }

@@ -72,27 +72,17 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
         }
         {
           name: 'entra-instance'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--Instance'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAd--Instance'
           identity: identityId
         }
         {
           name: 'entra-client-id'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--ClientId'
-          identity: identityId
-        }
-        {
-          name: 'entra-domain'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--Domain'
-          identity: identityId
-        }
-        {
-          name: 'entra-policy'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--SignUpSignInPolicyId'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAd--ClientId'
           identity: identityId
         }
         {
           name: 'entra-tenant-id'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--TenantId'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAd--TenantId'
           identity: identityId
         }
       ]
@@ -144,23 +134,15 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
               secretRef: 'acs-sender'
             }
             {
-              name: 'AzureAdB2C__Instance'
+              name: 'AzureAd__Instance'
               secretRef: 'entra-instance'
             }
             {
-              name: 'AzureAdB2C__ClientId'
+              name: 'AzureAd__ClientId'
               secretRef: 'entra-client-id'
             }
             {
-              name: 'AzureAdB2C__Domain'
-              secretRef: 'entra-domain'
-            }
-            {
-              name: 'AzureAdB2C__SignUpSignInPolicyId'
-              secretRef: 'entra-policy'
-            }
-            {
-              name: 'AzureAdB2C__TenantId'
+              name: 'AzureAd__TenantId'
               secretRef: 'entra-tenant-id'
             }
           ]
