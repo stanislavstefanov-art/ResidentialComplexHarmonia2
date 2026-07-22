@@ -44,7 +44,6 @@ public sealed class HarmoniaProductionFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Production");
         builder.ConfigureTestServices(services =>
             services.RemoveAll<IHostedService>());
     }
@@ -58,6 +57,12 @@ public sealed class HarmoniaProductionFactory : WebApplicationFactory<Program>
     }
 }
 
+// Disables parallel execution within this collection to prevent the process-wide
+// env-var mutation in HarmoniaProductionFactory from poisoning concurrent test classes.
+[CollectionDefinition("AuthPolicy", DisableParallelization = true)]
+public sealed class AuthPolicyCollection { }
+
+[Collection("AuthPolicy")]
 public class AuthorizationPolicyTests : IClassFixture<HarmoniaProductionFactory>
 {
     private readonly HttpClient _client;
