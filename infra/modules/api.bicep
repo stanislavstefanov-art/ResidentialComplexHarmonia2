@@ -70,6 +70,31 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
           keyVaultUrl: '${keyVaultUri}secrets/Acs--SenderAddress'
           identity: identityId
         }
+        {
+          name: 'entra-instance'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--Instance'
+          identity: identityId
+        }
+        {
+          name: 'entra-client-id'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--ClientId'
+          identity: identityId
+        }
+        {
+          name: 'entra-domain'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--Domain'
+          identity: identityId
+        }
+        {
+          name: 'entra-policy'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--SignUpSignInPolicyId'
+          identity: identityId
+        }
+        {
+          name: 'entra-tenant-id'
+          keyVaultUrl: '${keyVaultUri}secrets/AzureAdB2C--TenantId'
+          identity: identityId
+        }
       ]
     }
     template: {
@@ -80,7 +105,7 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
           env: [
             {
               name: 'ASPNETCORE_ENVIRONMENT'
-              value: 'Development'
+              value: 'Production'
             }
             {
               name: 'ASPNETCORE_URLS'
@@ -117,6 +142,26 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'Acs__SenderAddress'
               secretRef: 'acs-sender'
+            }
+            {
+              name: 'AzureAdB2C__Instance'
+              secretRef: 'entra-instance'
+            }
+            {
+              name: 'AzureAdB2C__ClientId'
+              secretRef: 'entra-client-id'
+            }
+            {
+              name: 'AzureAdB2C__Domain'
+              secretRef: 'entra-domain'
+            }
+            {
+              name: 'AzureAdB2C__SignUpSignInPolicyId'
+              secretRef: 'entra-policy'
+            }
+            {
+              name: 'AzureAdB2C__TenantId'
+              secretRef: 'entra-tenant-id'
             }
           ]
           resources: {
