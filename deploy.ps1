@@ -67,8 +67,15 @@ try {
 Write-Phase 'Phase 1: Collecting inputs'
 
 try {
-    $SqlAdminPasswordSecure = Read-Host 'SQL admin password' -AsSecureString
-    $VapidSubject           = Read-Host 'VAPID subject (e.g. mailto:ops@harmonia.example)'
+    $SqlAdminPasswordSecure  = Read-Host 'SQL admin password' -AsSecureString
+    $VapidSubject            = Read-Host 'VAPID subject (e.g. mailto:ops@harmonia.example)'
+
+    Write-Host "`n  Entra External ID config (from Azure Portal app registration):" -ForegroundColor Gray
+    $EntraInstance           = Read-Host '  Entra instance URL (e.g. https://<tenant>.b2clogin.com/)'
+    $EntraClientId           = Read-Host '  Entra client ID (app registration GUID)'
+    $EntraDomain             = Read-Host '  Entra domain (e.g. <tenant>.onmicrosoft.com)'
+    $EntraSignUpSignInPolicy = Read-Host '  Sign-up/sign-in policy ID (e.g. B2C_1_SignUpSignIn)'
+    $EntraTenantId           = Read-Host '  Entra tenant ID (GUID)'
 } catch {
     Write-Error "Phase 1 (collect inputs) failed: $_"
     throw
@@ -133,14 +140,19 @@ try {
         '$schema'      = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#'
         contentVersion = '1.0.0.0'
         parameters     = @{
-            sqlAdminPassword  = @{ value = $sqlPass }
-            vapidSubject      = @{ value = $VapidSubject }
-            vapidPublicKey    = @{ value = $vapidPublicKey }
-            vapidPrivateKey   = @{ value = $vapidPrivateKey }
-            useBootstrapImage = @{ value = $useBootstrapImage }
+            sqlAdminPassword         = @{ value = $sqlPass }
+            vapidSubject             = @{ value = $VapidSubject }
+            vapidPublicKey           = @{ value = $vapidPublicKey }
+            vapidPrivateKey          = @{ value = $vapidPrivateKey }
+            entraInstance            = @{ value = $EntraInstance }
+            entraClientId            = @{ value = $EntraClientId }
+            entraDomain              = @{ value = $EntraDomain }
+            entraSignUpSignInPolicyId = @{ value = $EntraSignUpSignInPolicy }
+            entraTenantId            = @{ value = $EntraTenantId }
+            useBootstrapImage        = @{ value = $useBootstrapImage }
         }
     }
-    Remove-Variable sqlPass, vapidPrivateKey -ErrorAction SilentlyContinue
+    Remove-Variable sqlPass, vapidPrivateKey, EntraInstance, EntraClientId, EntraDomain, EntraSignUpSignInPolicy, EntraTenantId -ErrorAction SilentlyContinue
     $tmpParam = [System.IO.Path]::GetTempFileName() + '.json'
     ConvertTo-Json $paramObj -Depth 5 -Compress | Set-Content -Path $tmpParam -Encoding utf8
     Remove-Variable paramObj
