@@ -17,10 +17,6 @@ param entraInstance string
 @secure()
 param entraClientId string
 @secure()
-param entraDomain string
-@secure()
-param entraSignUpSignInPolicyId string
-@secure()
 param entraTenantId string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -79,31 +75,19 @@ resource vapidPrivateKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = 
 
 resource entraInstanceSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
-  name: 'AzureAdB2C--Instance'
+  name: 'AzureAd--Instance'
   properties: { value: entraInstance }
 }
 
 resource entraClientIdSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
-  name: 'AzureAdB2C--ClientId'
+  name: 'AzureAd--ClientId'
   properties: { value: entraClientId }
-}
-
-resource entraDomainSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'AzureAdB2C--Domain'
-  properties: { value: entraDomain }
-}
-
-resource entraPolicySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'AzureAdB2C--SignUpSignInPolicyId'
-  properties: { value: entraSignUpSignInPolicyId }
 }
 
 resource entraTenantIdSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
-  name: 'AzureAdB2C--TenantId'
+  name: 'AzureAd--TenantId'
   properties: { value: entraTenantId }
 }
 

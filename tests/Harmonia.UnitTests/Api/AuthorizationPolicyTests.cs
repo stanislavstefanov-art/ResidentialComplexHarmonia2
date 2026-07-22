@@ -18,8 +18,7 @@ public sealed class HarmoniaProductionFactory : WebApplicationFactory<Program>
         "ASPNETCORE_ENVIRONMENT", "ConnectionStrings__Default",
         "Vapid__Subject", "Vapid__PublicKey", "Vapid__PrivateKey",
         "Acs__ConnectionString", "Acs__SenderAddress",
-        "AzureAdB2C__Instance", "AzureAdB2C__ClientId", "AzureAdB2C__Domain",
-        "AzureAdB2C__SignUpSignInPolicyId", "AzureAdB2C__TenantId",
+        "AzureAd__Instance", "AzureAd__ClientId", "AzureAd__TenantId",
     ];
 
     private readonly Dictionary<string, string?> _saved;
@@ -35,11 +34,9 @@ public sealed class HarmoniaProductionFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Vapid__PrivateKey",                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         Environment.SetEnvironmentVariable("Acs__ConnectionString",             "fake-acs-connection-string");
         Environment.SetEnvironmentVariable("Acs__SenderAddress",                "noreply@harmonia.example");
-        Environment.SetEnvironmentVariable("AzureAdB2C__Instance",              "https://fake.b2clogin.com/");
-        Environment.SetEnvironmentVariable("AzureAdB2C__ClientId",              "00000000-0000-0000-0000-000000000000");
-        Environment.SetEnvironmentVariable("AzureAdB2C__Domain",                "fake.onmicrosoft.com");
-        Environment.SetEnvironmentVariable("AzureAdB2C__SignUpSignInPolicyId",  "B2C_1_SignUpSignIn");
-        Environment.SetEnvironmentVariable("AzureAdB2C__TenantId",              "00000000-0000-0000-0000-000000000001");
+        Environment.SetEnvironmentVariable("AzureAd__Instance",   "https://fake.ciamlogin.com/");
+        Environment.SetEnvironmentVariable("AzureAd__ClientId",   "00000000-0000-0000-0000-000000000000");
+        Environment.SetEnvironmentVariable("AzureAd__TenantId",   "00000000-0000-0000-0000-000000000001");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
