@@ -15,7 +15,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot    = $PSScriptRoot
+$RepoRoot    = Split-Path $PSScriptRoot -Parent
 $SchemaFile  = Join-Path $RepoRoot 'db\schema.sql'
 $LocalConfig = Join-Path $RepoRoot 'src\Harmonia.Api\appsettings.Development.local.json'
 
