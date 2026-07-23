@@ -14,5 +14,7 @@ namespace Harmonia.Api.Reservations.Adapters;
 public sealed class DevSession(bool isResident, string householdRef) : ISession
 {
     public SessionContext? Resolve()
-        => new(IsResident: isResident, IsAdmin: false, HouseholdRef: new HouseholdRef(householdRef));
+        => new(IsResident: isResident, IsAdmin: false,
+               HouseholdRef: new HouseholdRef(householdRef),
+               EntraObjectId: null, IsPending: false);
 }

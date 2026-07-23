@@ -20,5 +20,6 @@ public sealed class DevAdminSession : ISession
     }
 
     public SessionContext? Resolve()
-        => new(IsResident: false, IsAdmin: true, HouseholdRef: null);
+        => new(IsResident: false, IsAdmin: true, HouseholdRef: null,
+               EntraObjectId: null, IsPending: false);
 }

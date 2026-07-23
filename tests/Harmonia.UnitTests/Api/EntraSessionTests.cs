@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Harmonia.Api.Identity;
+using Harmonia.Application;
+using Harmonia.Domain;
 using Microsoft.AspNetCore.Http;
 
 namespace Harmonia.UnitTests.Api;
@@ -78,6 +80,19 @@ public class EntraSessionTests
         Assert.NotNull(ctx);
         Assert.False(ctx.IsResident);
         Assert.False(ctx.IsAdmin);
+    }
+
+    [Fact]
+    public void SessionContext_exposes_EntraObjectId_and_IsPending()
+    {
+        var ctx = new SessionContext(
+            IsResident: true, IsAdmin: false,
+            HouseholdRef: new HouseholdRef("HH-1"),
+            EntraObjectId: "oid-123",
+            IsPending: false);
+
+        Assert.Equal("oid-123", ctx.EntraObjectId);
+        Assert.False(ctx.IsPending);
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
