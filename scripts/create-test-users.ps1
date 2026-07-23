@@ -154,7 +154,6 @@ function New-HarmoniaUser {
     try {
         $user = Invoke-Graph POST '/users' $body
         Write-Host "  ✓ Created  id=$($user.id)"
-        return $user
     } catch {
         if ($_ -match 'already exists') {
             Write-Host "  ! User $upn already exists — skipping."
