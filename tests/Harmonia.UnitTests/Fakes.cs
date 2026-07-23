@@ -4,6 +4,7 @@ using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
+using Harmonia.Application.PendingSignIn;
 using Harmonia.Application.Reservations;
 using Harmonia.Domain;
 using Harmonia.Domain.Directory;
@@ -411,4 +412,27 @@ public sealed class FailingDirectoryStore : IDirectoryStore
 
     public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(CancellationToken ct = default)
         => Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Failed());
+}
+
+public sealed class FakePendingSignInStore : IPendingSignInStore
+{
+    public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
+
+    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    {
+        UpsertCalls.Add((oid, email, displayName));
+        return Task.CompletedTask;
+    }
+}
+
+public sealed class FailingPendingSignInStore : IPendingSignInStore
+{
+    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+}
+
+public sealed class FakeHouseholdByOidLookup(string? householdRef) : IHouseholdByOidLookup
+{
+    public Task<string?> FindHouseholdRefAsync(string oid, CancellationToken ct = default)
+        => Task.FromResult(householdRef);
 }
