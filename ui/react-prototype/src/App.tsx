@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import {
-  AppBar, Box, Tab, Tabs, Toolbar, ToggleButton,
+  AppBar, Box, Button, CircularProgress, Tab, Tabs, Toolbar, ToggleButton,
   ToggleButtonGroup, Typography
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
+import { loginRequest } from './authConfig';
 import DirectoryList from './components/DirectoryList';
 import ExpensesScreen from './components/ExpensesScreen';
 import FinancialScreen from './components/FinancialScreen';
@@ -27,13 +29,40 @@ const theme = createTheme({
 
 type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit';
 
-function App() {
+function SignInPage() {
+  const { instance, inProgress } = useMsal();
+  const loading = inProgress !== 'none';
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 12, gap: 2 }}>
+      <HomeIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+      <Typography variant="h5" fontWeight={700}>Residence Harmonia</Typography>
+      <Typography variant="body2" color="text.secondary">Sign in to access your residence portal.</Typography>
+      {loading ? (
+        <CircularProgress size={32} />
+      ) : (
+        <Button
+          variant="contained"
+          size="large"
+          onClick={() => instance.loginRedirect(loginRequest)}
+        >
+          Sign in
+        </Button>
+      )}
+    </Box>
+  );
+}
+
+function MainApp() {
+  const { instance, accounts } = useMsal();
   const [role, setRole] = useState<Role>('resident');
   const [screen, setScreen] = useState<Screen>('directory');
 
+  const displayName = accounts[0]?.name ?? accounts[0]?.username ?? 'User';
+
+  const roleScreens: Screen[] = ['directory', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit'];
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
       <AppBar position="static" elevation={2}>
         <Toolbar>
           <HomeIcon sx={{ mr: 1 }} />
@@ -64,7 +93,7 @@ function App() {
             <Tab label="Privacy" value="privacy" />
             <Tab label="Edit Contact" value="contact-edit" />
           </Tabs>
-          {(screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy' || screen === 'contact-edit') && (
+          {roleScreens.includes(screen) && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
                 View as:
@@ -99,11 +128,21 @@ function App() {
               </ToggleButtonGroup>
             </>
           )}
+          <Box sx={{ ml: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>{displayName}</Typography>
+            <Button
+              size="small"
+              sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}
+              onClick={() => instance.logoutRedirect()}
+            >
+              Sign out
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box
         sx={{
-          maxWidth: (screen === 'directory' || screen === 'expenses' || screen === 'fees' || screen === 'payments' || screen === 'notifications' || screen === 'privacy' || screen === 'contact-edit') && role === 'admin' ? 1200 : 900,
+          maxWidth: roleScreens.includes(screen) && role === 'admin' ? 1200 : 900,
           mx: 'auto',
           px: 2,
           py: 4,
@@ -120,6 +159,20 @@ function App() {
         {screen === 'privacy' && <PrivacyScreen role={role} />}
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
       </Box>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthenticatedTemplate>
+        <MainApp />
+      </AuthenticatedTemplate>
+      <UnauthenticatedTemplate>
+        <SignInPage />
+      </UnauthenticatedTemplate>
     </ThemeProvider>
   );
 }

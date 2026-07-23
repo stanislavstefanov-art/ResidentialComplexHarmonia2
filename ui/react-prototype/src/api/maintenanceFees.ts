@@ -1,16 +1,16 @@
-import { API_BASE } from './config';
+import { API_BASE, apiFetch } from './config';
 import { ChargeDto, RecordChargeRequest } from '../types';
 
 const BASE = API_BASE;
 
 export async function getMyCharges(): Promise<ChargeDto[]> {
-  const res = await fetch(`${BASE}/maintenance-fees/charges`);
+  const res = await apiFetch(`${BASE}/maintenance-fees/charges`);
   if (!res.ok) throw new Error(`getMyCharges failed: ${res.status}`);
   return res.json();
 }
 
 export async function getAllCharges(): Promise<ChargeDto[]> {
-  const res = await fetch(`${BASE}/maintenance-fees/charges/all`);
+  const res = await apiFetch(`${BASE}/maintenance-fees/charges/all`);
   if (!res.ok) throw new Error(`getAllCharges failed: ${res.status}`);
   return res.json();
 }
@@ -19,7 +19,7 @@ export async function recordCharge(
   householdRef: string,
   body: RecordChargeRequest,
 ): Promise<ChargeDto> {
-  const res = await fetch(`${BASE}/maintenance-fees/charges/${encodeURIComponent(householdRef)}`, {
+  const res = await apiFetch(`${BASE}/maintenance-fees/charges/${encodeURIComponent(householdRef)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

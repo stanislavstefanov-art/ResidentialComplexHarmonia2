@@ -18,6 +18,8 @@
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "@azure/msal-angular": "^6.0.1",
+    "@azure/msal-browser": "^5.17.1",
     "@primeuix/themes": "^3.0.0",
     "primeicons": "^8.0.0",
     "primeng": "^22.0.0",
