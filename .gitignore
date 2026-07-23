@@ -13,7 +13,9 @@ appsettings.*.local.json
 
 # AI
 .ai-run/sdlc-factory/
+**/.ai-run/sdlc-factory/
 .ai-run/runs/
 .agents/memory/sdlc/daily/
 docs/superpowers/runs/
 docs/superpowers/tasks/*/.state.json
+.claude/worktrees/

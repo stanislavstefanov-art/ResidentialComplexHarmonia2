@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "17575609808512333959"
+      "templateHash": "18289401707422984657"
     }
   },
   "parameters": {
@@ -25,6 +25,24 @@
     "sqlAdminPassword": {
       "type": "securestring"
     },
+    "vapidSubject": {
+      "type": "securestring"
+    },
+    "vapidPublicKey": {
+      "type": "securestring"
+    },
+    "vapidPrivateKey": {
+      "type": "securestring"
+    },
+    "entraInstance": {
+      "type": "securestring"
+    },
+    "entraClientId": {
+      "type": "securestring"
+    },
+    "entraTenantId": {
+      "type": "securestring"
+    },
     "githubOrg": {
       "type": "string",
       "defaultValue": "stanislavstefanov-art"
@@ -32,9 +50,26 @@
     "githubRepo": {
       "type": "string",
       "defaultValue": "ResidentialComplexHarmonia2"
+    },
+    "useBootstrapImage": {
+      "type": "bool",
+      "defaultValue": false
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-api-id', parameters('namePrefix'))), 'Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[reference(resourceId('Microsoft.Resources/deployments', 'identity'), '2025-04-01').outputs.identityPrincipalId.value]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'identity')]"
+      ]
+    },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -225,9 +260,6 @@
           "namePrefix": {
             "value": "[parameters('namePrefix')]"
           },
-          "location": {
-            "value": "[parameters('location')]"
-          },
           "sqlAdminPassword": {
             "value": "[parameters('sqlAdminPassword')]"
           }
@@ -239,7 +271,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.43.8.12551",
-              "templateHash": "9908446516506647733"
+              "templateHash": "18250949144452206196"
             }
           },
           "parameters": {
@@ -248,7 +280,8 @@
               "minLength": 2
             },
             "location": {
-              "type": "string"
+              "type": "string",
+              "defaultValue": "northeurope"
             },
             "sqlAdminPassword": {
               "type": "securestring"
@@ -257,7 +290,7 @@
           "resources": [
             {
               "type": "Microsoft.Sql/servers",
-              "apiVersion": "2022-05-01-preview",
+              "apiVersion": "2023-02-01-preview",
               "name": "[format('{0}-sql', parameters('namePrefix'))]",
               "location": "[parameters('location')]",
               "properties": {
@@ -268,7 +301,7 @@
             },
             {
               "type": "Microsoft.Sql/servers/databases",
-              "apiVersion": "2022-05-01-preview",
+              "apiVersion": "2023-02-01-preview",
               "name": "[format('{0}/{1}', format('{0}-sql', parameters('namePrefix')), format('{0}-db', parameters('namePrefix')))]",
               "location": "[parameters('location')]",
               "sku": {
@@ -280,7 +313,9 @@
               "properties": {
                 "autoPauseDelay": 60,
                 "minCapacity": "[json('0.5')]",
-                "requestedBackupStorageRedundancy": "Local"
+                "requestedBackupStorageRedundancy": "Local",
+                "useFreeLimit": true,
+                "freeLimitExhaustionBehavior": "AutoPause"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Sql/servers', format('{0}-sql', parameters('namePrefix')))]"
@@ -288,11 +323,23 @@
             },
             {
               "type": "Microsoft.Sql/servers/firewallRules",
-              "apiVersion": "2022-05-01-preview",
+              "apiVersion": "2023-02-01-preview",
               "name": "[format('{0}/{1}', format('{0}-sql', parameters('namePrefix')), 'AllowAzureServices')]",
               "properties": {
                 "startIpAddress": "0.0.0.0",
                 "endIpAddress": "0.0.0.0"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', format('{0}-sql', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers/firewallRules",
+              "apiVersion": "2023-02-01-preview",
+              "name": "[format('{0}/{1}', format('{0}-sql', parameters('namePrefix')), 'AllowAll')]",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "255.255.255.255"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Sql/servers', format('{0}-sql', parameters('namePrefix')))]"
@@ -302,7 +349,7 @@
           "outputs": {
             "serverFqdn": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Sql/servers', format('{0}-sql', parameters('namePrefix'))), '2022-05-01-preview').fullyQualifiedDomainName]"
+              "value": "[reference(resourceId('Microsoft.Sql/servers', format('{0}-sql', parameters('namePrefix'))), '2023-02-01-preview').fullyQualifiedDomainName]"
             },
             "databaseName": {
               "type": "string",
@@ -339,6 +386,24 @@
           },
           "sqlAdminPassword": {
             "value": "[parameters('sqlAdminPassword')]"
+          },
+          "vapidSubject": {
+            "value": "[parameters('vapidSubject')]"
+          },
+          "vapidPublicKey": {
+            "value": "[parameters('vapidPublicKey')]"
+          },
+          "vapidPrivateKey": {
+            "value": "[parameters('vapidPrivateKey')]"
+          },
+          "entraInstance": {
+            "value": "[parameters('entraInstance')]"
+          },
+          "entraClientId": {
+            "value": "[parameters('entraClientId')]"
+          },
+          "entraTenantId": {
+            "value": "[parameters('entraTenantId')]"
           }
         },
         "template": {
@@ -348,7 +413,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.43.8.12551",
-              "templateHash": "4863473975503684212"
+              "templateHash": "2764008917387625579"
             }
           },
           "parameters": {
@@ -370,6 +435,24 @@
             },
             "identityPrincipalId": {
               "type": "string"
+            },
+            "vapidSubject": {
+              "type": "securestring"
+            },
+            "vapidPublicKey": {
+              "type": "securestring"
+            },
+            "vapidPrivateKey": {
+              "type": "securestring"
+            },
+            "entraInstance": {
+              "type": "securestring"
+            },
+            "entraClientId": {
+              "type": "securestring"
+            },
+            "entraTenantId": {
+              "type": "securestring"
             }
           },
           "variables": {
@@ -416,6 +499,72 @@
               "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
               ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('{0}kv', parameters('namePrefix')), 'Vapid--Subject')]",
+              "properties": {
+                "value": "[parameters('vapidSubject')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('{0}kv', parameters('namePrefix')), 'Vapid--PublicKey')]",
+              "properties": {
+                "value": "[parameters('vapidPublicKey')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('{0}kv', parameters('namePrefix')), 'Vapid--PrivateKey')]",
+              "properties": {
+                "value": "[parameters('vapidPrivateKey')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('{0}kv', parameters('namePrefix')), 'AzureAd--Instance')]",
+              "properties": {
+                "value": "[parameters('entraInstance')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('{0}kv', parameters('namePrefix')), 'AzureAd--ClientId')]",
+              "properties": {
+                "value": "[parameters('entraClientId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('{0}kv', parameters('namePrefix')), 'AzureAd--TenantId')]",
+              "properties": {
+                "value": "[parameters('entraTenantId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('{0}kv', parameters('namePrefix')))]"
+              ]
             }
           ],
           "outputs": {
@@ -437,6 +586,113 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'identity')]",
         "[resourceId('Microsoft.Resources/deployments', 'sql')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "acs",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "keyVaultName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2025-04-01').outputs.keyVaultName.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.43.8.12551",
+              "templateHash": "9316236099825892899"
+            }
+          },
+          "parameters": {
+            "namePrefix": {
+              "type": "string"
+            },
+            "keyVaultName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Communication/emailServices",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-email', parameters('namePrefix'))]",
+              "location": "global",
+              "properties": {
+                "dataLocation": "Europe"
+              }
+            },
+            {
+              "type": "Microsoft.Communication/emailServices/domains",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', format('{0}-email', parameters('namePrefix')), 'AzureManagedDomain')]",
+              "location": "global",
+              "properties": {
+                "domainManagement": "AzureManaged"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices', format('{0}-email', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Communication/communicationServices",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-acs', parameters('namePrefix'))]",
+              "location": "global",
+              "properties": {
+                "dataLocation": "Europe",
+                "linkedDomains": [
+                  "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('namePrefix')), 'AzureManagedDomain')]"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('namePrefix')), 'AzureManagedDomain')]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'Acs--ConnectionString')]",
+              "properties": {
+                "value": "[listKeys(resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('namePrefix'))), '2023-04-01').primaryConnectionString]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('namePrefix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'Acs--SenderAddress')]",
+              "properties": {
+                "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('namePrefix')), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain)]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('namePrefix')), 'AzureManagedDomain')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "senderAddress": {
+              "type": "string",
+              "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('namePrefix')), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain)]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'keyvault')]"
       ]
     },
     {
@@ -525,9 +781,6 @@
           "namePrefix": {
             "value": "[parameters('namePrefix')]"
           },
-          "location": {
-            "value": "[parameters('location')]"
-          },
           "identityId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'identity'), '2025-04-01').outputs.identityId.value]"
           },
@@ -545,6 +798,9 @@
           },
           "reactSwaUrl": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'frontend'), '2025-04-01').outputs.reactSwaUrl.value]"
+          },
+          "useBootstrapImage": {
+            "value": "[parameters('useBootstrapImage')]"
           }
         },
         "template": {
@@ -554,7 +810,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.43.8.12551",
-              "templateHash": "15714717229299425576"
+              "templateHash": "6113353738473983663"
             }
           },
           "parameters": {
@@ -563,7 +819,8 @@
               "minLength": 2
             },
             "location": {
-              "type": "string"
+              "type": "string",
+              "defaultValue": "northeurope"
             },
             "identityId": {
               "type": "string"
@@ -582,6 +839,10 @@
             },
             "reactSwaUrl": {
               "type": "string"
+            },
+            "useBootstrapImage": {
+              "type": "bool",
+              "defaultValue": false
             }
           },
           "resources": [
@@ -647,6 +908,21 @@
                       "name": "acs-sender",
                       "keyVaultUrl": "[format('{0}secrets/Acs--SenderAddress', parameters('keyVaultUri'))]",
                       "identity": "[parameters('identityId')]"
+                    },
+                    {
+                      "name": "entra-instance",
+                      "keyVaultUrl": "[format('{0}secrets/AzureAd--Instance', parameters('keyVaultUri'))]",
+                      "identity": "[parameters('identityId')]"
+                    },
+                    {
+                      "name": "entra-client-id",
+                      "keyVaultUrl": "[format('{0}secrets/AzureAd--ClientId', parameters('keyVaultUri'))]",
+                      "identity": "[parameters('identityId')]"
+                    },
+                    {
+                      "name": "entra-tenant-id",
+                      "keyVaultUrl": "[format('{0}secrets/AzureAd--TenantId', parameters('keyVaultUri'))]",
+                      "identity": "[parameters('identityId')]"
                     }
                   ]
                 },
@@ -654,11 +930,11 @@
                   "containers": [
                     {
                       "name": "[format('{0}-api', parameters('namePrefix'))]",
-                      "image": "[format('{0}/{1}-api:{2}', parameters('acrLoginServer'), parameters('namePrefix'), parameters('containerImageTag'))]",
+                      "image": "[if(parameters('useBootstrapImage'), 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest', format('{0}/{1}-api:{2}', parameters('acrLoginServer'), parameters('namePrefix'), parameters('containerImageTag')))]",
                       "env": [
                         {
                           "name": "ASPNETCORE_ENVIRONMENT",
-                          "value": "Development"
+                          "value": "Production"
                         },
                         {
                           "name": "ASPNETCORE_URLS",
@@ -695,6 +971,18 @@
                         {
                           "name": "Acs__SenderAddress",
                           "secretRef": "acs-sender"
+                        },
+                        {
+                          "name": "AzureAd__Instance",
+                          "secretRef": "entra-instance"
+                        },
+                        {
+                          "name": "AzureAd__ClientId",
+                          "secretRef": "entra-client-id"
+                        },
+                        {
+                          "name": "AzureAd__TenantId",
+                          "secretRef": "entra-tenant-id"
                         }
                       ],
                       "resources": {
@@ -724,6 +1012,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'acr')]",
+        "[resourceId('Microsoft.Resources/deployments', 'acs')]",
         "[resourceId('Microsoft.Resources/deployments', 'frontend')]",
         "[resourceId('Microsoft.Resources/deployments', 'identity')]",
         "[resourceId('Microsoft.Resources/deployments', 'keyvault')]"

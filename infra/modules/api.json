@@ -1,0 +1,206 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.43.8.12551",
+      "templateHash": "6113353738473983663"
+    }
+  },
+  "parameters": {
+    "namePrefix": {
+      "type": "string",
+      "minLength": 2
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "northeurope"
+    },
+    "identityId": {
+      "type": "string"
+    },
+    "acrLoginServer": {
+      "type": "string"
+    },
+    "containerImageTag": {
+      "type": "string"
+    },
+    "keyVaultUri": {
+      "type": "string"
+    },
+    "angularSwaUrl": {
+      "type": "string"
+    },
+    "reactSwaUrl": {
+      "type": "string"
+    },
+    "useBootstrapImage": {
+      "type": "bool",
+      "defaultValue": false
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-env', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-api', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', parameters('identityId'))]": {}
+        }
+      },
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('namePrefix')))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": 8080,
+            "transport": "auto"
+          },
+          "registries": [
+            {
+              "server": "[parameters('acrLoginServer')]",
+              "identity": "[parameters('identityId')]"
+            }
+          ],
+          "secrets": [
+            {
+              "name": "conn-default",
+              "keyVaultUrl": "[format('{0}secrets/ConnectionStrings--Default', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "vapid-subject",
+              "keyVaultUrl": "[format('{0}secrets/Vapid--Subject', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "vapid-public-key",
+              "keyVaultUrl": "[format('{0}secrets/Vapid--PublicKey', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "vapid-private-key",
+              "keyVaultUrl": "[format('{0}secrets/Vapid--PrivateKey', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "acs-conn-string",
+              "keyVaultUrl": "[format('{0}secrets/Acs--ConnectionString', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "acs-sender",
+              "keyVaultUrl": "[format('{0}secrets/Acs--SenderAddress', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "entra-instance",
+              "keyVaultUrl": "[format('{0}secrets/AzureAd--Instance', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "entra-client-id",
+              "keyVaultUrl": "[format('{0}secrets/AzureAd--ClientId', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            },
+            {
+              "name": "entra-tenant-id",
+              "keyVaultUrl": "[format('{0}secrets/AzureAd--TenantId', parameters('keyVaultUri'))]",
+              "identity": "[parameters('identityId')]"
+            }
+          ]
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "[format('{0}-api', parameters('namePrefix'))]",
+              "image": "[if(parameters('useBootstrapImage'), 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest', format('{0}/{1}-api:{2}', parameters('acrLoginServer'), parameters('namePrefix'), parameters('containerImageTag')))]",
+              "env": [
+                {
+                  "name": "ASPNETCORE_ENVIRONMENT",
+                  "value": "Production"
+                },
+                {
+                  "name": "ASPNETCORE_URLS",
+                  "value": "http://+:8080"
+                },
+                {
+                  "name": "Cors__AllowedOrigins__0",
+                  "value": "[parameters('angularSwaUrl')]"
+                },
+                {
+                  "name": "Cors__AllowedOrigins__1",
+                  "value": "[parameters('reactSwaUrl')]"
+                },
+                {
+                  "name": "ConnectionStrings__Default",
+                  "secretRef": "conn-default"
+                },
+                {
+                  "name": "Vapid__Subject",
+                  "secretRef": "vapid-subject"
+                },
+                {
+                  "name": "Vapid__PublicKey",
+                  "secretRef": "vapid-public-key"
+                },
+                {
+                  "name": "Vapid__PrivateKey",
+                  "secretRef": "vapid-private-key"
+                },
+                {
+                  "name": "Acs__ConnectionString",
+                  "secretRef": "acs-conn-string"
+                },
+                {
+                  "name": "Acs__SenderAddress",
+                  "secretRef": "acs-sender"
+                },
+                {
+                  "name": "AzureAd__Instance",
+                  "secretRef": "entra-instance"
+                },
+                {
+                  "name": "AzureAd__ClientId",
+                  "secretRef": "entra-client-id"
+                },
+                {
+                  "name": "AzureAd__TenantId",
+                  "secretRef": "entra-tenant-id"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 0,
+            "maxReplicas": 3
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('namePrefix')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "containerAppFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', format('{0}-api', parameters('namePrefix'))), '2023-05-01').configuration.ingress.fqdn]"
+    }
+  }
+}
