@@ -71,13 +71,29 @@ Write-Host "`n→ Locating aad-extensions-app..."
 $appsResp = Invoke-Graph GET '/applications?$filter=startsWith(displayName,''aad-extensions-app'')&$select=appId,displayName'
 
 if (-not $appsResp.value -or $appsResp.value.Count -eq 0) {
+    # Broaden search to distinguish "no attributes created" from a permissions issue
+    Write-Host "  ! Name filter returned nothing — checking if any apps are visible..."
+    $allApps = Invoke-Graph GET '/applications?$select=appId,displayName&$top=10'
+    if (-not $allApps.value -or $allApps.value.Count -eq 0) {
+        Write-Warning "  No apps visible at all. Your account may lack Application.Read.All in this tenant."
+        Write-Warning "  Sign in with a Global Administrator account and re-run."
+    } else {
+        Write-Host "  Apps visible in tenant (first 10):"
+        $allApps.value | ForEach-Object { Write-Host "    - $($_.displayName)  ($($_.appId))" }
+        Write-Host ""
+        Write-Warning "  'aad-extensions-app' not among them — custom user attributes not yet created."
+    }
     Write-Error @"
-Could not find 'aad-extensions-app' in tenant $TenantId.
+Custom user attributes not found in tenant $TenantId.
 
-This app is auto-created by Entra when the first custom user attribute is added.
-Go to External Identities → Custom user attributes → + Add and create:
+In the Azure portal, go to:
+  External Identities → Custom user attributes → + Add
+
+Create both attributes:
   Name: householdRef   Type: String
   Name: role           Type: String
+
+This creates the 'aad-extensions-app' registration that stores extension properties.
 Then re-run this script.
 "@
     exit 1
