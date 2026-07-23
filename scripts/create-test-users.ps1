@@ -138,6 +138,7 @@ function New-HarmoniaUser {
         accountEnabled    = $true
         displayName       = $DisplayName
         userPrincipalName = $upn
+        mailNickname      = $Username
         passwordProfile   = @{
             password                      = $TempPassword
             forceChangePasswordNextSignIn = $false
