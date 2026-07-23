@@ -84,7 +84,11 @@ if ($ExtensionPrefix) {
     Write-Host "`n→ Resolving extension property prefix..."
 
     # Try az ad app list first — uses az CLI's own directory auth
-    $extApps = az ad app list --display-name 'aad-extensions-app' 2>$null | ConvertFrom-Json
+    # Entra External ID (CIAM) uses 'b2c-extensions-app'; classic AAD uses 'aad-extensions-app'
+    $extApps = az ad app list --display-name 'b2c-extensions-app' 2>$null | ConvertFrom-Json
+    if (-not ($extApps -and $extApps.Count -gt 0)) {
+        $extApps = az ad app list --display-name 'aad-extensions-app' 2>$null | ConvertFrom-Json
+    }
     if ($extApps -and $extApps.Count -gt 0) {
         $extPrefix = 'extension_' + ($extApps[0].appId -replace '-', '')
         Write-Host "  ✓ Found via az ad app list: $($extApps[0].displayName)"
