@@ -39,7 +39,7 @@ function SignInPage() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 12, gap: 2 }}>
       <HomeIcon sx={{ fontSize: 48, color: 'primary.main' }} />
-      <Typography variant="h5" fontWeight={700}>Residence Harmonia</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>Residence Harmonia</Typography>
       <Typography variant="body2" color="text.secondary">Sign in to access your residence portal.</Typography>
       {loading ? (
         <CircularProgress size={32} />
