@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "task": "Implement Entra External ID authentication end-to-end: fix ASPNETCORE_ENVIRONMENT in api.bicep, add AzureAdB2C KV secrets to keyvault.bicep and deploy.ps1, add MSAL login/logout to Angular and React UIs with Bearer token on all API calls.",
+  "generated": "2026-07-22T00:00:00Z",
+  "dimensions": {
+    "component_scope":      { "score": 5, "label": "XL" },
+    "requirements_clarity": { "score": 3, "label": "M" },
+    "technical_risk":       { "score": 6, "label": "XXL" },
+    "file_change_estimate": { "score": 6, "label": "XXL" },
+    "dependencies":         { "score": 4, "label": "L" },
+    "affected_layers":      { "score": 6, "label": "XXL" }
+  },
+  "total": 30,
+  "size": "XL",
+  "routing": "split-required",
+  "key_reasoning": [
+    {
+      "dimension": "component_scope",
+      "reason": "Five major subsystems all require changes: API endpoint hardening (~23 endpoints need .RequireAuthorization()), Angular MSAL module (net-new from zero), React MSAL module (net-new from zero), Bicep infra (keyvault.bicep, api.bicep, main.bicep, main.parameters.json), and deploy.ps1. Bumped L→XL by external-service integration red flag (Entra External ID + MSAL.js as new external dependencies) and shared-utilities red flag (Program.cs auth wiring affects all 27 endpoints)."
+    },
+    {
+      "dimension": "technical_risk",
+      "reason": "Entire task is authentication/security boundary work: a mistake leaves all 27 endpoints unprotected or users unable to log in. The ASPNETCORE_ENVIRONMENT fix is a single-line infra change that toggles the live API from dev-stub (DevSession) to real JWT enforcement (EntraSession). MSAL.js is a novel library dependency in both UIs with no existing repo pattern. No WebApplicationFactory JWT tests and no MSAL frontend test infrastructure exist. Hard external gate (Entra tenant provisioning) blocks all E2E verification. Bumped XL→XXL by security/compliance red flag (ADR-0001 R2/R3 PII invariants) and auth/authz red flag."
+    },
+    {
+      "dimension": "file_change_estimate",
+      "reason": "Estimated 17-18 files changed: keyvault.bicep, api.bicep, main.bicep, main.parameters.json, deploy.ps1 (5 infra), environment.ts, environment.prod.ts, app.config.ts, new interceptor, new auth service, app.routes.ts (6 Angular), index.tsx, App.tsx, api/config.ts, new MsalProvider file, new fetch wrapper (5 React), Program.cs (1 API). 16+ files maps to XXL."
+    },
+    {
+      "dimension": "affected_layers",
+      "reason": "Six distinct architectural layers: External (Microsoft Entra External ID OIDC issuer), API/Service (Program.cs endpoint guards + environment fix), Infrastructure/Secrets (Key Vault bicep + deploy.ps1), Angular UI (new MSAL auth module), React UI (new MSAL auth module), and Infra Container App (api.bicep env var injection). Bumped XL→XXL by external-service integration red flag."
+    },
+    {
+      "dimension": "dependencies",
+      "reason": "Four new npm packages introduced across two separate frontend projects: @azure/msal-browser and @azure/msal-angular in Angular; @azure/msal-browser and @azure/msal-react in React. No new NuGet packages (Microsoft.Identity.Web already wired in .NET API)."
+    }
+  ],
+  "red_flags_applied": [
+    "Component Scope bumped from L(4) to XL(5): integration with new external service (Microsoft Entra External ID via MSAL.js in two UIs) triggers both Component Scope and Affected Layers bumps",
+    "Affected Layers bumped from XL(5) to XXL(6): integration with new external service (Entra External ID OIDC issuer) adds the External layer on top of five internal layers already touched",
+    "Technical Risk bumped from XL(5) to XXL(6): Security/Compliance requirements — authentication end-to-end, ADR-0001 R2/R3 PII invariants, householdRef never logged",
+    "Technical Risk confirmed at XXL: Affects authentication or authorization — this task IS the authentication layer for all 27 API endpoints",
+    "Component Scope confirmed at XL: Touches core shared utilities — Program.cs auth wiring and ISession port contract underpin all 29 use-case classes and all 27 endpoints"
+  ],
+  "split_recommendation": "Split into three sequential slices: (1) Infra slice — fix ASPNETCORE_ENVIRONMENT in api.bicep, add AzureAdB2C secrets to keyvault.bicep and api.bicep, update deploy.ps1 to collect and store Entra config in Key Vault, add .RequireAuthorization() to remaining 23 API endpoints in Program.cs. Deliverable: deployed API reads Entra config from Key Vault and enforces JWT at middleware level (gated on human provisioning the Entra tenant). (2) Angular MSAL slice — install @azure/msal-browser + @azure/msal-angular, configure MsalModule in app.config.ts, add MSAL config to environment files, implement HTTP interceptor for Bearer token, add login/logout UI, add route guards, add Jasmine MSAL mock infrastructure and interceptor tests. (3) React MSAL slice — install @azure/msal-browser + @azure/msal-react, wrap root in MsalProvider, introduce a centralized fetch client with Bearer injection replacing bare fetch() across 9 API modules, add login/logout UI, add Jest MSAL mock infrastructure and fetch wrapper tests."
+}

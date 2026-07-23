@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "task": "Add GitHub Actions CI/CD pipeline deploying Harmonia to Azure: API to Azure Container Apps, Angular and React UIs to Azure Static Web Apps, Azure SQL for the database, with two environments (staging + production), secrets via Azure Key Vault, and OIDC federated identity.",
+  "generated": "2026-07-17T00:00:00Z",
+  "dimensions": {
+    "component_scope":      { "score": 6, "label": "XXL" },
+    "requirements_clarity": { "score": 5, "label": "XL" },
+    "technical_risk":       { "score": 6, "label": "XXL" },
+    "file_change_estimate": { "score": 6, "label": "XXL" },
+    "dependencies":         { "score": 5, "label": "XL" },
+    "affected_layers":      { "score": 6, "label": "XXL" }
+  },
+  "total": 34,
+  "size": "XXL",
+  "routing": "split-required",
+  "key_reasoning": [
+    {
+      "dimension": "component_scope",
+      "reason": "Five or more distinct components must be created or substantially modified: Harmonia.Api (Dockerfile, health endpoint, CORS), Angular UI (~18 service files + env config + staticwebapp.config.json), React UI (same), GitHub Actions pipeline YAML, and IaC for Azure resources (ACR, Container Apps, Static Web Apps, Azure SQL). Red flag applied: multiple new external service integrations bump this from XL to XXL."
+    },
+    {
+      "dimension": "requirements_clarity",
+      "reason": "ADR-0005 explicitly records that UIs have 'no CI pipeline' — this is a scope extension requiring a human decision before work can begin. IaC authoring vs. manual pre-provisioning is explicitly left open. These are not minor gaps; resolving them changes the file count and approach materially. Red flag applied: vague acceptance criteria bump from L to XL."
+    },
+    {
+      "dimension": "technical_risk",
+      "reason": "Everything is net-new: no Dockerfile, no health endpoint, no CORS, no ACR, no IaC, no CD steps in existing ci.yml, and hardcoded localhost URLs across ~18 files. Key Vault wiring is zero-fault-tolerance (6 connection strings all required at startup). OIDC federated identity is a security-sensitive integration. EU data-residency constraint limits region choices. Reversibility is low once Azure resources and pipeline secrets are provisioned."
+    },
+    {
+      "dimension": "file_change_estimate",
+      "reason": "Minimum affected files: Dockerfile (new), Program.cs, ~18 Angular/React service files, 2x environment config files (Angular), 2x staticwebapp.config.json (new), 2+ GitHub Actions YAML files (new/rewritten), Bicep or Terraform files (multiple, new). Conservative total: 28–35 files. Firmly XXL."
+    },
+    {
+      "dimension": "dependencies",
+      "reason": "Five or more new external service integrations: Azure Container Registry, Azure Container Apps, Azure Static Web Apps, Azure Key Vault, GitHub Actions OIDC federated identity, and optionally Bicep CLI / Terraform as toolchain additions. Each carries its own config, credentials, and failure mode."
+    },
+    {
+      "dimension": "affected_layers",
+      "reason": "API layer (Program.cs — health endpoint + CORS), External layer (ACR, Container Apps, Static Web Apps, Key Vault, OIDC), Workflow/Pipeline layer (GitHub Actions YAML), DB-Persistence layer (Azure SQL + Key Vault connection string wiring), and frontend source (Angular + React, cross-cutting). Red flag applied: multiple new external service integrations bump from XL to XXL."
+    }
+  ],
+  "red_flags_applied": [
+    "Component Scope bumped from XL(5) to XXL(6): integration with multiple new external services (ACR, Container Apps, Static Web Apps, Key Vault, OIDC)",
+    "Affected Layers bumped from XL(5) to XXL(6): integration with multiple new external services touches every layer boundary",
+    "Technical Risk held at XXL(6) (already maximum): security/compliance flag applied for OIDC federated identity, Key Vault secrets management, and EU data-residency constraint",
+    "Requirements Clarity bumped from L(4) to XL(5): ADR-0005 scope conflict unresolved (UIs have 'no CI pipeline'); IaC vs. manual provisioning decision is open"
+  ],
+  "split_recommendation": "Decompose into at least four independent slices, each shippable and reviewable on its own:\n\n  Slice 1 — API containerisation and health readiness\n    Scope: author Dockerfile for Harmonia.Api, add /health endpoint to Program.cs, add CORS middleware for SWA origins, verify local docker build and run. No pipeline changes. No Azure resources.\n    Exit criterion: `docker build` succeeds locally; /health returns 200; CORS headers present in response.\n\n  Slice 2 — Frontend env-awareness\n    Scope: replace hardcoded http://localhost:5000 across all Angular and React service files with environment-variable-driven substitution; add staticwebapp.config.json to both UIs for SPA routing and API proxy config; add Angular environment files if missing.\n    Exit criterion: both UIs build and run locally against a configurable API base URL; no localhost references remain in source.\n\n  Slice 3 — Azure infrastructure provisioning (IaC or manual runbook)\n    Scope: resolve the IaC-vs-manual decision (human gate required); author Bicep or Terraform for ACR, Container Apps, Static Web Apps (staging + production), Azure SQL, Key Vault, and managed identity / OIDC app registration. EU region (westeurope/northeurope). Resolve ADR-0005 scope extension (human gate required).\n    Exit criterion: all Azure resources exist in both environments; OIDC federated credentials configured; Key Vault populated with all 6 connection strings.\n\n  Slice 4 — GitHub Actions CI/CD pipeline\n    Scope: extend existing ci.yml or author new CD workflow files; implement build → push to ACR → deploy to Container Apps (API) and Static Web Apps (Angular + React); staging auto-deploy on main; production deploy on manual approval or tag; secrets sourced via OIDC + Key Vault references.\n    Exit criterion: staging deployment completes end-to-end on a commit to main; production deployment requires explicit approval and succeeds when approved.\n\n  Each slice unblocks the next but can be reviewed, merged, and tested independently."
+}
