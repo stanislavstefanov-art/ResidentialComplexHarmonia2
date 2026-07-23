@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "task": "Set Bulgarian as the default language in Angular (PrimeNG 22) and React (MUI 9) UIs, and update the dev-mode household reference default from 'HH-DEV-1' to 'АП. 1' in API config.",
+  "generated": "2026-07-23T00:00:00Z",
+  "dimensions": {
+    "component_scope":      { "score": 2, "label": "S" },
+    "requirements_clarity": { "score": 2, "label": "S" },
+    "technical_risk":       { "score": 1, "label": "XS" },
+    "file_change_estimate": { "score": 3, "label": "M" },
+    "dependencies":         { "score": 1, "label": "XS" },
+    "affected_layers":      { "score": 2, "label": "S" }
+  },
+  "total": 11,
+  "size": "S",
+  "routing": "writing-plans",
+  "key_reasoning": [
+    {
+      "dimension": "file_change_estimate",
+      "reason": "5 files touched across 3 sub-projects (app.config.ts, app.ts, App.tsx, appsettings.json, Program.cs) — maps to M (4-6 files) even though each change is small and targeted."
+    },
+    {
+      "dimension": "component_scope",
+      "reason": "Three distinct sub-projects are involved (Angular UI, React UI, .NET API), but every change is a configuration-level addition or string replacement with no new business logic or components. Existing patterns fully cover all change sites."
+    },
+    {
+      "dimension": "requirements_clarity",
+      "reason": "Named files, named lines, and before/after values are explicit. The only open question — whether the PrimeNG DatePicker dateFormat override in reservations.component.ts should be changed — is explicitly scoped as a product/UX decision, not a technical unknown."
+    }
+  ],
+  "red_flags_applied": [],
+  "split_recommendation": null
+}
