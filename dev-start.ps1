@@ -158,8 +158,8 @@ $launch = {
 }
 
 & $launch 'Harmonia API'     $RepoRoot                                'dotnet run --project src/Harmonia.Api'
-& $launch 'Harmonia Angular' "$RepoRoot\ui\angular-prototype"         'npm start'
-& $launch 'Harmonia React'   "$RepoRoot\ui\react-prototype"           'npm start'
+& $launch 'Harmonia Angular' "$RepoRoot\ui\angular"         'npm start'
+& $launch 'Harmonia React'   "$RepoRoot\ui\react"           'npm start'
 
 Write-Host @"
 
