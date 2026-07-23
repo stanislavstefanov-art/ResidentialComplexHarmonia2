@@ -1,22 +1,22 @@
-import { API_BASE } from './config';
+import { API_BASE, apiFetch } from './config';
 import { PaymentDto, RecordPaymentRequest, BalanceDto } from '../types';
 
 const BASE = API_BASE;
 
 export async function getMyPayments(): Promise<PaymentDto[]> {
-  const res = await fetch(`${BASE}/payments`);
+  const res = await apiFetch(`${BASE}/payments`);
   if (!res.ok) throw new Error(`getMyPayments failed: ${res.status}`);
   return res.json();
 }
 
 export async function getAllPayments(): Promise<PaymentDto[]> {
-  const res = await fetch(`${BASE}/payments/all`);
+  const res = await apiFetch(`${BASE}/payments/all`);
   if (!res.ok) throw new Error(`getAllPayments failed: ${res.status}`);
   return res.json();
 }
 
 export async function recordPayment(body: RecordPaymentRequest): Promise<PaymentDto> {
-  const res = await fetch(`${BASE}/payments`, {
+  const res = await apiFetch(`${BASE}/payments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -27,7 +27,7 @@ export async function recordPayment(body: RecordPaymentRequest): Promise<Payment
 
 export async function getBalance(period?: string): Promise<BalanceDto> {
   const url = period ? `${BASE}/balance?period=${encodeURIComponent(period)}` : `${BASE}/balance`;
-  const res = await fetch(url);
+  const res = await apiFetch(url);
   if (!res.ok) throw new Error(`getBalance failed: ${res.status}`);
   return res.json();
 }

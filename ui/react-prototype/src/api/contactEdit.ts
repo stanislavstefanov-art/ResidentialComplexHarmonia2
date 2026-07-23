@@ -1,4 +1,4 @@
-import { API_BASE } from './config';
+import { API_BASE, apiFetch } from './config';
 
 const BASE = API_BASE;
 
@@ -10,7 +10,7 @@ export interface UpdateContactRequest {
 }
 
 export async function updateMyContact(body: UpdateContactRequest): Promise<void> {
-  const res = await fetch(`${BASE}/directory/contact`, {
+  const res = await apiFetch(`${BASE}/directory/contact`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -19,7 +19,7 @@ export async function updateMyContact(body: UpdateContactRequest): Promise<void>
 }
 
 export async function updateContact(householdRef: string, body: UpdateContactRequest): Promise<void> {
-  const res = await fetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/contact`, {
+  const res = await apiFetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/contact`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -28,7 +28,7 @@ export async function updateContact(householdRef: string, body: UpdateContactReq
 }
 
 export async function updateNotes(householdRef: string, notes: string | null): Promise<void> {
-  const res = await fetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/notes`, {
+  const res = await apiFetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/notes`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ notes }),
