@@ -66,58 +66,18 @@ function Invoke-Graph {
     }
 }
 
-# ── 3. Find the extensions app (holds the attribute property prefix) ──────────
-Write-Host "`n→ Locating aad-extensions-app..."
-$appsResp = Invoke-Graph GET '/applications?$filter=startsWith(displayName,''aad-extensions-app'')&$select=appId,displayName'
+# ── 3. Derive extension prefix from the user flow attribute IDs ───────────────
+# The id of a custom userFlowAttribute is: extension_{appIdNoHyphens}_{name}
+# This avoids needing Application.Read.All to query /applications.
+Write-Host "`n→ Resolving extension property prefix from user flow attributes..."
+$flowAttrs = Invoke-Graph GET '/identity/userFlowAttributes?$select=id,displayName'
 
-if (-not $appsResp.value -or $appsResp.value.Count -eq 0) {
-    # Broaden search to distinguish "no attributes created" from a permissions issue
-    Write-Host "  ! Name filter returned nothing — checking if any apps are visible..."
-    $allApps = Invoke-Graph GET '/applications?$select=appId,displayName&$top=10'
-    if (-not $allApps.value -or $allApps.value.Count -eq 0) {
-        Write-Warning "  No apps visible at all. Your account may lack Application.Read.All in this tenant."
-        Write-Warning "  Sign in with a Global Administrator account and re-run."
-    } else {
-        Write-Host "  Apps visible in tenant (first 10):"
-        $allApps.value | ForEach-Object { Write-Host "    - $($_.displayName)  ($($_.appId))" }
-        Write-Host ""
-        Write-Warning "  'aad-extensions-app' not among them — custom user attributes not yet created."
-    }
-    Write-Error @"
-Custom user attributes not found in tenant $TenantId.
-
-In the Azure portal, go to:
-  External Identities → Custom user attributes → + Add
-
-Create both attributes:
-  Name: householdRef   Type: String
-  Name: role           Type: String
-
-This creates the 'aad-extensions-app' registration that stores extension properties.
-Then re-run this script.
-"@
-    exit 1
-}
-
-$extApp   = $appsResp.value[0]
-$extPrefix = 'extension_' + ($extApp.appId -replace '-', '')
-Write-Host "  ✓ Found: $($extApp.displayName)"
-Write-Host "  ✓ Attribute prefix: $extPrefix"
-
-# ── 4. Verify custom attributes are registered ────────────────────────────────
-Write-Host "`n→ Verifying custom user attributes..."
-$flowAttrs = Invoke-Graph GET '/identity/userFlowAttributes?$select=displayName'
-$registered = $flowAttrs.value | Select-Object -ExpandProperty displayName
+$householdRefAttr = $flowAttrs.value | Where-Object { $_.displayName -eq 'householdRef' }
+$roleAttr         = $flowAttrs.value | Where-Object { $_.displayName -eq 'role' }
 
 $missing = @()
-foreach ($attr in @('householdRef', 'role')) {
-    if ($registered -contains $attr) {
-        Write-Host "  ✓ $attr"
-    } else {
-        Write-Warning "  ✗ $attr — NOT FOUND in tenant"
-        $missing += $attr
-    }
-}
+if (-not $householdRefAttr) { $missing += 'householdRef' }
+if (-not $roleAttr)         { $missing += 'role' }
 
 if ($missing.Count -gt 0) {
     Write-Error @"
@@ -131,7 +91,13 @@ Create them in the portal before running this script:
     exit 1
 }
 
-# ── 5. Create users ───────────────────────────────────────────────────────────
+# id is "extension_{appIdNoHyphens}_householdRef" — strip the trailing attribute name
+$extPrefix = $householdRefAttr.id -replace '_householdRef$', ''
+Write-Host "  ✓ householdRef  (id: $($householdRefAttr.id))"
+Write-Host "  ✓ role          (id: $($roleAttr.id))"
+Write-Host "  ✓ Extension prefix: $extPrefix"
+
+# ── 4. Create users ───────────────────────────────────────────────────────────
 function New-HarmoniaUser {
     param(
         [string]$DisplayName,
@@ -184,7 +150,7 @@ New-HarmoniaUser `
     -Role        'admin'
     # no HouseholdRef for admin — ADR-0003
 
-# ── 6. Summary ────────────────────────────────────────────────────────────────
+# ── 5. Summary ────────────────────────────────────────────────────────────────
 Write-Host @"
 
 ✓ Done.
