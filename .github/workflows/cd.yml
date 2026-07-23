@@ -84,14 +84,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ui/angular-prototype/package-lock.json
+          cache-dependency-path: ui/angular/package-lock.json
 
       - name: Install dependencies
-        working-directory: ui/angular-prototype
+        working-directory: ui/angular
         run: npm ci --legacy-peer-deps
 
       - name: Build Angular
-        working-directory: ui/angular-prototype
+        working-directory: ui/angular
         run: npm run build -- --configuration production
 
       - name: Deploy to Angular SWA
@@ -100,7 +100,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.ANGULAR_SWA_DEPLOY_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: ui/angular-prototype/dist/angular-prototype/browser
+          app_location: ui/angular/dist/harmonia-angular/browser
           skip_app_build: true
 
   deploy-react:
@@ -115,14 +115,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ui/react-prototype/package-lock.json
+          cache-dependency-path: ui/react/package-lock.json
 
       - name: Install dependencies
-        working-directory: ui/react-prototype
+        working-directory: ui/react
         run: npm ci
 
       - name: Build React
-        working-directory: ui/react-prototype
+        working-directory: ui/react
         env:
           REACT_APP_API_URL: https://residenceharmonia-api.bravesea-14332e7f.northeurope.azurecontainerapps.io
         run: npm run build
@@ -133,7 +133,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.REACT_SWA_DEPLOY_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: ui/react-prototype/build
+          app_location: ui/react/build
           skip_app_build: true
 
   run-schema:

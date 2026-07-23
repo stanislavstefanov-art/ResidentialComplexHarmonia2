@@ -37,8 +37,8 @@ parallel UI prototypes for a framework comparison exercise (ADR-0005).
 
 | Path | Framework | Library | Status |
 |---|---|---|---|
-| `ui/angular-prototype/` | Angular | PrimeNG or NG-ZORRO | In progress |
-| `ui/react-prototype/` | React | MUI or shadcn/ui | Planned |
+| `ui/angular/` | Angular | PrimeNG or NG-ZORRO | In progress |
+| `ui/react/` | React | MUI or shadcn/ui | Planned |
 
 **Prototype scope:** member directory listing (resident view, opted-out hidden), edit own contact
 form, opt-out toggle. Both prototypes call the local Harmonia API — no auth integration.

@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "angular-prototype": {
+    "harmonia-angular": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -89,10 +89,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "angular-prototype:build:production"
+              "buildTarget": "harmonia-angular:build:production"
             },
             "development": {
-              "buildTarget": "angular-prototype:build:development"
+              "buildTarget": "harmonia-angular:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -100,7 +100,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "buildTarget": "angular-prototype:build:development",
+            "buildTarget": "harmonia-angular:build:development",
             "runner": "vitest",
             "setupFiles": ["src/test-setup.ts"]
           }
