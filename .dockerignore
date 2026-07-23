@@ -8,4 +8,4 @@ docs/
 *.md
 .gitignore
 .gitattributes
-dev-start.ps1
+scripts/dev-start.ps1
