@@ -19,7 +19,12 @@
 #>
 
 param(
-    [string]$TempPassword = 'Harmonia2026!'
+    [string]$TempPassword    = 'Harmonia2026!',
+    # Optional: pass the prefix directly to skip auto-discovery.
+    # Find it in the portal: External Identities → Custom user attributes →
+    # click 'householdRef' → copy 'API name', then strip '_householdRef'.
+    # Example: -ExtensionPrefix extension_abc123def456abc123def456abc123de
+    [string]$ExtensionPrefix = ''
 )
 
 $TenantId     = '28bd994b-6208-43ef-8a44-4ef2efccd991'
@@ -66,36 +71,52 @@ function Invoke-Graph {
     }
 }
 
-# ── 3. Derive extension prefix from the user flow attribute IDs ───────────────
-# The id of a custom userFlowAttribute is: extension_{appIdNoHyphens}_{name}
-# This avoids needing Application.Read.All to query /applications.
-Write-Host "`n→ Resolving extension property prefix from user flow attributes..."
-$flowAttrs = Invoke-Graph GET '/identity/userFlowAttributes?$select=id,displayName'
+# ── 3. Resolve extension property prefix ─────────────────────────────────────
+# Strategy 1: caller supplied it via -ExtensionPrefix
+# Strategy 2: az ad app list (uses az CLI's own auth, no extra Graph scopes needed)
+# Strategy 3: Graph /identity/userFlowAttributes (needs IdentityUserFlow.Read.All)
+# Strategy 4: fail with instructions
 
-$householdRefAttr = $flowAttrs.value | Where-Object { $_.displayName -eq 'householdRef' }
-$roleAttr         = $flowAttrs.value | Where-Object { $_.displayName -eq 'role' }
+if ($ExtensionPrefix) {
+    Write-Host "`n→ Using supplied extension prefix: $ExtensionPrefix"
+    $extPrefix = $ExtensionPrefix
+} else {
+    Write-Host "`n→ Resolving extension property prefix..."
 
-$missing = @()
-if (-not $householdRefAttr) { $missing += 'householdRef' }
-if (-not $roleAttr)         { $missing += 'role' }
+    # Try az ad app list first — uses az CLI's own directory auth
+    $extApps = az ad app list --display-name 'aad-extensions-app' 2>$null | ConvertFrom-Json
+    if ($extApps -and $extApps.Count -gt 0) {
+        $extPrefix = 'extension_' + ($extApps[0].appId -replace '-', '')
+        Write-Host "  ✓ Found via az ad app list: $($extApps[0].displayName)"
+        Write-Host "  ✓ Extension prefix: $extPrefix"
+    } else {
+        # Try Graph /identity/userFlowAttributes (needs IdentityUserFlow.Read.All)
+        try {
+            $flowAttrs        = Invoke-Graph GET '/identity/userFlowAttributes?$select=id,displayName'
+            $householdRefAttr = $flowAttrs.value | Where-Object { $_.displayName -eq 'householdRef' }
+            if ($householdRefAttr) {
+                $extPrefix = $householdRefAttr.id -replace '_householdRef$', ''
+                Write-Host "  ✓ Found via userFlowAttributes"
+                Write-Host "  ✓ Extension prefix: $extPrefix"
+            }
+        } catch {
+            $householdRefAttr = $null
+        }
 
-if ($missing.Count -gt 0) {
-    Write-Error @"
-Missing custom attributes: $($missing -join ', ')
+        if (-not $extPrefix) {
+            Write-Error @"
+Could not auto-discover the extension property prefix. Pass it manually:
 
-Create them in the portal before running this script:
-  External Identities → Custom user attributes → + Add
-  Name: householdRef   Type: String
-  Name: role           Type: String
+  1. Azure portal → External Identities → Custom user attributes
+  2. Click 'householdRef' → copy the 'API name'  (e.g. extension_abc123_householdRef)
+  3. Strip '_householdRef' from the end and run:
+
+     .\create-test-users.ps1 -ExtensionPrefix extension_abc123
 "@
-    exit 1
+            exit 1
+        }
+    }
 }
-
-# id is "extension_{appIdNoHyphens}_householdRef" — strip the trailing attribute name
-$extPrefix = $householdRefAttr.id -replace '_householdRef$', ''
-Write-Host "  ✓ householdRef  (id: $($householdRefAttr.id))"
-Write-Host "  ✓ role          (id: $($roleAttr.id))"
-Write-Host "  ✓ Extension prefix: $extPrefix"
 
 # ── 4. Create users ───────────────────────────────────────────────────────────
 function New-HarmoniaUser {
