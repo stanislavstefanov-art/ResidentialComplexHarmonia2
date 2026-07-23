@@ -87,7 +87,7 @@ if (builder.Environment.IsDevelopment())
     else
         builder.Services.AddSingleton<ISession>(new DevSession(
             builder.Configuration.GetValue("Session:IsResident", true),
-            builder.Configuration.GetValue("Session:HouseholdRef", "HH-DEV-1")!));
+            builder.Configuration.GetValue("Session:HouseholdRef", "АП. 1")!));
 }
 else
 {
