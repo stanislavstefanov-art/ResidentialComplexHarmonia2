@@ -4,6 +4,10 @@ import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { InteractionStatus } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
+import { registerLocaleData } from '@angular/common';
+import localeBg from '@angular/common/locales/bg';
+
+registerLocaleData(localeBg);
 
 @Component({
   selector: 'app-root',

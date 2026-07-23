@@ -55,7 +55,6 @@ import { Slot } from './models';
               <p-datepicker
                 [(ngModel)]="selectedDate"
                 [minDate]="today"
-                dateFormat="yy-mm-dd"
                 [showIcon]="true"
                 (ngModelChange)="onDateChange($event)"
               />

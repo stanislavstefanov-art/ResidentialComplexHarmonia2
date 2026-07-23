@@ -5,6 +5,7 @@ import {
   ToggleButtonGroup, Typography
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import { bgBG } from '@mui/material/locale';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
 import DirectoryList from './components/DirectoryList';
@@ -18,14 +19,17 @@ import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#2e6b4f' },
-    background: { default: '#f5f5f0' },
+const theme = createTheme(
+  {
+    palette: {
+      primary: { main: '#2e6b4f' },
+      background: { default: '#f5f5f0' },
+    },
+    shape: { borderRadius: 8 },
+    typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
   },
-  shape: { borderRadius: 8 },
-  typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
-});
+  bgBG,
+);
 
 type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit';
 
