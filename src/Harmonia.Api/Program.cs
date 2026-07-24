@@ -1,10 +1,13 @@
+using Harmonia.Api.Adapters;
 using Harmonia.Api.Directory;
 using Harmonia.Api.Expenses;
 using Harmonia.Api.FinancialSummary;
+using Harmonia.Api.Me;
 using Harmonia.Api.Notifications;
 using Harmonia.Api.Payments;
 using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
+using Harmonia.Application.PendingSignIn;
 using Harmonia.Api.Identity;
 using Harmonia.Api.MaintenanceFees;
 using Harmonia.Api.Reservations;
@@ -39,6 +42,8 @@ builder.Services.AddSingleton<IExpenseStore>(new SqlExpenseStore(defaultConn));
 builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(defaultConn));
 builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(defaultConn));
 builder.Services.AddSingleton<IDirectoryStore>(new SqlDirectoryStore(defaultConn));
+builder.Services.AddSingleton<IPendingSignInStore>(new SqlPendingSignInStore(defaultConn));
+builder.Services.AddSingleton<IHouseholdByOidLookup>(new SqlHouseholdByOidLookup(defaultConn));
 
 var vapidSubject = builder.Configuration["Vapid:Subject"];
 var vapidPublic  = builder.Configuration["Vapid:PublicKey"];
@@ -81,13 +86,30 @@ builder.Services.AddHostedService<BbqReminderService>();
 
 if (builder.Environment.IsDevelopment())
 {
-    // Dev stubs unchanged — config-driven household ref and admin flag.
-    if (builder.Configuration.GetValue("Session:IsAdmin", false))
-        builder.Services.AddSingleton<ISession>(new DevAdminSession(builder.Environment));
-    else
-        builder.Services.AddSingleton<ISession>(new DevSession(
-            builder.Configuration.GetValue("Session:IsResident", true),
-            builder.Configuration.GetValue("Session:HouseholdRef", "АП. 1")!));
+    switch (builder.Configuration.GetValue("Session:Mode", "Dev"))
+    {
+        case "DevAdmin":
+            builder.Services.AddSingleton<ISession>(new DevAdminSession(builder.Environment));
+            break;
+        case "DevPending":
+            builder.Services.AddSingleton<ISession>(new DevPendingSession(builder.Environment));
+            break;
+        case "Entra":
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+            builder.Services.AddAuthorization(options =>
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build());
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ISession, EntraSession>();
+            break;
+        default: // "Dev" — resident with config-driven household ref
+            builder.Services.AddSingleton<ISession>(new DevSession(
+                builder.Configuration.GetValue("Session:IsResident", true),
+                builder.Configuration.GetValue("Session:HouseholdRef", "АП. 1")!));
+            break;
+    }
 }
 else
 {
@@ -101,6 +123,7 @@ else
     builder.Services.AddScoped<ISession, EntraSession>();
 }
 
+builder.Services.AddScoped<GetCallerStatus>();
 builder.Services.AddScoped<GetDayAvailability>();
 builder.Services.AddScoped<ReserveSlot>();
 builder.Services.AddScoped<RecordCharge>();
@@ -136,6 +159,18 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+// Pending caller gate: authenticated-but-unlinked callers may only reach GET /me.
+app.Use(async (context, next) =>
+{
+    var session = context.RequestServices.GetRequiredService<ISession>();
+    if (session.Resolve()?.IsPending == true && context.Request.Path.Value != "/me")
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return;
+    }
+    await next(context);
+});
 
 app.MapGet(
     "/days/{day}/slots",
@@ -281,6 +316,11 @@ app.MapDelete(
     (PurgeExpiredContacts uc, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.PurgeExpiredContactsEndpoint(
             uc, loggers.CreateLogger("Directory"), ct));
+
+app.MapGet(
+    "/me",
+    (GetCallerStatus useCase, ILoggerFactory loggers, CancellationToken ct)
+        => MeEndpoints.GetMe(useCase, loggers.CreateLogger("Me"), ct));
 
 app.MapGet("/healthz", () => Results.Ok()).AllowAnonymous();
 

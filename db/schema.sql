@@ -111,3 +111,29 @@ CREATE TABLE dbo.HouseholdContacts
 -- Idempotent: SqlServerFixture applies schema.sql on every integration test run.
 IF COL_LENGTH('dbo.HouseholdContacts', 'DepartedAt') IS NULL
     ALTER TABLE dbo.HouseholdContacts ADD DepartedAt datetimeoffset NULL;
+
+-- Pending activation queue: authenticated residents not yet linked to a household.
+-- EntraObjectId is the JWT 'oid' claim. FirstSeenAt is set once on INSERT, never updated.
+-- Email, DisplayName, EntraObjectId are personal data (R3) — never log their values.
+IF OBJECT_ID(N'dbo.PendingSignIns', N'U') IS NULL
+CREATE TABLE dbo.PendingSignIns
+(
+    EntraObjectId  nvarchar(36)  NOT NULL,
+    Email          nvarchar(256) NOT NULL,
+    DisplayName    nvarchar(256) NOT NULL,
+    FirstSeenAt    datetime2(3)  NOT NULL,
+    CONSTRAINT PK_PendingSignIns PRIMARY KEY (EntraObjectId)
+);
+
+-- Account-to-household link table (set by admin activation in Slice 2).
+-- EntraObjectId PK: one account belongs to exactly one household.
+-- Multiple OIDs can share one HouseholdRef (family members per apartment).
+-- EntraObjectId is personal data (R3) — never log its value.
+IF OBJECT_ID(N'dbo.HouseholdLinks', N'U') IS NULL
+CREATE TABLE dbo.HouseholdLinks
+(
+    EntraObjectId  nvarchar(36)   NOT NULL,
+    HouseholdRef   nvarchar(128)  NOT NULL,
+    LinkedAt       datetime2(3)   NOT NULL,
+    CONSTRAINT PK_HouseholdLinks PRIMARY KEY (EntraObjectId)
+);
