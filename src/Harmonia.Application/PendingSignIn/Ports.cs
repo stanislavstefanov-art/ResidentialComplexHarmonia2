@@ -12,7 +12,10 @@ public interface IPendingSignInStore
     /// </summary>
     Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default);
 
-    /// <summary>Returns all pending-activation rows, ordered by FirstSeenAt ascending.</summary>
+    /// <summary>
+    /// Returns all pending-activation rows, ordered by FirstSeenAt ascending.
+    /// R3: the returned records contain personal data (OID, email, displayName) — never log them.
+    /// </summary>
     Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default);
 
     /// <summary>
@@ -23,7 +26,7 @@ public interface IPendingSignInStore
     Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default);
 
     /// <summary>Deletes rows where FirstSeenAt is older than <paramref name="olderThan"/>. Returns row count.</summary>
-    Task<int> PurgeExpiredAsync(DateTime olderThan, CancellationToken ct = default);
+    Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default);
 }
 
 public enum ActivateResult { Ok, NotFound, AlreadyActivated }
