@@ -26,4 +26,15 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
         cmd.Parameters.Add(new SqlParameter("@DisplayName", SqlDbType.NVarChar, 256) { Value = displayName });
         await cmd.ExecuteNonQueryAsync(ct);
     }
+
+    public Task<IReadOnlyList<Application.PendingSignIn.PendingSignIn>> ListAsync(
+        CancellationToken ct = default)
+        => throw new NotImplementedException("Implemented in Task 6.");
+
+    public Task<ActivateResult> ActivateAsync(
+        string oid, string householdRef, CancellationToken ct = default)
+        => throw new NotImplementedException("Implemented in Task 6.");
+
+    public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+        => throw new NotImplementedException("Implemented in Task 6.");
 }
