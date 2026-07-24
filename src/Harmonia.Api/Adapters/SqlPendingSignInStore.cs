@@ -27,14 +27,77 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
-    public Task<IReadOnlyList<PendingSignIn>> ListAsync(
-        CancellationToken ct = default)
-        => throw new NotImplementedException("Implemented in Task 6.");
+    public async Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT EntraObjectId, Email, DisplayName, FirstSeenAt
+            FROM dbo.PendingSignIns
+            ORDER BY FirstSeenAt ASC;
+            """;
+        var result = new List<PendingSignIn>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            result.Add(new PendingSignIn(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                new DateTimeOffset(reader.GetDateTime(3), TimeSpan.Zero)));
+        return result;
+    }
 
-    public Task<ActivateResult> ActivateAsync(
+    public async Task<ActivateResult> ActivateAsync(
         string oid, string householdRef, CancellationToken ct = default)
-        => throw new NotImplementedException("Implemented in Task 6.");
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SET XACT_ABORT ON;
+            BEGIN TRANSACTION;
+                DECLARE @pendingExists bit = 0;
+                DECLARE @alreadyLinked bit = 0;
 
-    public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
-        => throw new NotImplementedException("Implemented in Task 6.");
+                IF EXISTS (SELECT 1 FROM dbo.PendingSignIns  WHERE EntraObjectId = @Oid)
+                    SET @pendingExists = 1;
+                IF EXISTS (SELECT 1 FROM dbo.HouseholdLinks  WHERE EntraObjectId = @Oid)
+                    SET @alreadyLinked = 1;
+
+                IF @pendingExists = 1 AND @alreadyLinked = 0
+                BEGIN
+                    INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, LinkedAt)
+                    VALUES (@Oid, @HouseholdRef, SYSUTCDATETIME());
+                    DELETE FROM dbo.PendingSignIns WHERE EntraObjectId = @Oid;
+                END
+            COMMIT;
+            SELECT @pendingExists AS PendingExists, @alreadyLinked AS AlreadyLinked;
+            """;
+        cmd.Parameters.Add(new SqlParameter("@Oid",          SqlDbType.NVarChar, 36)  { Value = oid });
+        cmd.Parameters.Add(new SqlParameter("@HouseholdRef", SqlDbType.NVarChar, 256) { Value = householdRef });
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        await reader.ReadAsync(ct);
+        var pendingExists = reader.GetBoolean(0);
+        var alreadyLinked = reader.GetBoolean(1);
+        return (pendingExists, alreadyLinked) switch
+        {
+            (false, _)    => ActivateResult.NotFound,
+            (true,  true) => ActivateResult.AlreadyActivated,
+            _             => ActivateResult.Ok
+        };
+    }
+
+    public async Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            DELETE FROM dbo.PendingSignIns WHERE FirstSeenAt < @OlderThan;
+            SELECT @@ROWCOUNT;
+            """;
+        cmd.Parameters.Add(new SqlParameter("@OlderThan", SqlDbType.DateTime2) { Value = olderThan.UtcDateTime });
+        return (int)(await cmd.ExecuteScalarAsync(ct))!;
+    }
 }
