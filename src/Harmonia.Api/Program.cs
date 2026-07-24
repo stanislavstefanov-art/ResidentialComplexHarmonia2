@@ -1,4 +1,5 @@
 using Harmonia.Api.Adapters;
+using Harmonia.Api.Admin;
 using Harmonia.Api.Directory;
 using Harmonia.Api.Expenses;
 using Harmonia.Api.FinancialSummary;
@@ -148,6 +149,9 @@ builder.Services.AddScoped<EraseMyContact>();
 builder.Services.AddScoped<EraseContact>();
 builder.Services.AddScoped<MarkDeparted>();
 builder.Services.AddScoped<PurgeExpiredContacts>();
+builder.Services.AddScoped<ListPendingSignIns>();
+builder.Services.AddScoped<ActivatePendingSignIn>();
+builder.Services.AddScoped<PurgeExpiredPendingSignIns>();
 
 var app = builder.Build();
 
@@ -316,6 +320,25 @@ app.MapDelete(
     (PurgeExpiredContacts uc, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.PurgeExpiredContactsEndpoint(
             uc, loggers.CreateLogger("Directory"), ct));
+
+app.MapGet(
+    "/admin/pending",
+    (ListPendingSignIns useCase, ILoggerFactory loggers, CancellationToken ct)
+        => AdminPendingEndpoints.ListPendingEndpoint(
+            useCase, loggers.CreateLogger("AdminPending"), ct));
+
+app.MapPost(
+    "/admin/pending/{oid}/activate",
+    (ActivatePendingSignIn useCase, string oid, ActivateRequest body,
+     ILoggerFactory loggers, CancellationToken ct)
+        => AdminPendingEndpoints.ActivatePendingEndpoint(
+            useCase, oid, body, loggers.CreateLogger("AdminPending"), ct));
+
+app.MapDelete(
+    "/admin/pending/purge-expired",
+    (PurgeExpiredPendingSignIns useCase, ILoggerFactory loggers, CancellationToken ct)
+        => AdminPendingEndpoints.PurgeExpiredPendingEndpoint(
+            useCase, loggers.CreateLogger("AdminPending"), ct));
 
 app.MapGet(
     "/me",

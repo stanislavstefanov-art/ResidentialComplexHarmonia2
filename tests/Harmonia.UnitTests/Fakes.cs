@@ -414,6 +414,7 @@ public sealed class FailingDirectoryStore : IDirectoryStore
         => Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Failed());
 }
 
+// Slice 1 fake — only UpsertAsync is exercised; the 3 new methods throw so they're never called from Slice 1 tests.
 public sealed class FakePendingSignInStore : IPendingSignInStore
 {
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
@@ -423,12 +424,68 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
         UpsertCalls.Add((oid, email, displayName));
         return Task.CompletedTask;
     }
+
+    public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
+        => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
+
+    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
+        => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
+
+    public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+        => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
 }
 
 public sealed class FailingPendingSignInStore : IPendingSignInStore
 {
     public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+}
+
+// Slice 2 fake — full implementation; used by ListPendingSignIns, ActivatePendingSignIn,
+// PurgeExpiredPendingSignIns use case tests and AdminPendingEndpoints tests.
+public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
+{
+    public List<PendingSignIn> Pending { get; init; } = [];
+    public HashSet<string> AlreadyActivated { get; } = [];
+    public List<(string Oid, string HouseholdRef)> ActivateCalls { get; } = [];
+    public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
+    public int PurgeCalls { get; private set; }
+
+    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    {
+        UpsertCalls.Add((oid, email, displayName));
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<PendingSignIn>>(Pending.ToList());
+
+    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
+    {
+        if (AlreadyActivated.Contains(oid))
+            return Task.FromResult(ActivateResult.AlreadyActivated);
+        var pending = Pending.FirstOrDefault(p => p.EntraObjectId == oid);
+        if (pending is null) return Task.FromResult(ActivateResult.NotFound);
+        ActivateCalls.Add((oid, householdRef));
+        Pending.Remove(pending);
+        return Task.FromResult(ActivateResult.Ok);
+    }
+
+    public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+    {
+        PurgeCalls++;
+        var removed = Pending.RemoveAll(p => p.FirstSeenAt < olderThan);
+        return Task.FromResult(removed);
+    }
 }
 
 public sealed class FakeHouseholdByOidLookup(string? householdRef) : IHouseholdByOidLookup
