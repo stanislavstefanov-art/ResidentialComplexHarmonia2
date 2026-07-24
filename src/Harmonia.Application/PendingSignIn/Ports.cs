@@ -3,7 +3,6 @@ namespace Harmonia.Application.PendingSignIn;
 /// <summary>
 /// Upserts a pending-activation row for an authenticated but unlinked caller.
 /// R3: oid, email, displayName are personal data — never log their values.
-/// Slice 2 extends this port with ListAsync and ActivateAsync.
 /// </summary>
 public interface IPendingSignInStore
 {
@@ -12,7 +11,22 @@ public interface IPendingSignInStore
     /// FirstSeenAt is set on first INSERT and never updated on repeat calls.
     /// </summary>
     Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default);
+
+    /// <summary>Returns all pending-activation rows, ordered by FirstSeenAt ascending.</summary>
+    Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Atomically inserts into dbo.HouseholdLinks and deletes from dbo.PendingSignIns
+    /// in a single SQL transaction. Returns the outcome discriminant.
+    /// R3: oid and householdRef are personal data — never log their values.
+    /// </summary>
+    Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default);
+
+    /// <summary>Deletes rows where FirstSeenAt is older than <paramref name="olderThan"/>. Returns row count.</summary>
+    Task<int> PurgeExpiredAsync(DateTime olderThan, CancellationToken ct = default);
 }
+
+public enum ActivateResult { Ok, NotFound, AlreadyActivated }
 
 /// <summary>
 /// Looks up the HouseholdRef for an activated member by their Entra OID.
