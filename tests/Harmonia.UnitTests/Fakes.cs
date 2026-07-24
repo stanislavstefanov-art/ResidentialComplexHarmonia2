@@ -454,21 +454,28 @@ public sealed class FailingPendingSignInStore : IPendingSignInStore
 // PurgeExpiredPendingSignIns use case tests and AdminPendingEndpoints tests.
 public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
 {
-    public List<PendingSignIn> Pending { get; set; } = [];
+    public List<PendingSignIn> Pending { get; init; } = [];
+    public HashSet<string> AlreadyActivated { get; } = [];
     public List<(string Oid, string HouseholdRef)> ActivateCalls { get; } = [];
+    public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
     public int PurgeCalls { get; private set; }
 
     public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
-        => Task.CompletedTask;
+    {
+        UpsertCalls.Add((oid, email, displayName));
+        return Task.CompletedTask;
+    }
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
-        => Task.FromResult<IReadOnlyList<PendingSignIn>>(Pending);
+        => Task.FromResult<IReadOnlyList<PendingSignIn>>(Pending.ToList());
 
     public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
     {
-        ActivateCalls.Add((oid, householdRef));
+        if (AlreadyActivated.Contains(oid))
+            return Task.FromResult(ActivateResult.AlreadyActivated);
         var pending = Pending.FirstOrDefault(p => p.EntraObjectId == oid);
         if (pending is null) return Task.FromResult(ActivateResult.NotFound);
+        ActivateCalls.Add((oid, householdRef));
         Pending.Remove(pending);
         return Task.FromResult(ActivateResult.Ok);
     }

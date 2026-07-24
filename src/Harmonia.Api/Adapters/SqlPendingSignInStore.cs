@@ -27,7 +27,7 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
-    public Task<IReadOnlyList<Application.PendingSignIn.PendingSignIn>> ListAsync(
+    public Task<IReadOnlyList<PendingSignIn>> ListAsync(
         CancellationToken ct = default)
         => throw new NotImplementedException("Implemented in Task 6.");
 
