@@ -17,7 +17,7 @@ public class ListPendingSignInsTests
     }
 
     [Fact]
-    public async Task Admin_with_items_returns_Ok_with_list()
+    public async Task Admin_returns_Ok_with_items()
     {
         var items = new List<PendingSignIn>
         {
@@ -30,10 +30,11 @@ public class ListPendingSignInsTests
         var ok = Assert.IsType<ListPendingResult.Ok>(result);
         Assert.Equal(2, ok.Items.Count);
         Assert.Equal("oid-1", ok.Items[0].EntraObjectId);
+        Assert.Equal("oid-2", ok.Items[1].EntraObjectId);
     }
 
     [Fact]
-    public async Task Admin_with_empty_store_returns_Ok_with_empty_list()
+    public async Task Admin_returns_Ok_empty_list()
     {
         var result = await UseCase(AdminSession()).ExecuteAsync();
 
@@ -58,5 +59,15 @@ public class ListPendingSignInsTests
         var result = await UseCase(null).ExecuteAsync();
 
         Assert.IsType<ListPendingResult.Refused>(result);
+    }
+
+    [Fact]
+    public async Task Store_failure_returns_Failed()
+    {
+        var useCase = new ListPendingSignIns(new FakeSession(AdminSession()), new FailingPendingSignInStore());
+
+        var result = await useCase.ExecuteAsync();
+
+        Assert.IsType<ListPendingResult.Failed>(result);
     }
 }
