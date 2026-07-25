@@ -11,14 +11,14 @@ beforeEach(() => { (global.fetch as jest.Mock) = jest.fn(); });
 test('getMyPayments calls GET /payments', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [PAYMENT] });
   const result = await getMyPayments();
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/payments');
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/payments', expect.any(Object));
   expect(result).toEqual([PAYMENT]);
 });
 
 test('getAllPayments calls GET /payments/all', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [PAYMENT] });
   const result = await getAllPayments();
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/payments/all');
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/payments/all', expect.any(Object));
   expect(result).toEqual([PAYMENT]);
 });
 
@@ -33,6 +33,6 @@ test('recordPayment calls POST /payments', async () => {
 test('getBalance calls GET /balance', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => BALANCE });
   const result = await getBalance();
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/balance');
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/balance', expect.any(Object));
   expect(result).toEqual(BALANCE);
 });

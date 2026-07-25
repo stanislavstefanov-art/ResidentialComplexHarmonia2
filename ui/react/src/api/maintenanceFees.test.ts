@@ -10,14 +10,14 @@ beforeEach(() => { (global.fetch as jest.Mock) = jest.fn(); });
 test('getMyCharges calls GET /maintenance-fees/charges', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [CHARGE] });
   const result = await getMyCharges();
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/maintenance-fees/charges');
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/maintenance-fees/charges', expect.any(Object));
   expect(result).toEqual([CHARGE]);
 });
 
 test('getAllCharges calls GET /maintenance-fees/charges/all', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [CHARGE] });
   const result = await getAllCharges();
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/maintenance-fees/charges/all');
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/maintenance-fees/charges/all', expect.any(Object));
   expect(result).toEqual([CHARGE]);
 });
 

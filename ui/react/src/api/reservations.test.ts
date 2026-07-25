@@ -15,7 +15,7 @@ afterEach(() => jest.restoreAllMocks());
 test('getSlots fetches correct URL', async () => {
   mockFetch({ day: '2026-07-16', slots: [] });
   await getSlots('2026-07-16');
-  expect(fetch).toHaveBeenCalledWith(`${BASE}/days/2026-07-16/slots`);
+  expect(fetch).toHaveBeenCalledWith(`${BASE}/days/2026-07-16/slots`, expect.any(Object));
 });
 
 test('claimSlot POSTs correct URL with no request body fields', async () => {
