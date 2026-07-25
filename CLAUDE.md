@@ -110,6 +110,13 @@ Non-negotiables (facts + commands live in `docs/context/stack.md`):
 - **Tests:** framework + real-DB tier per `stack.md`. The concurrency test runs on a REAL SQL
   Server (never in-memory) or CI fails — never skip it. Watch each test fail before implementing.
 - **Secrets:** never commit secrets/connection strings; local dev config stays git-ignored.
+- **Azure cost (C1):** always use the cheapest available tier for every Azure resource. For SWAs use
+  `Free` tier (not Standard — Standard adds ~€9/month per SWA for features this project does not
+  use). For ACR, prefer deletion over retention when no active CD pipeline is pulling images; ACR
+  has no free tier (Basic = ~€4.60/month) and can be recreated in minutes. For any new resource,
+  explicitly choose the free or lowest-cost SKU and document why if a paid tier is unavoidable.
+  Never leave orphaned duplicate resource groups from re-deployments with different `namePrefix`
+  values — delete the older set immediately after confirming the new one is live.
 - Follow `standards/git-workflow.md` for branches/commits; escalate anything touching a `gap-log` item.
 
 ## Human gates
