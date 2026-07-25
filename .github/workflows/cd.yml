@@ -12,21 +12,25 @@ permissions:
 
 env:
   RESOURCE_GROUP: rg-residence-harmonia-prod
-  ACR_NAME: residenceharmoniaacr
-  ACR_LOGIN_SERVER: residenceharmoniaacr.azurecr.io
-  CONTAINER_APP_NAME: residenceharmonia-api
+  APP_SERVICE_NAME: residenceharmonia-api
 
 jobs:
-  build-push-api:
+  deploy-api:
+    needs: [run-schema]
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.tag.outputs.image-tag }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish API
+        run: dotnet publish src/Harmonia.Api/Harmonia.Api.csproj -c Release -o ./publish
+
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -34,43 +38,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: ACR login
-        run: az acr login --name ${{ env.ACR_NAME }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Set image tag
-        id: tag
-        run: echo "image-tag=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
         with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:${{ github.event.workflow_run.head_sha }}
-            ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:latest
-
-  deploy-api:
-    needs: [build-push-api, run-schema]
-    if: github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Update Container App
-        run: |
-          az containerapp update \
-            --name ${{ env.CONTAINER_APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_LOGIN_SERVER }}/residenceharmonia-api:${{ needs.build-push-api.outputs.image-tag }} \
-            --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          app-name: ${{ env.APP_SERVICE_NAME }}
+          package: ./publish
 
   deploy-angular:
     if: github.event.workflow_run.conclusion == 'success'
@@ -124,7 +96,7 @@ jobs:
       - name: Build React
         working-directory: ui/react
         env:
-          REACT_APP_API_URL: https://residenceharmonia-api.bravesea-14332e7f.northeurope.azurecontainerapps.io
+          REACT_APP_API_URL: https://residenceharmonia-api.azurewebsites.net
         run: npm run build
 
       - name: Deploy to React SWA
@@ -186,4 +158,3 @@ jobs:
             echo "DB resuming (attempt $i/9), retrying in 20s..."
             sleep 20
           done
-
