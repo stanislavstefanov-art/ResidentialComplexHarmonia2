@@ -155,3 +155,14 @@ export interface AnnouncementRequest {
   title: string;
   body: string;
 }
+
+export interface PendingSignInDto {
+  entraObjectId: string;
+  email: string;
+  displayName: string;
+  firstSeenAt: string;
+}
+
+export interface PurgeExpiredResult {
+  deleted: number;
+}

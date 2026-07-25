@@ -6,8 +6,8 @@ resource angularSwa 'Microsoft.Web/staticSites@2023-01-01' = {
   name: '${namePrefix}-angular-swa'
   location: location
   sku: {
-    name: 'Standard'
-    tier: 'Standard'
+    name: 'Free'
+    tier: 'Free'
   }
   properties: {}
 }
@@ -16,8 +16,8 @@ resource reactSwa 'Microsoft.Web/staticSites@2023-01-01' = {
   name: '${namePrefix}-react-swa'
   location: location
   sku: {
-    name: 'Standard'
-    tier: 'Standard'
+    name: 'Free'
+    tier: 'Free'
   }
   properties: {}
 }

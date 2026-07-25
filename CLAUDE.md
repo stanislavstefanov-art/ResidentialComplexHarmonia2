@@ -110,6 +110,13 @@ Non-negotiables (facts + commands live in `docs/context/stack.md`):
 - **Tests:** framework + real-DB tier per `stack.md`. The concurrency test runs on a REAL SQL
   Server (never in-memory) or CI fails — never skip it. Watch each test fail before implementing.
 - **Secrets:** never commit secrets/connection strings; local dev config stays git-ignored.
+- **Azure cost (C1):** always use the cheapest available tier for every Azure resource. SWAs: `Free`
+  tier only. API: **App Service Free (F1)** — deploy via zip/GitHub Actions, no Docker or ACR
+  needed. Do NOT use Container Apps for a plain .NET API (forces ACR at ~€4.60/month with no
+  benefit). Only use Container Apps if a specific feature (sidecars, Dapr) requires it, and record
+  that decision in an ADR. ACR: delete when no active CD pipeline is pushing; no free tier exists.
+  For any resource, pick the free/lowest-cost SKU and document in Bicep why a paid tier is needed.
+  Never leave orphaned duplicate deployments from re-runs with different `namePrefix` values.
 - Follow `standards/git-workflow.md` for branches/commits; escalate anything touching a `gap-log` item.
 
 ## Human gates

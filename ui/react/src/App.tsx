@@ -15,6 +15,7 @@ import MaintenanceFeesScreen from './components/MaintenanceFeesScreen';
 import NotificationsScreen from './components/NotificationsScreen';
 import PaymentsScreen from './components/PaymentsScreen';
 import PrivacyScreen from './components/PrivacyScreen';
+import AdminPendingScreen from './components/AdminPendingScreen';
 import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { Role } from './types';
@@ -31,7 +32,7 @@ const theme = createTheme(
   bgBG,
 );
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit';
+type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending';
 
 function SignInPage() {
   const { instance, inProgress } = useMsal();
@@ -63,7 +64,7 @@ function MainApp() {
 
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? 'User';
 
-  const roleScreens: Screen[] = ['directory', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit'];
+  const roleScreens: Screen[] = ['directory', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
   return (
     <>
@@ -96,6 +97,7 @@ function MainApp() {
             <Tab label="Notifications" value="notifications" />
             <Tab label="Privacy" value="privacy" />
             <Tab label="Edit Contact" value="contact-edit" />
+            <Tab label="Pending Users" value="admin-pending" />
           </Tabs>
           {roleScreens.includes(screen) && (
             <>
@@ -162,6 +164,7 @@ function MainApp() {
         {screen === 'notifications' && <NotificationsScreen role={role} />}
         {screen === 'privacy' && <PrivacyScreen role={role} />}
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
+        {screen === 'admin-pending' && <AdminPendingScreen role={role} />}
       </Box>
     </>
   );

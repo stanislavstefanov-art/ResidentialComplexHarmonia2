@@ -25,6 +25,7 @@ import { ContactEditService } from './contact-edit.service';
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link nav-active">Edit Contact</a>
+        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">Admin</button>

@@ -1,7 +1,6 @@
 @minLength(2)
 param namePrefix string = 'harmonia'
 param location string = 'westeurope'
-param containerImageTag string = 'latest'
 @secure()
 param sqlAdminPassword string
 @secure()
@@ -18,7 +17,6 @@ param entraClientId string
 param entraTenantId string
 param githubOrg string = 'stanislavstefanov-art'
 param githubRepo string = 'ResidentialComplexHarmonia2'
-param useBootstrapImage bool = false
 
 module identity 'modules/identity.bicep' = {
   name: 'identity'
@@ -27,15 +25,6 @@ module identity 'modules/identity.bicep' = {
     location: location
     githubOrg: githubOrg
     githubRepo: githubRepo
-  }
-}
-
-module acr 'modules/acr.bicep' = {
-  name: 'acr'
-  params: {
-    namePrefix: namePrefix
-    location: location
-    identityPrincipalId: identity.outputs.identityPrincipalId
   }
 }
 
@@ -82,24 +71,21 @@ module frontend 'modules/frontend.bicep' = {
   }
 }
 
-// location intentionally omitted — api.bicep defaults to northeurope to avoid AKS capacity shortage in westeurope; co-locates with SQL. Both are EU/GDPR compliant (R3).
-// dependsOn acs: acs.bicep writes Acs--ConnectionString + Acs--SenderAddress into Key Vault; Container App reads them at revision creation time.
+// location intentionally omitted — api.bicep defaults to northeurope to co-locate with SQL. Both are EU/GDPR compliant (R3).
+// dependsOn acs: acs.bicep writes Acs--ConnectionString + Acs--SenderAddress into Key Vault; App Service reads them via Key Vault references at startup.
 module api 'modules/api.bicep' = {
   name: 'api'
   dependsOn: [acs]
   params: {
     namePrefix: namePrefix
     identityId: identity.outputs.identityId
-    acrLoginServer: acr.outputs.loginServer
-    containerImageTag: containerImageTag
     keyVaultUri: keyvault.outputs.keyVaultUri
     angularSwaUrl: frontend.outputs.angularSwaUrl
     reactSwaUrl: frontend.outputs.reactSwaUrl
-    useBootstrapImage: useBootstrapImage
   }
 }
 
-// Contributor on the resource group lets the managed identity update Container Apps in CD.
+// Contributor on the resource group lets the managed identity deploy to App Service in CD.
 resource identityContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', '${namePrefix}-api-id'), 'Contributor')
   properties: {
@@ -109,8 +95,7 @@ resource identityContributorRole 'Microsoft.Authorization/roleAssignments@2022-0
   }
 }
 
-output acrLoginServer string = acr.outputs.loginServer
-output containerAppFqdn string = api.outputs.containerAppFqdn
+output apiUrl string = api.outputs.webAppUrl
 output angularSwaUrl string = frontend.outputs.angularSwaUrl
 output reactSwaUrl string = frontend.outputs.reactSwaUrl
 output managedIdentityClientId string = identity.outputs.identityClientId

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
+import { AdminPendingComponent } from './admin-pending/admin-pending.component';
 import { DirectoryListComponent } from './directory/directory-list.component';
 import { ReservationsComponent } from './reservations/reservations.component';
 import { FinancialComponent } from './financial/financial.component';
@@ -23,4 +24,5 @@ export const routes: Routes = [
   { path: 'notifications', component: NotificationComponent, canActivate: guard },
   { path: 'privacy', component: PrivacyComponent, canActivate: guard },
   { path: 'contact-edit', component: ContactEditComponent, canActivate: guard },
+  { path: 'admin-pending', component: AdminPendingComponent, canActivate: guard },
 ];

@@ -15,7 +15,7 @@ afterEach(() => jest.restoreAllMocks());
 test('getExpenses fetches GET /expenses', async () => {
   mockFetch([]);
   await getExpenses();
-  expect(fetch).toHaveBeenCalledWith(`${BASE}/expenses`);
+  expect(fetch).toHaveBeenCalledWith(`${BASE}/expenses`, expect.any(Object));
 });
 
 test('recordExpense posts to POST /expenses', async () => {

@@ -1,24 +1,30 @@
 @minLength(2)
 param namePrefix string
-// North Europe — westeurope AKS capacity exhausted (AKSCapacityHeavyUsage). NE co-locates with SQL and is EU/GDPR compliant (R3).
+// North Europe — co-locates with SQL and is EU/GDPR compliant (R3).
 param location string = 'northeurope'
 param identityId string
-param acrLoginServer string
-param containerImageTag string
 param keyVaultUri string
 param angularSwaUrl string
 param reactSwaUrl string
-param useBootstrapImage bool = false
 
-resource containerAppsEnv 'Microsoft.App/managedEnvironments@2023-05-01' = {
-  name: '${namePrefix}-env'
+// C1: Free (F1) — no Docker image or ACR required; deploy via zip/dotnet publish.
+resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
+  name: '${namePrefix}-asp'
   location: location
-  properties: {}
+  sku: {
+    name: 'F1'
+    tier: 'Free'
+  }
+  kind: 'linux'
+  properties: {
+    reserved: true
+  }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
+resource webApp 'Microsoft.Web/sites@2023-01-01' = {
   name: '${namePrefix}-api'
   location: location
+  kind: 'app,linux'
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -26,138 +32,68 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
     }
   }
   properties: {
-    managedEnvironmentId: containerAppsEnv.id
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 8080
-        transport: 'auto'
-      }
-      registries: [
+    serverFarmId: appServicePlan.id
+    // Tells App Service which managed identity to use when resolving @Microsoft.KeyVault() references.
+    keyVaultReferenceIdentity: identityId
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|8.0'
+      appSettings: [
         {
-          server: acrLoginServer
-          identity: identityId
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: 'Production'
+        }
+        {
+          name: 'WEBSITES_PORT'
+          value: '8080'
+        }
+        {
+          name: 'Cors__AllowedOrigins__0'
+          value: angularSwaUrl
+        }
+        {
+          name: 'Cors__AllowedOrigins__1'
+          value: reactSwaUrl
+        }
+        {
+          name: 'ConnectionStrings__Default'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/ConnectionStrings--Default)'
+        }
+        {
+          name: 'Vapid__Subject'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/Vapid--Subject)'
+        }
+        {
+          name: 'Vapid__PublicKey'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/Vapid--PublicKey)'
+        }
+        {
+          name: 'Vapid__PrivateKey'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/Vapid--PrivateKey)'
+        }
+        {
+          name: 'Acs__ConnectionString'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/Acs--ConnectionString)'
+        }
+        {
+          name: 'Acs__SenderAddress'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/Acs--SenderAddress)'
+        }
+        {
+          name: 'AzureAd__Instance'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/AzureAd--Instance)'
+        }
+        {
+          name: 'AzureAd__ClientId'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/AzureAd--ClientId)'
+        }
+        {
+          name: 'AzureAd__TenantId'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/AzureAd--TenantId)'
         }
       ]
-      secrets: [
-        {
-          name: 'conn-default'
-          keyVaultUrl: '${keyVaultUri}secrets/ConnectionStrings--Default'
-          identity: identityId
-        }
-        {
-          name: 'vapid-subject'
-          keyVaultUrl: '${keyVaultUri}secrets/Vapid--Subject'
-          identity: identityId
-        }
-        {
-          name: 'vapid-public-key'
-          keyVaultUrl: '${keyVaultUri}secrets/Vapid--PublicKey'
-          identity: identityId
-        }
-        {
-          name: 'vapid-private-key'
-          keyVaultUrl: '${keyVaultUri}secrets/Vapid--PrivateKey'
-          identity: identityId
-        }
-        {
-          name: 'acs-conn-string'
-          keyVaultUrl: '${keyVaultUri}secrets/Acs--ConnectionString'
-          identity: identityId
-        }
-        {
-          name: 'acs-sender'
-          keyVaultUrl: '${keyVaultUri}secrets/Acs--SenderAddress'
-          identity: identityId
-        }
-        {
-          name: 'entra-instance'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAd--Instance'
-          identity: identityId
-        }
-        {
-          name: 'entra-client-id'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAd--ClientId'
-          identity: identityId
-        }
-        {
-          name: 'entra-tenant-id'
-          keyVaultUrl: '${keyVaultUri}secrets/AzureAd--TenantId'
-          identity: identityId
-        }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: '${namePrefix}-api'
-          image: useBootstrapImage ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${acrLoginServer}/${namePrefix}-api:${containerImageTag}'
-          env: [
-            {
-              name: 'ASPNETCORE_ENVIRONMENT'
-              value: 'Production'
-            }
-            {
-              name: 'ASPNETCORE_URLS'
-              value: 'http://+:8080'
-            }
-            {
-              name: 'Cors__AllowedOrigins__0'
-              value: angularSwaUrl
-            }
-            {
-              name: 'Cors__AllowedOrigins__1'
-              value: reactSwaUrl
-            }
-            {
-              name: 'ConnectionStrings__Default'
-              secretRef: 'conn-default'
-            }
-            {
-              name: 'Vapid__Subject'
-              secretRef: 'vapid-subject'
-            }
-            {
-              name: 'Vapid__PublicKey'
-              secretRef: 'vapid-public-key'
-            }
-            {
-              name: 'Vapid__PrivateKey'
-              secretRef: 'vapid-private-key'
-            }
-            {
-              name: 'Acs__ConnectionString'
-              secretRef: 'acs-conn-string'
-            }
-            {
-              name: 'Acs__SenderAddress'
-              secretRef: 'acs-sender'
-            }
-            {
-              name: 'AzureAd__Instance'
-              secretRef: 'entra-instance'
-            }
-            {
-              name: 'AzureAd__ClientId'
-              secretRef: 'entra-client-id'
-            }
-            {
-              name: 'AzureAd__TenantId'
-              secretRef: 'entra-tenant-id'
-            }
-          ]
-          resources: {
-            cpu: json('0.25')
-            memory: '0.5Gi'
-          }
-        }
-      ]
-      scale: {
-        minReplicas: 0
-        maxReplicas: 3
-      }
     }
   }
 }
 
-output containerAppFqdn string = containerApp.properties.configuration.ingress.fqdn
+output webAppUrl string = 'https://${webApp.properties.defaultHostName}'

@@ -7,7 +7,7 @@ beforeEach(() => { (global.fetch as jest.Mock) = jest.fn(); });
 test('getHistory calls GET /notifications', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [NOTIFICATION] });
   const result = await getHistory();
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/notifications');
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/notifications', expect.any(Object));
   expect(result).toEqual([NOTIFICATION]);
 });
 

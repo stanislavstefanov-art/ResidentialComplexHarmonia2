@@ -5,6 +5,23 @@
 no ORM needed). Money/keys are typed; no dynamic SQL string-building for values (parameters only).
 **Store:** SQL Server. Local/dev + CI = SQL Server 2022 in a **Podman** container (same engine as
 prod). Prod = Azure SQL Database, free-forever serverless, **EU region**. (ADR-0002.)
+
+**Azure cost rule (C1) — non-negotiable:** always provision the cheapest available SKU.
+- Static Web Apps: `Free` tier (`sku.name: 'Free'`, `sku.tier: 'Free'`). Standard adds ~€9/month
+  per SWA for custom auth, private endpoints, and staging slots — none of which this project uses.
+- API hosting: **App Service Free (F1)** is the preferred host for the .NET 8 API. It costs
+  nothing, needs no Docker image, and deploys via `dotnet publish` + zip-deploy or the
+  `azure/webapps-deploy` GitHub Action. Do NOT use Container Apps for a plain .NET API — Container
+  Apps requires ACR (~€4.60/month minimum) and a Docker build pipeline with no benefit for this
+  workload. Only choose Container Apps if there is a specific requirement (sidecars, Dapr, etc.)
+  that App Service cannot satisfy, and document that requirement in an ADR.
+- Container Registry: only provision ACR if the chosen host genuinely requires container images
+  (i.e. Container Apps without a bootstrap image). Delete when no active CD pipeline is pushing.
+  ACR has no free tier (Basic = ~€4.60/month).
+- Any other resource: pick the free or lowest-cost SKU; comment the Bicep/Terraform if a paid
+  tier is unavoidable, explaining what specific feature requires it.
+- Never leave orphaned duplicate deployments: delete old resources immediately after confirming a
+  re-deployment under a new prefix is live.
 **Tests:** xUnit. Pure-logic tests use fakes (no DB). Integration + concurrency tests run against a
 **real SQL Server** — never in-memory.
 **Identity:** Microsoft Entra External ID (ADR-0003) — social login (Google OAuth 2.0) + local
