@@ -43,6 +43,7 @@ import { Slot } from './models';
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
+        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
       </header>
 
       <main class="harmonia-content">
