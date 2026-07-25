@@ -9,10 +9,17 @@ prod). Prod = Azure SQL Database, free-forever serverless, **EU region**. (ADR-0
 **Azure cost rule (C1) — non-negotiable:** always provision the cheapest available SKU.
 - Static Web Apps: `Free` tier (`sku.name: 'Free'`, `sku.tier: 'Free'`). Standard adds ~€9/month
   per SWA for custom auth, private endpoints, and staging slots — none of which this project uses.
-- Container Registry: delete when no active CD pipeline is pulling images (no free tier; Basic =
-  ~€4.60/month). Recreate on demand.
+- API hosting: **App Service Free (F1)** is the preferred host for the .NET 8 API. It costs
+  nothing, needs no Docker image, and deploys via `dotnet publish` + zip-deploy or the
+  `azure/webapps-deploy` GitHub Action. Do NOT use Container Apps for a plain .NET API — Container
+  Apps requires ACR (~€4.60/month minimum) and a Docker build pipeline with no benefit for this
+  workload. Only choose Container Apps if there is a specific requirement (sidecars, Dapr, etc.)
+  that App Service cannot satisfy, and document that requirement in an ADR.
+- Container Registry: only provision ACR if the chosen host genuinely requires container images
+  (i.e. Container Apps without a bootstrap image). Delete when no active CD pipeline is pushing.
+  ACR has no free tier (Basic = ~€4.60/month).
 - Any other resource: pick the free or lowest-cost SKU; comment the Bicep/Terraform if a paid
-  tier is unavoidable, explaining what feature requires it.
+  tier is unavoidable, explaining what specific feature requires it.
 - Never leave orphaned duplicate deployments: delete old resources immediately after confirming a
   re-deployment under a new prefix is live.
 **Tests:** xUnit. Pure-logic tests use fakes (no DB). Integration + concurrency tests run against a
