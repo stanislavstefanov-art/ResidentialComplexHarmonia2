@@ -74,6 +74,7 @@ export class ResidentPendingComponent {
       },
       error: () => {
         this.checking.set(false);
+        this.activated.emit();
       },
     });
   }
