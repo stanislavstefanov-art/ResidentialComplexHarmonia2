@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import {
   AppBar, Box, Button, CircularProgress, Tab, Tabs, Toolbar, ToggleButton,
@@ -18,6 +18,8 @@ import PrivacyScreen from './components/PrivacyScreen';
 import AdminPendingScreen from './components/AdminPendingScreen';
 import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
+import { getMyStatus } from './api/me';
+import ResidentPendingScreen from './components/ResidentPendingScreen';
 import { Role } from './types';
 
 const theme = createTheme(
@@ -170,12 +172,39 @@ function MainApp() {
   );
 }
 
+function AppStatusGate() {
+  const { instance } = useMsal();
+  const [status, setStatus] = useState<'loading' | 'pending' | 'ok'>('loading');
+
+  useEffect(() => {
+    getMyStatus()
+      .then((res) => setStatus(res.status === 'pending' ? 'pending' : 'ok'))
+      .catch(() => setStatus('ok'));
+  }, []);
+
+  if (status === 'loading') {
+    return <CircularProgress sx={{ mt: 8, display: 'block', mx: 'auto' }} />;
+  }
+  if (status === 'pending') {
+    return (
+      <ResidentPendingScreen
+        onCheckAgain={async () => {
+          const res = await getMyStatus().catch(() => ({ status: 'ok' }));
+          if (res.status !== 'pending') setStatus('ok');
+        }}
+        onSignOut={() => instance.logoutRedirect()}
+      />
+    );
+  }
+  return <MainApp />;
+}
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthenticatedTemplate>
-        <MainApp />
+        <AppStatusGate />
       </AuthenticatedTemplate>
       <UnauthenticatedTemplate>
         <SignInPage />
