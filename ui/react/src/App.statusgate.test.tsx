@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import App from './App';
 import * as meApi from './api/me';
 
@@ -36,6 +36,17 @@ test('shows main app tabs when getMyStatus returns ok', async () => {
 test('shows main app tabs when getMyStatus errors (fail-open)', async () => {
   mockGetMyStatus.mockRejectedValue(new Error('network error'));
   render(<App />);
+  await waitFor(() => screen.getByRole('tablist'));
+  expect(screen.queryByTestId('pending-heading')).not.toBeInTheDocument();
+});
+
+test('shows main app after Check Again returns ok', async () => {
+  mockGetMyStatus
+    .mockResolvedValueOnce({ status: 'pending' })
+    .mockResolvedValueOnce({ status: 'ok' });
+  render(<App />);
+  await waitFor(() => screen.getByTestId('pending-heading'));
+  fireEvent.click(screen.getByTestId('check-again-btn'));
   await waitFor(() => screen.getByRole('tablist'));
   expect(screen.queryByTestId('pending-heading')).not.toBeInTheDocument();
 });
