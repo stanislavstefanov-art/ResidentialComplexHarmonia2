@@ -19,9 +19,9 @@ interface Props {
 export default function NotificationsScreen({ role }: Props) {
   const [history, setHistory]             = useState<NotificationRecordDto[]>([]);
   const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState<string | null>(null);
+  const [error, setError]                 = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError]     = useState<string | null>(null);
+  const [submitError, setSubmitError]     = useState<string>('');
   const [submitting, setSubmitting]       = useState(false);
 
   const [title, setTitle] = useState('');
@@ -29,7 +29,7 @@ export default function NotificationsScreen({ role }: Props) {
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError('');
     try {
       setHistory(await getHistory());
     } catch {
@@ -44,7 +44,7 @@ export default function NotificationsScreen({ role }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitSuccess(false);
-    setSubmitError(null);
+    setSubmitError('');
     if (!title || !body) {
       setSubmitError('Title and body are required.');
       return;

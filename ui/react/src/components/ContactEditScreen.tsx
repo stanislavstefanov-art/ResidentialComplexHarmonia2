@@ -16,7 +16,7 @@ export default function ContactEditScreen({ role }: Props) {
   const [myOptedOut, setMyOptedOut]       = useState(false);
   const [mySaving, setMySaving]           = useState(false);
   const [mySuccess, setMySuccess]         = useState(false);
-  const [myError, setMyError]             = useState<string | null>(null);
+  const [myError, setMyError]             = useState<string>('');
 
   const [adminRef, setAdminRef]             = useState('');
   const [adminName, setAdminName]           = useState('');
@@ -25,17 +25,17 @@ export default function ContactEditScreen({ role }: Props) {
   const [adminOptedOut, setAdminOptedOut]   = useState(false);
   const [adminSaving, setAdminSaving]       = useState(false);
   const [adminSuccess, setAdminSuccess]     = useState(false);
-  const [adminError, setAdminError]         = useState<string | null>(null);
+  const [adminError, setAdminError]         = useState<string>('');
 
   const [notesRef, setNotesRef]       = useState('');
   const [notesText, setNotesText]     = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSuccess, setNotesSuccess] = useState(false);
-  const [notesError, setNotesError]   = useState<string | null>(null);
+  const [notesError, setNotesError]   = useState<string>('');
 
   const handleMyContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMySuccess(false); setMyError(null); setMySaving(true);
+    setMySuccess(false); setMyError(''); setMySaving(true);
     try {
       await updateMyContact({
         displayName: myDisplayName || null,
@@ -53,7 +53,7 @@ export default function ContactEditScreen({ role }: Props) {
 
   const handleAdminContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAdminSuccess(false); setAdminError(null); setAdminSaving(true);
+    setAdminSuccess(false); setAdminError(''); setAdminSaving(true);
     try {
       await updateContact(adminRef, {
         displayName: adminName || null,
@@ -71,7 +71,7 @@ export default function ContactEditScreen({ role }: Props) {
 
   const handleNotes = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNotesSuccess(false); setNotesError(null); setNotesSaving(true);
+    setNotesSuccess(false); setNotesError(''); setNotesSaving(true);
     try {
       await updateNotes(notesRef, notesText || null);
       setNotesSuccess(true);

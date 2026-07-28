@@ -16,27 +16,27 @@ export default function AdminPendingScreen({ role }: Props) {
   const [rows, setRows] = useState<PendingSignInDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [forbidden, setForbidden] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
+  const [toast, setToast] = useState<string>('');
 
   const [activateOpen, setActivateOpen] = useState(false);
   const [activateOid, setActivateOid] = useState('');
   const [householdRef, setHouseholdRef] = useState('');
   const [activating, setActivating] = useState(false);
-  const [activateError, setActivateError] = useState<string | null>(null);
+  const [activateError, setActivateError] = useState<string>('');
 
   const [purgeOpen, setPurgeOpen] = useState(false);
   const [purging, setPurging] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(''), 4000);
   };
 
   const load = useCallback(async () => {
     setLoading(true);
     setForbidden(false);
-    setError(null);
+    setError('');
     try {
       const data = await listPending();
       setRows(data);
@@ -57,13 +57,13 @@ export default function AdminPendingScreen({ role }: Props) {
   const openActivate = (row: PendingSignInDto) => {
     setActivateOid(row.entraObjectId);
     setHouseholdRef('');
-    setActivateError(null);
+    setActivateError('');
     setActivateOpen(true);
   };
 
   const handleActivate = async () => {
     setActivating(true);
-    setActivateError(null);
+    setActivateError('');
     try {
       await activatePending(activateOid, householdRef);
       setActivateOpen(false);
