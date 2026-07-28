@@ -125,6 +125,7 @@ if (Test-Path $LocalConfig) {
 
     @{
         ConnectionStrings = @{
+            Default         = $cs
             Reservations    = $cs
             MaintenanceFees = $cs
             Expenses        = $cs
