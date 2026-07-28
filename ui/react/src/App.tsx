@@ -61,7 +61,10 @@ function SignInPage() {
 
 function MainApp() {
   const { instance, accounts } = useMsal();
-  const [role, setRole] = useState<Role>('resident');
+  const claims = accounts[0]?.idTokenClaims as Record<string, unknown> | undefined;
+  const entraRole = claims?.['extension_role'];
+  const initialRole: Role = entraRole === 'admin' ? 'admin' : 'resident';
+  const [role, setRole] = useState<Role>(initialRole);
   const [screen, setScreen] = useState<Screen>('directory');
 
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? 'User';
@@ -101,7 +104,7 @@ function MainApp() {
             <Tab label="Edit Contact" value="contact-edit" />
             <Tab label="Pending Users" value="admin-pending" />
           </Tabs>
-          {roleScreens.includes(screen) && (
+          {initialRole === 'admin' && roleScreens.includes(screen) && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
                 View as:
