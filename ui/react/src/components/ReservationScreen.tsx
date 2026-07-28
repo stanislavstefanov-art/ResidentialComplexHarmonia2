@@ -20,13 +20,13 @@ export default function ReservationScreen() {
   const [day, setDay] = useState(todayString());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [claimInFlight, setClaimInFlight] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [error, setError] = useState<string>('');
+  const [claimInFlight, setClaimInFlight] = useState<string>('');
+  const [feedback, setFeedback] = useState<Feedback | undefined>(undefined);
 
   const loadSlots = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError('');
     try {
       const r = await getSlots(day);
       setSlots(r.slots);
@@ -55,7 +55,7 @@ export default function ReservationScreen() {
     } catch {
       setFeedback({ msg: 'Network error. Please try again.', severity: 'error' });
     } finally {
-      setClaimInFlight(null);
+      setClaimInFlight('');
     }
   };
 
@@ -106,12 +106,12 @@ export default function ReservationScreen() {
       )}
 
       <Snackbar
-        open={feedback !== null}
+        open={!!feedback}
         autoHideDuration={4000}
-        onClose={() => setFeedback(null)}
+        onClose={() => setFeedback(undefined)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={feedback?.severity} onClose={() => setFeedback(null)}>
+        <Alert severity={feedback?.severity} onClose={() => setFeedback(undefined)}>
           {feedback?.msg}
         </Alert>
       </Snackbar>

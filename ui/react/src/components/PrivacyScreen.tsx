@@ -11,25 +11,25 @@ interface Props {
 export default function PrivacyScreen({ role }: Props) {
   const [deleting, setDeleting]           = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [deleteError, setDeleteError]     = useState<string | null>(null);
+  const [deleteError, setDeleteError]     = useState<string>('');
 
   const [eraseRef, setEraseRef]         = useState('');
   const [erasing, setErasing]           = useState(false);
-  const [eraseResult, setEraseResult]   = useState<string | null>(null);
-  const [eraseError, setEraseError]     = useState<string | null>(null);
+  const [eraseResult, setEraseResult]   = useState<string>('');
+  const [eraseError, setEraseError]     = useState<string>('');
 
   const [departRef, setDepartRef]         = useState('');
   const [departing, setDeparting]         = useState(false);
-  const [departResult, setDepartResult]   = useState<string | null>(null);
-  const [departError, setDepartError]     = useState<string | null>(null);
+  const [departResult, setDepartResult]   = useState<string>('');
+  const [departError, setDepartError]     = useState<string>('');
 
   const [purging, setPurging]             = useState(false);
-  const [purgeResult, setPurgeResult]     = useState<{ deleted: number } | null>(null);
-  const [purgeError, setPurgeError]       = useState<string | null>(null);
+  const [purgeResult, setPurgeResult]     = useState<{ deleted: number } | undefined>(undefined);
+  const [purgeError, setPurgeError]       = useState<string>('');
 
   const handleDeleteMyData = async () => {
     setDeleteSuccess(false);
-    setDeleteError(null);
+    setDeleteError('');
     setDeleting(true);
     try {
       await eraseMyContact();
@@ -43,8 +43,8 @@ export default function PrivacyScreen({ role }: Props) {
 
   const handleErase = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEraseResult(null);
-    setEraseError(null);
+    setEraseResult('');
+    setEraseError('');
     setErasing(true);
     try {
       const outcome = await eraseContact(eraseRef);
@@ -59,8 +59,8 @@ export default function PrivacyScreen({ role }: Props) {
 
   const handleDepart = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDepartResult(null);
-    setDepartError(null);
+    setDepartResult('');
+    setDepartError('');
     setDeparting(true);
     try {
       const outcome = await markDeparted(departRef);
@@ -74,8 +74,8 @@ export default function PrivacyScreen({ role }: Props) {
   };
 
   const handlePurge = async () => {
-    setPurgeResult(null);
-    setPurgeError(null);
+    setPurgeResult(undefined);
+    setPurgeError('');
     setPurging(true);
     try {
       setPurgeResult(await purgeExpired());
@@ -182,7 +182,7 @@ export default function PrivacyScreen({ role }: Props) {
               >
                 Purge Expired Contacts
               </Button>
-              {purgeResult !== null && (
+              {purgeResult !== undefined && (
                 <Alert data-testid="purge-result" severity="success" sx={{ mt: 1 }}>
                   {purgeResult.deleted} contact(s) purged.
                 </Alert>

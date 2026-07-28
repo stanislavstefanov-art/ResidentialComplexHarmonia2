@@ -23,9 +23,9 @@ interface Props {
 export default function MaintenanceFeesScreen({ role }: Props) {
   const [charges, setCharges]           = useState<ChargeDto[]>([]);
   const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
+  const [error, setError]               = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError]   = useState<string | null>(null);
+  const [submitError, setSubmitError]   = useState<string>('');
   const [submitting, setSubmitting]     = useState(false);
 
   const [householdRef, setHouseholdRef] = useState('');
@@ -35,7 +35,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
 
   const loadCharges = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError('');
     try {
       setCharges(role === 'admin' ? await getAllCharges() : await getMyCharges());
     } catch {
@@ -50,7 +50,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitSuccess(false);
-    setSubmitError(null);
+    setSubmitError('');
     const parsed = parseFloat(amount);
     if (!householdRef || !amount || isNaN(parsed) || parsed <= 0) {
       setSubmitError('Enter a valid household ref and amount greater than zero.');

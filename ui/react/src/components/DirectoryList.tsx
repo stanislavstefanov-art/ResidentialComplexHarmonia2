@@ -89,15 +89,15 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
 
   // shared
   const [loading, setLoading]             = useState(false);
-  const [error, setError]                 = useState<string | null>(null);
+  const [error, setError]                 = useState<string>('');
   const [search, setSearch]               = useState('');
-  const [toast, setToast]                 = useState<string | null>(null);
+  const [toast, setToast]                 = useState<string>('');
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000); };
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError('');
     try {
       if (role === 'resident') {
         setRows(await getDirectory());
@@ -347,13 +347,13 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       </Box>
 
       {/* alerts */}
-      {toast && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setToast(null)}>{toast}</Alert>}
+      {toast && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setToast('')}>{toast}</Alert>}
       {error && (
         <Alert
           severity="error"
           sx={{ mb: 2 }}
           action={<Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={load}>Retry</Button>}
-          onClose={() => setError(null)}
+          onClose={() => setError('')}
         >
           {error}
         </Alert>

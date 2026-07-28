@@ -23,12 +23,12 @@ export default function FinancialScreen() {
   const [charges, setCharges]             = useState<ChargeDto[]>([]);
   const [payments, setPayments]           = useState<PaymentDto[]>([]);
   const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState<string | null>(null);
+  const [error, setError]                 = useState<string>('');
   const [showPayDialog, setShowPayDialog] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError('');
     try {
       const [summaryData, chargesData, paymentsData] = await Promise.all([
         getPeriodSummary(period),
