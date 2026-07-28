@@ -60,14 +60,15 @@ var vapidConfig = new VapidConfig(vapidSubject, vapidPublic, vapidPrivate);
 
 var acsConnStr = builder.Configuration["Acs:ConnectionString"];
 var acsSender  = builder.Configuration["Acs:SenderAddress"];
-if (string.IsNullOrWhiteSpace(acsConnStr) || string.IsNullOrWhiteSpace(acsSender))
+var acsAvailable = !string.IsNullOrWhiteSpace(acsConnStr) && !string.IsNullOrWhiteSpace(acsSender);
+
+if (!acsAvailable && !builder.Environment.IsDevelopment())
 {
     throw new InvalidOperationException(
         "Acs:ConnectionString and Acs:SenderAddress must be configured " +
         "(env vars: Acs__ConnectionString, Acs__SenderAddress). " +
         "Set them in a git-ignored local config file or as environment variables.");
 }
-var acsConfig = new AcsEmailConfig(acsConnStr, acsSender);
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -77,12 +78,21 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
-builder.Services.AddSingleton<INotificationDispatcher>(sp =>
-    new VapidPushDispatcher(
-        sp.GetRequiredService<INotificationStore>(),
-        vapidConfig,
-        acsConfig,
-        sp.GetRequiredService<ILogger<VapidPushDispatcher>>()));
+if (acsAvailable)
+{
+    var acsConfig = new AcsEmailConfig(acsConnStr!, acsSender!);
+    builder.Services.AddSingleton<INotificationDispatcher>(sp =>
+        new VapidPushDispatcher(
+            sp.GetRequiredService<INotificationStore>(),
+            vapidConfig,
+            acsConfig,
+            sp.GetRequiredService<ILogger<VapidPushDispatcher>>()));
+}
+else
+{
+    // Development only — logs instead of sending real push/email notifications.
+    builder.Services.AddSingleton<INotificationDispatcher, NoOpNotificationDispatcher>();
+}
 builder.Services.AddHostedService<BbqReminderService>();
 
 if (builder.Environment.IsDevelopment())
