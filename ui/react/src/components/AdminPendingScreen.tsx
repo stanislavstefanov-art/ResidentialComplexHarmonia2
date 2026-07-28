@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogContentText, DialogTitle, IconButton, TextField, Typography,
+  DialogContent, DialogContentText, DialogTitle, IconButton, Table,
+  TableBody, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { listPending, activatePending, purgeExpired } from '../api/adminPending';
 import { PendingSignInDto, Role } from '../types';
 
@@ -96,39 +96,6 @@ export default function AdminPendingScreen({ role }: Props) {
     }
   };
 
-  const columns: GridColDef[] = [
-    { field: 'displayName', headerName: 'Display Name', flex: 1 },
-    { field: 'email', headerName: 'Email', width: 260 },
-    {
-      field: 'entraObjectId',
-      headerName: 'OID',
-      width: 220,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value as string}
-          size="small"
-          sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-        />
-      ),
-    },
-    {
-      field: 'firstSeenAt',
-      headerName: 'First Seen',
-      width: 160,
-      valueFormatter: (value: string) => new Date(value).toLocaleDateString(),
-    },
-    {
-      field: 'actions',
-      headerName: '',
-      width: 90,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <IconButton size="small" onClick={() => openActivate(params.row as PendingSignInDto)}>
-          <LinkIcon fontSize="small" />
-        </IconButton>
-      ),
-    },
-  ];
 
   return (
     <Box>
@@ -155,14 +122,44 @@ export default function AdminPendingScreen({ role }: Props) {
       )}
 
       {!loading && !forbidden && (
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          getRowId={(row) => row.entraObjectId}
-          autoHeight
-          pageSizeOptions={[25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-        />
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Display Name</TableCell>
+              <TableCell sx={{ width: 260 }}>Email</TableCell>
+              <TableCell sx={{ width: 220 }}>OID</TableCell>
+              <TableCell sx={{ width: 160 }}>First Seen</TableCell>
+              <TableCell sx={{ width: 60 }} />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                  No pending sign-ins.
+                </TableCell>
+              </TableRow>
+            ) : rows.map(row => (
+              <TableRow key={row.entraObjectId}>
+                <TableCell>{row.displayName}</TableCell>
+                <TableCell>{row.email}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={row.entraObjectId}
+                    size="small"
+                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                  />
+                </TableCell>
+                <TableCell>{new Date(row.firstSeenAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <IconButton size="small" onClick={() => openActivate(row)}>
+                    <LinkIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
 
       <Dialog open={activateOpen} onClose={() => setActivateOpen(false)} maxWidth="sm" fullWidth>
