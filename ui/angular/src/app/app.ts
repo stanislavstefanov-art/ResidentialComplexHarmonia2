@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { registerLocaleData } from '@angular/common';
 import localeBg from '@angular/common/locales/bg';
+import { ProgressSpinner } from 'primeng/progressspinner';
 import { MeService } from './me.service';
 import { ResidentPendingComponent } from './resident-pending/resident-pending.component';
 
@@ -13,7 +14,7 @@ registerLocaleData(localeBg);
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ResidentPendingComponent],
+  imports: [RouterOutlet, ProgressSpinner, ResidentPendingComponent],
   // MsalRedirectComponent is rendered in a hidden iframe for redirect flows;
   // the guard redirects back here once authentication completes.
   template: `

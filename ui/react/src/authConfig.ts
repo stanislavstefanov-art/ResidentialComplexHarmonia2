@@ -16,7 +16,6 @@ export const msalInstance = new PublicClientApplication({
   },
   cache: {
     cacheLocation: BrowserCacheLocation.LocalStorage,
-    storeAuthStateInCookie: false,
   },
 });
 
