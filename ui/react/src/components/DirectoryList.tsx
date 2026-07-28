@@ -8,17 +8,14 @@ import {
   IconButton,
   InputAdornment,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridToolbarColumnsButton,
-  GridToolbarContainer,
-  GridToolbarDensitySelector,
-} from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import PersonOffIcon from '@mui/icons-material/PersonOffOutlined';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -48,15 +45,6 @@ import EraseContactDialog from './EraseContactDialog';
 
 const BLANK_RESIDENT: MyContact = { displayName: '', phone: '', email: '', isOptedOut: false };
 const BLANK_ADMIN: AdminContact = { displayName: '', phone: '', email: '', notes: '', isOptedOut: false };
-
-function Toolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarColumnsButton />
-      <GridToolbarDensitySelector />
-    </GridToolbarContainer>
-  );
-}
 
 interface Props { role: Role; }
 
@@ -215,89 +203,6 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
   };
 
   // ── columns ────────────────────────────────────────────────────────────────
-  const residentCols: GridColDef<DirectoryEntry>[] = useMemo(() => [
-    {
-      field: 'householdRef',
-      headerName: 'Apartment',
-      width: 160,
-      renderCell: (p: GridRenderCellParams<DirectoryEntry>) => (
-        <Chip label={p.value} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
-      ),
-    },
-    {
-      field: 'displayName',
-      headerName: 'Name',
-      flex: 1,
-      valueGetter: (v: string | null) => v ?? '—',
-    },
-  ], []);
-
-  const adminCols: GridColDef<DirectoryEntryAdmin>[] = useMemo(() => [
-    {
-      field: 'householdRef',
-      headerName: 'Apartment',
-      width: 140,
-      renderCell: (p: GridRenderCellParams<DirectoryEntryAdmin>) => (
-        <Chip label={p.value} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
-      ),
-    },
-    {
-      field: 'displayName',
-      headerName: 'Name',
-      width: 180,
-      valueGetter: (v: string | null) => v ?? '—',
-    },
-    {
-      field: 'phone',
-      headerName: 'Phone',
-      width: 150,
-      valueGetter: (v: string | null) => v ?? '—',
-    },
-    {
-      field: 'email',
-      headerName: 'Email',
-      width: 220,
-      valueGetter: (v: string | null) => v ?? '—',
-    },
-    {
-      field: 'isOptedOut',
-      headerName: 'Opt-out',
-      width: 110,
-      renderCell: (p: GridRenderCellParams<DirectoryEntryAdmin>) =>
-        p.value
-          ? <Chip label="Opted out" size="small" color="warning" />
-          : <Chip label="Active" size="small" color="success" variant="outlined" />,
-    },
-    {
-      field: 'deactivatedAt',
-      headerName: 'Departed',
-      width: 140,
-      valueGetter: (v: string | null) =>
-        v ? new Date(v).toLocaleDateString() : '—',
-    },
-    {
-      field: '_actions',
-      headerName: '',
-      width: 120,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (p: GridRenderCellParams<DirectoryEntryAdmin>) => (
-        <Box sx={{ display: 'flex', gap: 0.25 }}>
-          <IconButton size="small" title="Edit" onClick={() => openAdminEdit(p.row)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" color="error" title="Mark Departed" onClick={() => openDepart(p.row.householdRef)}>
-            <PersonOffIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" color="error" title="Erase contact data"
-            onClick={() => { setEraseContactRef(p.row.householdRef); setEraseContactOpen(true); }}>
-            <DeleteForeverIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ], [openAdminEdit, openDepart]);
 
   // ── filtering ──────────────────────────────────────────────────────────────
   const filteredRows = useMemo(() => {
@@ -384,31 +289,84 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <Typography variant="body2" color="text.secondary">Loading directory…</Typography>
           </Box>
         ) : isAdmin ? (
-          <Box sx={{ height: 520 }}>
-            <DataGrid
-              rows={filteredAdminRows}
-              columns={adminCols}
-              getRowId={r => r.householdRef}
-              pageSizeOptions={[25, 50, 100]}
-              initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-              disableRowSelectionOnClick
-              slots={{ toolbar: Toolbar }}
-              sx={{ border: 0 }}
-            />
-          </Box>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 140 }}>Apartment</TableCell>
+                <TableCell sx={{ width: 180 }}>Name</TableCell>
+                <TableCell sx={{ width: 150 }}>Phone</TableCell>
+                <TableCell sx={{ width: 220 }}>Email</TableCell>
+                <TableCell sx={{ width: 110 }}>Opt-out</TableCell>
+                <TableCell sx={{ width: 140 }}>Departed</TableCell>
+                <TableCell sx={{ width: 120 }} />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredAdminRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                    No residents found.
+                  </TableCell>
+                </TableRow>
+              ) : filteredAdminRows.map(r => (
+                <TableRow key={r.householdRef}>
+                  <TableCell>
+                    <Chip label={r.householdRef} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
+                  </TableCell>
+                  <TableCell>{r.displayName ?? '—'}</TableCell>
+                  <TableCell>{r.phone ?? '—'}</TableCell>
+                  <TableCell>{r.email ?? '—'}</TableCell>
+                  <TableCell>
+                    {r.isOptedOut
+                      ? <Chip label="Opted out" size="small" color="warning" />
+                      : <Chip label="Active" size="small" color="success" variant="outlined" />}
+                  </TableCell>
+                  <TableCell>
+                    {r.deactivatedAt ? new Date(r.deactivatedAt).toLocaleDateString() : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.25 }}>
+                      <IconButton size="small" title="Edit" onClick={() => openAdminEdit(r)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" title="Mark Departed" onClick={() => openDepart(r.householdRef)}>
+                        <PersonOffIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" title="Erase contact data"
+                        onClick={() => { setEraseContactRef(r.householdRef); setEraseContactOpen(true); }}>
+                        <DeleteForeverIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
-          <Box sx={{ height: 400 }}>
-            <DataGrid
-              rows={filteredRows}
-              columns={residentCols}
-              getRowId={r => r.householdRef}
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-              disableRowSelectionOnClick
-              slots={{ toolbar: Toolbar }}
-              sx={{ border: 0 }}
-            />
-          </Box>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 160 }}>Apartment</TableCell>
+                <TableCell>Name</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                    No residents found.
+                  </TableCell>
+                </TableRow>
+              ) : filteredRows.map(r => (
+                <TableRow key={r.householdRef}>
+                  <TableCell>
+                    <Chip label={r.householdRef} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
+                  </TableCell>
+                  <TableCell>{r.displayName ?? '—'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Paper>
 
