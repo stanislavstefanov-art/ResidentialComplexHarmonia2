@@ -13,6 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { AdminContact } from '../types';
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
 const AdminEditDialog: React.FC<Props> = ({
   open, saving, householdRef, form, onChange, onSave, onClose,
 }) => {
+  const { t } = useTranslation();
   const set = (field: keyof AdminContact, value: string | boolean) =>
     onChange({ ...form, [field]: value });
 
@@ -37,29 +39,29 @@ const AdminEditDialog: React.FC<Props> = ({
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <TextField
-            label="Display Name"
+            label={t('common.displayName')}
             value={form.displayName}
             onChange={e => set('displayName', e.target.value)}
             fullWidth size="small"
           />
           <TextField
-            label="Phone"
+            label={t('common.phone')}
             value={form.phone}
             onChange={e => set('phone', e.target.value)}
             fullWidth size="small"
           />
           <TextField
-            label="Email"
+            label={t('common.email')}
             type="email"
             value={form.email}
             onChange={e => set('email', e.target.value)}
             fullWidth size="small"
           />
           <TextField
-            label="Notes"
+            label={t('common.notes')}
             value={form.notes}
             onChange={e => set('notes', e.target.value)}
-            placeholder="Internal notes — not visible to resident"
+            placeholder={t('dialog.adminNotesPlaceholder')}
             fullWidth size="small"
             multiline rows={3}
           />
@@ -82,14 +84,14 @@ const AdminEditDialog: React.FC<Props> = ({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
+        <Button onClick={onClose} color="inherit" disabled={saving}>{t('common.cancel')}</Button>
         <Button
           onClick={onSave}
           variant="contained"
           disabled={saving}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? t('common.saving') : t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>

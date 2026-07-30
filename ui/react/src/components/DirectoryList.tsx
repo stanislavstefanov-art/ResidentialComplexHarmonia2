@@ -21,6 +21,7 @@ import PersonOffIcon from '@mui/icons-material/PersonOffOutlined';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccountsOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
+import { useTranslation } from 'react-i18next';
 import {
   adminUpdateContact,
   getAdminDirectory,
@@ -49,6 +50,8 @@ const BLANK_ADMIN: AdminContact = { displayName: '', phone: '', email: '', notes
 interface Props { role: Role; }
 
 const DirectoryList: React.FC<Props> = ({ role }) => {
+  const { t } = useTranslation();
+
   // resident
   const [rows, setRows]                   = useState<DirectoryEntry[]>([]);
   const [residentDialogOpen, setResidentDialogOpen] = useState(false);
@@ -93,11 +96,11 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         setAdminRows(await getAdminDirectory());
       }
     } catch {
-      setError('Could not reach the Harmonia API. Is it running on port 5000?');
+      setError(t('directory.errApi'));
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -112,10 +115,10 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         isOptedOut:  residentForm.isOptedOut,
       });
       setResidentDialogOpen(false);
-      showToast('Profile updated.');
+      showToast(t('directory.toastProfileUpdated'));
       await load();
     } catch {
-      setError('Could not save. Please try again.');
+      setError(t('directory.errSave'));
     } finally {
       setSaving(false);
     }
@@ -145,10 +148,10 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         isOptedOut:  adminForm.isOptedOut,
       });
       setAdminEditOpen(false);
-      showToast('Resident updated.');
+      showToast(t('directory.toastResidentUpdated'));
       await load();
     } catch {
-      setError('Could not save. Please try again.');
+      setError(t('directory.errSave'));
     } finally {
       setAdminSaving(false);
     }
@@ -165,9 +168,9 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       await markDeparted(departRef);
       setAdminRows(prev => prev.filter(r => r.householdRef !== departRef));
       setDepartOpen(false);
-      showToast(`${departRef} marked as departed.`);
+      showToast(t('directory.toastDeparted', { ref: departRef }));
     } catch {
-      setError('Could not mark as departed. Please try again.');
+      setError(t('directory.errDepart'));
     } finally {
       setDeparting(false);
     }
@@ -180,9 +183,9 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       setEraseMyOpen(false);
       setResidentDialogOpen(false);
       setRows([]);
-      showToast('Your data has been permanently deleted.');
+      showToast(t('directory.toastMyDataDeleted'));
     } catch {
-      setError('Could not delete your data. Please try again.');
+      setError(t('directory.errDeleteMine'));
     } finally {
       setErasingMy(false);
     }
@@ -194,9 +197,9 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       await eraseContact(eraseContactRef);
       setAdminRows(prev => prev.filter(r => r.householdRef !== eraseContactRef));
       setEraseContactOpen(false);
-      showToast(`Data for ${eraseContactRef} has been permanently deleted.`);
+      showToast(t('directory.toastContactErased', { ref: eraseContactRef }));
     } catch {
-      setError('Could not erase contact data. Please try again.');
+      setError(t('directory.errErase'));
     } finally {
       setErasingContact(false);
     }
@@ -232,11 +235,11 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       {/* header row */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>Member Directory</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>{t('directory.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
             {isAdmin
-              ? 'Admin view — all active residents including opted-out.'
-              : 'Showing residents who have shared their details.'}
+              ? t('directory.adminSubtitle')
+              : t('directory.residentSubtitle')}
           </Typography>
         </Box>
         {!isAdmin && (
@@ -246,7 +249,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             onClick={() => { setResidentForm(BLANK_RESIDENT); setResidentDialogOpen(true); }}
             sx={{ textTransform: 'none' }}
           >
-            My Profile
+            {t('directory.myProfile')}
           </Button>
         )}
       </Box>
@@ -257,7 +260,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         <Alert
           severity="error"
           sx={{ mb: 2 }}
-          action={<Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={load}>Retry</Button>}
+          action={<Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={load}>{t('common.retry')}</Button>}
           onClose={() => setError('')}
         >
           {error}
@@ -267,7 +270,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       {/* search */}
       <TextField
         size="small"
-        placeholder={isAdmin ? 'Search name, apartment, phone, email…' : 'Search residents…'}
+        placeholder={isAdmin ? t('directory.searchAdmin') : t('directory.searchResident')}
         value={search}
         onChange={e => setSearch(e.target.value)}
         sx={{ mb: 2, maxWidth: isAdmin ? 400 : 320 }}
@@ -286,18 +289,18 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         {loading ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 4 }}>
             <CircularProgress size={20} />
-            <Typography variant="body2" color="text.secondary">Loading directory…</Typography>
+            <Typography variant="body2" color="text.secondary">{t('directory.loading')}</Typography>
           </Box>
         ) : isAdmin ? (
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 140 }}>Apartment</TableCell>
-                <TableCell sx={{ width: 180 }}>Name</TableCell>
-                <TableCell sx={{ width: 150 }}>Phone</TableCell>
-                <TableCell sx={{ width: 220 }}>Email</TableCell>
-                <TableCell sx={{ width: 110 }}>Opt-out</TableCell>
-                <TableCell sx={{ width: 140 }}>Departed</TableCell>
+                <TableCell sx={{ width: 140 }}>{t('directory.apartment')}</TableCell>
+                <TableCell sx={{ width: 180 }}>{t('directory.name')}</TableCell>
+                <TableCell sx={{ width: 150 }}>{t('common.phone')}</TableCell>
+                <TableCell sx={{ width: 220 }}>{t('common.email')}</TableCell>
+                <TableCell sx={{ width: 110 }}>{t('directory.optOut')}</TableCell>
+                <TableCell sx={{ width: 140 }}>{t('directory.departed')}</TableCell>
                 <TableCell sx={{ width: 120 }} />
               </TableRow>
             </TableHead>
@@ -305,7 +308,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
               {filteredAdminRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ color: 'text.secondary', py: 4 }}>
-                    No residents found.
+                    {t('directory.noResidents')}
                   </TableCell>
                 </TableRow>
               ) : filteredAdminRows.map(r => (
@@ -318,21 +321,21 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
                   <TableCell>{r.email ?? '—'}</TableCell>
                   <TableCell>
                     {r.isOptedOut
-                      ? <Chip label="Opted out" size="small" color="warning" />
-                      : <Chip label="Active" size="small" color="success" variant="outlined" />}
+                      ? <Chip label={t('directory.optedOut')} size="small" color="warning" />
+                      : <Chip label={t('directory.active')} size="small" color="success" variant="outlined" />}
                   </TableCell>
                   <TableCell>
                     {r.deactivatedAt ? new Date(r.deactivatedAt).toLocaleDateString() : '—'}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.25 }}>
-                      <IconButton size="small" title="Edit" onClick={() => openAdminEdit(r)}>
+                      <IconButton size="small" title={t('directory.tipEdit')} onClick={() => openAdminEdit(r)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" color="error" title="Mark Departed" onClick={() => openDepart(r.householdRef)}>
+                      <IconButton size="small" color="error" title={t('directory.tipDepart')} onClick={() => openDepart(r.householdRef)}>
                         <PersonOffIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" color="error" title="Erase contact data"
+                      <IconButton size="small" color="error" title={t('directory.tipErase')}
                         onClick={() => { setEraseContactRef(r.householdRef); setEraseContactOpen(true); }}>
                         <DeleteForeverIcon fontSize="small" />
                       </IconButton>
@@ -346,15 +349,15 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 160 }}>Apartment</TableCell>
-                <TableCell>Name</TableCell>
+                <TableCell sx={{ width: 160 }}>{t('directory.apartment')}</TableCell>
+                <TableCell>{t('directory.name')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} align="center" sx={{ color: 'text.secondary', py: 4 }}>
-                    No residents found.
+                    {t('directory.noResidents')}
                   </TableCell>
                 </TableRow>
               ) : filteredRows.map(r => (
