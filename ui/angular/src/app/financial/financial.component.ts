@@ -8,6 +8,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { forkJoin } from 'rxjs';
 import { FinancialService } from './financial.service';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from './models';
+import { RoleService } from '../role.service';
 
 function currentMonth(): string {
   const d = new Date();
@@ -44,7 +45,7 @@ function formatEur(n: number): string {
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
       </header>
 
       <main class="harmonia-content">
@@ -193,6 +194,7 @@ function formatEur(n: number): string {
 })
 export class FinancialComponent implements OnInit {
   private readonly svc = inject(FinancialService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly summary   = signal<PeriodSummaryDto | null>(null);
   readonly charges   = signal<ChargeDto[]>([]);

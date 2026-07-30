@@ -9,10 +9,10 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
-import { SelectButton } from 'primeng/selectbutton';
 import { MessageService } from 'primeng/api';
 import { AdminPendingService } from './admin-pending.service';
 import { PendingSignInDto } from './models';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-admin-pending',
@@ -29,7 +29,6 @@ import { PendingSignInDto } from './models';
     ToastModule,
     TagModule,
     CardModule,
-    SelectButton,
   ],
   providers: [MessageService],
   template: `
@@ -49,16 +48,7 @@ import { PendingSignInDto } from './models';
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link nav-active">Pending Users</a>
-        <span class="role-label">View as:</span>
-        <p-selectbutton
-          [options]="roleOptions"
-          [ngModel]="selectedRole"
-          (ngModelChange)="onRoleChange($event)"
-          optionLabel="label"
-          optionValue="value"
-          styleClass="role-toggle"
-        />
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link nav-active">Pending Users</a> }
       </header>
 
       <main class="harmonia-content">
@@ -196,10 +186,6 @@ import { PendingSignInDto } from './models';
     .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; }
     .nav-link:hover { background: rgba(255,255,255,.1); }
     .nav-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
-    .role-label { font-size: 0.8125rem; opacity: 0.75; white-space: nowrap; }
-    ::ng-deep .role-toggle .p-selectbutton { border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; overflow: hidden; }
-    ::ng-deep .role-toggle .p-togglebutton { background: transparent !important; color: rgba(255,255,255,0.8) !important; border: none !important; padding: 0.375rem 1rem; font-size: 0.8125rem; }
-    ::ng-deep .role-toggle .p-togglebutton.p-highlight { background: rgba(255,255,255,0.22) !important; color: white !important; font-weight: 600; }
     .harmonia-content { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
     .card-title-row { display: flex; align-items: center; justify-content: space-between; }
     .loading-row, .error-row, .info-row {
@@ -225,6 +211,7 @@ import { PendingSignInDto } from './models';
 export class AdminPendingComponent implements OnInit {
   private readonly svc = inject(AdminPendingService);
   private readonly msg = inject(MessageService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   loading   = signal(false);
   forbidden = signal(false);
@@ -238,17 +225,6 @@ export class AdminPendingComponent implements OnInit {
   activateOid     = '';
   householdRef    = '';
   activateError: string | null = null;
-
-  selectedRole: 'resident' | 'admin' = 'resident';
-  roleOptions = [
-    { label: 'Resident', value: 'resident' },
-    { label: 'Admin',    value: 'admin'    },
-  ];
-
-  onRoleChange(role: 'resident' | 'admin') {
-    this.selectedRole = role;
-    this.load();
-  }
 
   ngOnInit() { this.load(); }
 

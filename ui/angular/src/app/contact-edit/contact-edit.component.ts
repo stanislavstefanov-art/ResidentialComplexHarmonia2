@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ContactEditService } from './contact-edit.service';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-contact-edit',
@@ -25,11 +26,13 @@ import { ContactEditService } from './contact-edit.service';
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link nav-active">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        @if (isAdmin) {
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">Admin</button>
         </span>
+        }
       </header>
 
       <main class="harmonia-content">
@@ -173,6 +176,7 @@ export class ContactEditComponent {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(ContactEditService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   myForm = { displayName: '', phone: '', email: '', optedOut: false };
   readonly mySaving   = signal(false);

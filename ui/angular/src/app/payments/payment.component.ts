@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { PaymentService } from './payment.service';
 import { PaymentDto, BalanceDto } from './models';
+import { RoleService } from '../role.service';
 
 function formatEur(n: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
@@ -39,11 +40,13 @@ function currentMonth(): string {
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        @if (isAdmin) {
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>
         </span>
+        }
       </header>
 
       <main class="harmonia-content">
@@ -200,6 +203,7 @@ export class PaymentComponent implements OnInit {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(PaymentService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly payments       = signal<PaymentDto[]>([]);
   readonly balance        = signal<BalanceDto | null>(null);

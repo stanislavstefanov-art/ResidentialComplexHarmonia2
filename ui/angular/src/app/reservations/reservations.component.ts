@@ -11,6 +11,7 @@ import { DatePicker } from 'primeng/datepicker';
 import { MessageService } from 'primeng/api';
 import { ReservationsService } from './reservations.service';
 import { Slot } from './models';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-reservations',
@@ -43,7 +44,7 @@ import { Slot } from './models';
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
       </header>
 
       <main class="harmonia-content">
@@ -145,6 +146,7 @@ import { Slot } from './models';
 export class ReservationsComponent implements OnInit {
   private readonly svc = inject(ReservationsService);
   private readonly msg = inject(MessageService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly today = new Date();
   selectedDate: Date = new Date();
