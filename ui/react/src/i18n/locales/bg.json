@@ -1,1 +1,44 @@
-{ "signIn": { "button": "Вход" } }
+{
+  "common": {
+    "cancel": "Отказ",
+    "save": "Запази",
+    "saving": "Запазване…",
+    "close": "Затвори",
+    "retry": "Опитай отново",
+    "period": "Период",
+    "amount": "Сума",
+    "description": "Описание",
+    "date": "Дата",
+    "household": "Домакинство",
+    "householdRef": "Домакинство (реф.)",
+    "displayName": "Име за показване",
+    "phone": "Телефон",
+    "email": "Имейл",
+    "notes": "Бележки"
+  },
+  "nav": {
+    "directory": "Указател",
+    "reservations": "Резервации",
+    "finance": "Финанси",
+    "expenses": "Разходи",
+    "fees": "Такси",
+    "payments": "Плащания",
+    "notifications": "Известия",
+    "privacy": "Поверителност",
+    "contactEdit": "Редакция на контакт",
+    "adminPending": "Чакащи потребители"
+  },
+  "app": {
+    "brand": "Хармония",
+    "viewAs": "Преглед като:",
+    "roleResident": "Обитател",
+    "roleAdmin": "Администратор",
+    "signOut": "Изход",
+    "user": "Потребител"
+  },
+  "signIn": {
+    "title": "Резиденция Хармония",
+    "subtitle": "Влезте, за да получите достъп до портала на вашата резиденция.",
+    "button": "Вход"
+  }
+}

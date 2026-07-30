@@ -1,1 +1,44 @@
-{ "signIn": { "button": "Sign in" } }
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "close": "Close",
+    "retry": "Retry",
+    "period": "Period",
+    "amount": "Amount",
+    "description": "Description",
+    "date": "Date",
+    "household": "Household",
+    "householdRef": "Household Ref",
+    "displayName": "Display Name",
+    "phone": "Phone",
+    "email": "Email",
+    "notes": "Notes"
+  },
+  "nav": {
+    "directory": "Directory",
+    "reservations": "Reservations",
+    "finance": "Finance",
+    "expenses": "Expenses",
+    "fees": "Fees",
+    "payments": "Payments",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "contactEdit": "Edit Contact",
+    "adminPending": "Pending Users"
+  },
+  "app": {
+    "brand": "Harmonia",
+    "viewAs": "View as:",
+    "roleResident": "Resident",
+    "roleAdmin": "Admin",
+    "signOut": "Sign out",
+    "user": "User"
+  },
+  "signIn": {
+    "title": "Residence Harmonia",
+    "subtitle": "Sign in to access your residence portal.",
+    "button": "Sign in"
+  }
+}

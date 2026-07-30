@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import {
   AppBar, Box, Button, CircularProgress, Tab, Tabs, Toolbar, ToggleButton,
   ToggleButtonGroup, Typography
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
-import { bgBG } from '@mui/material/locale';
+import { useTranslation } from 'react-i18next';
+import { makeTheme } from './theme';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
 import DirectoryList from './components/DirectoryList';
@@ -21,30 +22,21 @@ import ReservationScreen from './components/ReservationScreen';
 import { getMyStatus } from './api/me';
 import ResidentPendingScreen from './components/ResidentPendingScreen';
 import ErrorBoundary from './components/ErrorBoundary';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import { Role } from './types';
-
-const theme = createTheme(
-  {
-    palette: {
-      primary: { main: '#2e6b4f' },
-      background: { default: '#f5f5f0' },
-    },
-    shape: { borderRadius: 8 },
-    typography: { fontFamily: 'system-ui, -apple-system, sans-serif' },
-  },
-  bgBG,
-);
 
 type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending';
 
 function SignInPage() {
   const { instance, inProgress } = useMsal();
+  const { t } = useTranslation();
   const loading = inProgress !== 'none';
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 12, gap: 2 }}>
+      <LanguageSwitcher color="inherit" />
       <HomeIcon sx={{ fontSize: 48, color: 'primary.main' }} />
-      <Typography variant="h5" sx={{ fontWeight: 700 }}>Residence Harmonia</Typography>
-      <Typography variant="body2" color="text.secondary">Sign in to access your residence portal.</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>{t('signIn.title')}</Typography>
+      <Typography variant="body2" color="text.secondary">{t('signIn.subtitle')}</Typography>
       {loading ? (
         <CircularProgress size={32} />
       ) : (
@@ -53,7 +45,7 @@ function SignInPage() {
           size="large"
           onClick={() => instance.loginRedirect(loginRequest)}
         >
-          Sign in
+          {t('signIn.button')}
         </Button>
       )}
     </Box>
@@ -62,13 +54,14 @@ function SignInPage() {
 
 function MainApp() {
   const { instance, accounts } = useMsal();
+  const { t } = useTranslation();
   const claims = accounts[0]?.idTokenClaims as Record<string, unknown> | undefined;
   const entraRole = claims?.['extension_role'];
   const initialRole: Role = entraRole === 'admin' ? 'admin' : 'resident';
   const [role, setRole] = useState<Role>(initialRole);
   const [screen, setScreen] = useState<Screen>('directory');
 
-  const displayName = accounts[0]?.name ?? accounts[0]?.username ?? 'User';
+  const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
 
   const roleScreens: Screen[] = ['directory', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
@@ -78,7 +71,7 @@ function MainApp() {
         <Toolbar>
           <HomeIcon sx={{ mr: 1 }} />
           <Typography variant="h6" sx={{ fontWeight: 700, mr: 2 }}>
-            Harmonia
+            {t('app.brand')}
           </Typography>
           <Tabs
             value={screen}
@@ -94,21 +87,21 @@ function MainApp() {
               },
             }}
           >
-            <Tab label="Directory" value="directory" />
-            <Tab label="Reservations" value="reservations" />
-            <Tab label="Finance" value="financial" />
-            <Tab label="Expenses" value="expenses" />
-            <Tab label="Fees" value="fees" />
-            <Tab label="Payments" value="payments" />
-            <Tab label="Notifications" value="notifications" />
-            <Tab label="Privacy" value="privacy" />
-            <Tab label="Edit Contact" value="contact-edit" />
-            <Tab label="Pending Users" value="admin-pending" />
+            <Tab label={t('nav.directory')} value="directory" />
+            <Tab label={t('nav.reservations')} value="reservations" />
+            <Tab label={t('nav.finance')} value="financial" />
+            <Tab label={t('nav.expenses')} value="expenses" />
+            <Tab label={t('nav.fees')} value="fees" />
+            <Tab label={t('nav.payments')} value="payments" />
+            <Tab label={t('nav.notifications')} value="notifications" />
+            <Tab label={t('nav.privacy')} value="privacy" />
+            <Tab label={t('nav.contactEdit')} value="contact-edit" />
+            <Tab label={t('nav.adminPending')} value="admin-pending" />
           </Tabs>
           {initialRole === 'admin' && roleScreens.includes(screen) && (
             <>
               <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
-                View as:
+                {t('app.viewAs')}
               </Typography>
               <ToggleButtonGroup
                 value={role}
@@ -135,19 +128,20 @@ function MainApp() {
                   },
                 }}
               >
-                <ToggleButton value="resident">Resident</ToggleButton>
-                <ToggleButton value="admin">Admin</ToggleButton>
+                <ToggleButton value="resident">{t('app.roleResident')}</ToggleButton>
+                <ToggleButton value="admin">{t('app.roleAdmin')}</ToggleButton>
               </ToggleButtonGroup>
             </>
           )}
           <Box sx={{ ml: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="caption" sx={{ opacity: 0.8 }}>{displayName}</Typography>
+            <LanguageSwitcher />
             <Button
               size="small"
               sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}
               onClick={() => instance.logoutRedirect()}
             >
-              Sign out
+              {t('app.signOut')}
             </Button>
           </Box>
         </Toolbar>
@@ -204,16 +198,14 @@ function AppStatusGate() {
 }
 
 function App() {
+  const { i18n } = useTranslation();
+  const theme = React.useMemo(() => makeTheme(i18n.language), [i18n.language]);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ErrorBoundary>
-        <AuthenticatedTemplate>
-          <AppStatusGate />
-        </AuthenticatedTemplate>
-        <UnauthenticatedTemplate>
-          <SignInPage />
-        </UnauthenticatedTemplate>
+        <AuthenticatedTemplate><AppStatusGate /></AuthenticatedTemplate>
+        <UnauthenticatedTemplate><SignInPage /></UnauthenticatedTemplate>
       </ErrorBoundary>
     </ThemeProvider>
   );
