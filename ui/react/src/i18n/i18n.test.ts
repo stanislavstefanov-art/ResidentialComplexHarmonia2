@@ -9,19 +9,19 @@ describe('i18n', () => {
     expect(i18n.options.fallbackLng).toContain('bg');
   });
 
-  it('translates a known key in each language', () => {
-    i18n.changeLanguage('en');
+  it('translates a known key in each language', async () => {
+    await i18n.changeLanguage('en');
     expect(i18n.t('signIn.button')).toBe('Sign in');
-    i18n.changeLanguage('bg');
+    await i18n.changeLanguage('bg');
     expect(i18n.t('signIn.button')).toBe('Вход');
-    i18n.changeLanguage('ru');
+    await i18n.changeLanguage('ru');
     expect(i18n.t('signIn.button')).toBe('Войти');
-    i18n.changeLanguage('en');
+    await i18n.changeLanguage('en');
   });
 
-  it('persists language choice to localStorage', () => {
-    i18n.changeLanguage('ru');
+  it('persists language choice to localStorage', async () => {
+    await i18n.changeLanguage('ru');
     expect(localStorage.getItem(LANG_STORAGE_KEY)).toBe('ru');
-    i18n.changeLanguage('en');
+    await i18n.changeLanguage('en');
   });
 });
