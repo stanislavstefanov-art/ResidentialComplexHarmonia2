@@ -13,7 +13,7 @@ if (!globalThis.crypto) {
   });
 }
 
-// MUI X DataGrid uses TextEncoder which JSDOM doesn't provide; supply from Node's util module.
+// Some deps use TextEncoder/TextDecoder which JSDOM doesn't provide; supply from Node's util module.
 if (typeof globalThis.TextEncoder === 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { TextEncoder, TextDecoder } = require('node:util');

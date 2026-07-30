@@ -1,3 +1,4 @@
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -12,9 +13,11 @@ const root = ReactDOM.createRoot(
 // MSAL Browser 5.x requires async initialization before rendering.
 msalInstance.initialize().then(() => {
   root.render(
-    <MsalProvider instance={msalInstance}>
-      <App />
-    </MsalProvider>
+    <React.StrictMode>
+      <MsalProvider instance={msalInstance}>
+        <App />
+      </MsalProvider>
+    </React.StrictMode>
   );
 });
 
