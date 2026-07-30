@@ -5,6 +5,7 @@ import {
   TextField, Typography,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { getMyPayments, getAllPayments, recordPayment, getBalance } from '../api/payments';
 import { PaymentDto, BalanceDto } from '../types';
 
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function PaymentsScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [payments, setPayments]         = useState<PaymentDto[]>([]);
   const [balance, setBalance]           = useState<BalanceDto | null>(null);
   const [loading, setLoading]           = useState(true);
@@ -44,11 +46,11 @@ export default function PaymentsScreen({ role }: Props) {
     try {
       setPayments(role === 'admin' ? await getAllPayments() : await getMyPayments());
     } catch {
-      setError('Could not load payments. Please try again.');
+      setError(t('payments.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, t]);
 
   const loadBalance = useCallback(async () => {
     try { setBalance(await getBalance()); } catch { /* non-blocking */ }
@@ -65,7 +67,7 @@ export default function PaymentsScreen({ role }: Props) {
     setSubmitError('');
     const parsed = parseFloat(amount);
     if (!householdRef || !amount || isNaN(parsed) || parsed <= 0) {
-      setSubmitError('Enter a valid household ref and amount greater than zero.');
+      setSubmitError(t('payments.errInput'));
       return;
     }
     setSubmitting(true);
@@ -85,7 +87,7 @@ export default function PaymentsScreen({ role }: Props) {
       await loadPayments();
       await loadBalance();
     } catch {
-      setSubmitError('Could not record payment. Please try again.');
+      setSubmitError(t('payments.errRecord'));
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +98,7 @@ export default function PaymentsScreen({ role }: Props) {
       {role === 'admin' && (
         <Card variant="outlined">
           <CardContent>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Record Payment</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('payments.record')}</Typography>
             <Box
               component="form"
               data-testid="record-form"
@@ -104,7 +106,7 @@ export default function PaymentsScreen({ role }: Props) {
               sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}
             >
               <TextField
-                label="Household Ref"
+                label={t('common.householdRef')}
                 slotProps={{ htmlInput: { 'aria-label': 'Household Ref' } }}
                 value={householdRef}
                 onChange={e => setHouseholdRef(e.target.value)}
@@ -113,7 +115,7 @@ export default function PaymentsScreen({ role }: Props) {
                 placeholder="e.g. H001"
               />
               <TextField
-                label="Amount (€)"
+                label={t('payments.amountEuro')}
                 slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' } }}
                 type="number"
                 value={amount}
@@ -122,7 +124,7 @@ export default function PaymentsScreen({ role }: Props) {
                 size="small"
               />
               <TextField
-                label="Period (YYYY-MM)"
+                label={t('payments.periodYm')}
                 type="month"
                 value={period}
                 onChange={e => setPeriod(e.target.value)}
@@ -131,7 +133,7 @@ export default function PaymentsScreen({ role }: Props) {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
-                label="Date received"
+                label={t('payments.dateReceived')}
                 type="date"
                 value={dateReceived}
                 onChange={e => setDateReceived(e.target.value)}
@@ -141,9 +143,9 @@ export default function PaymentsScreen({ role }: Props) {
               />
               <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Button data-testid="submit-btn" type="submit" variant="contained" disabled={submitting}>
-                  Record Payment
+                  {t('payments.record')}
                 </Button>
-                {submitSuccess && <Alert data-testid="submit-success" severity="success">Payment recorded.</Alert>}
+                {submitSuccess && <Alert data-testid="submit-success" severity="success">{t('payments.recorded')}</Alert>}
                 {submitError  && <Alert data-testid="submit-error"   severity="error">{submitError}</Alert>}
               </Box>
             </Box>
@@ -160,10 +162,10 @@ export default function PaymentsScreen({ role }: Props) {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {role === 'admin' && <TableCell>Household</TableCell>}
-                  <TableCell align="right">Charged</TableCell>
-                  <TableCell align="right">Paid</TableCell>
-                  <TableCell align="right">Balance</TableCell>
+                  {role === 'admin' && <TableCell>{t('common.household')}</TableCell>}
+                  <TableCell align="right">{t('payments.charged')}</TableCell>
+                  <TableCell align="right">{t('payments.paid')}</TableCell>
+                  <TableCell align="right">{t('payments.balance')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -185,7 +187,7 @@ export default function PaymentsScreen({ role }: Props) {
 
       <Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-          {role === 'admin' ? 'All Payments' : 'My Payments'}
+          {t(role === 'admin' ? 'payments.allPayments' : 'payments.myPayments')}
         </Typography>
 
         {loading && (
@@ -197,7 +199,7 @@ export default function PaymentsScreen({ role }: Props) {
         {error && !loading && (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
             <Alert severity="error">{error}</Alert>
-            <Button variant="outlined" startIcon={<Refresh />} onClick={loadPayments}>Retry</Button>
+            <Button variant="outlined" startIcon={<Refresh />} onClick={loadPayments}>{t('common.retry')}</Button>
           </Box>
         )}
 
@@ -205,10 +207,10 @@ export default function PaymentsScreen({ role }: Props) {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Period</TableCell>
-                {role === 'admin' && <TableCell>Household</TableCell>}
-                <TableCell align="right">Amount</TableCell>
-                <TableCell>Date received</TableCell>
+                <TableCell>{t('common.period')}</TableCell>
+                {role === 'admin' && <TableCell>{t('common.household')}</TableCell>}
+                <TableCell align="right">{t('common.amount')}</TableCell>
+                <TableCell>{t('payments.dateReceived')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

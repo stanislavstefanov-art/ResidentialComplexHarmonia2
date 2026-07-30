@@ -87,5 +87,55 @@
     "marking": "Marking…",
     "markDeparted": "Mark Departed"
   },
-  "errorBoundary": { "title": "Something went wrong", "reload": "Reload" }
+  "errorBoundary": { "title": "Something went wrong", "reload": "Reload" },
+  "finance": {
+    "periodLabel": "Period:",
+    "totalCharges": "Total charges this period",
+    "totalExpenses": "Total expenses this period",
+    "myCharges": "My Charges",
+    "myPayments": "My Payments",
+    "dateReceived": "Date received",
+    "requestPayment": "Request Payment",
+    "requestInfo": "Payments are recorded by the building administrator.",
+    "errLoad": "Could not load financial data. Please try again."
+  },
+  "expenses": {
+    "record": "Record Expense",
+    "amountEuro": "Amount (€)",
+    "expenseDate": "Expense date",
+    "ledger": "Expense Ledger",
+    "category": "Category",
+    "recorded": "Expense recorded.",
+    "chargedAt": "Charged At",
+    "errLoad": "Could not load expenses. Please try again.",
+    "errAmount": "Enter a valid amount greater than zero.",
+    "errRecord": "Could not record expense. Please try again."
+  },
+  "fees": {
+    "record": "Record Charge",
+    "amountEuro": "Amount (€)",
+    "periodYm": "Period (YYYY-MM)",
+    "recorded": "Charge recorded.",
+    "allCharges": "All Charges",
+    "myCharges": "My Charges",
+    "chargedAt": "Charged At",
+    "errLoad": "Could not load charges. Please try again.",
+    "errInput": "Enter a valid household ref and amount greater than zero.",
+    "errRecord": "Could not record charge. Please try again."
+  },
+  "payments": {
+    "record": "Record Payment",
+    "amountEuro": "Amount (€)",
+    "periodYm": "Period (YYYY-MM)",
+    "dateReceived": "Date received",
+    "recorded": "Payment recorded.",
+    "charged": "Charged",
+    "paid": "Paid",
+    "balance": "Balance",
+    "allPayments": "All Payments",
+    "myPayments": "My Payments",
+    "errLoad": "Could not load payments. Please try again.",
+    "errInput": "Enter a valid household ref and amount greater than zero.",
+    "errRecord": "Could not record payment. Please try again."
+  }
 }
