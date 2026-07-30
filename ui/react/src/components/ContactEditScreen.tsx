@@ -3,6 +3,7 @@ import {
   Alert, Box, Button, Card, CardContent, Checkbox, FormControlLabel,
   TextField, Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { updateMyContact, updateContact, updateNotes } from '../api/contactEdit';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function ContactEditScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [myDisplayName, setMyDisplayName] = useState('');
   const [myPhone, setMyPhone]             = useState('');
   const [myEmail, setMyEmail]             = useState('');
@@ -45,7 +47,7 @@ export default function ContactEditScreen({ role }: Props) {
       });
       setMySuccess(true);
     } catch {
-      setMyError('Could not save contact details. Please try again.');
+      setMyError(t('contactEdit.errSave'));
     } finally {
       setMySaving(false);
     }
@@ -63,7 +65,7 @@ export default function ContactEditScreen({ role }: Props) {
       });
       setAdminSuccess(true);
     } catch {
-      setAdminError('Could not update contact. Please try again.');
+      setAdminError(t('contactEdit.errUpdate'));
     } finally {
       setAdminSaving(false);
     }
@@ -76,7 +78,7 @@ export default function ContactEditScreen({ role }: Props) {
       await updateNotes(notesRef, notesText || null);
       setNotesSuccess(true);
     } catch {
-      setNotesError('Could not update notes. Please try again.');
+      setNotesError(t('contactEdit.errNotes'));
     } finally {
       setNotesSaving(false);
     }
@@ -88,7 +90,7 @@ export default function ContactEditScreen({ role }: Props) {
       {role === 'resident' && (
         <Card variant="outlined">
           <CardContent>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>My Contact Details</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('contactEdit.myTitle')}</Typography>
             <Box
               component="form"
               data-testid="my-contact-form"
@@ -96,7 +98,7 @@ export default function ContactEditScreen({ role }: Props) {
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
-                label="Display Name"
+                label={t('common.displayName')}
                 slotProps={{ htmlInput: { 'data-testid': 'my-name-input' } }}
                 value={myDisplayName}
                 onChange={e => setMyDisplayName(e.target.value)}
@@ -104,7 +106,7 @@ export default function ContactEditScreen({ role }: Props) {
                 fullWidth
               />
               <TextField
-                label="Phone"
+                label={t('common.phone')}
                 slotProps={{ htmlInput: { 'data-testid': 'my-phone-input' } }}
                 value={myPhone}
                 onChange={e => setMyPhone(e.target.value)}
@@ -112,7 +114,7 @@ export default function ContactEditScreen({ role }: Props) {
                 fullWidth
               />
               <TextField
-                label="Email"
+                label={t('common.email')}
                 slotProps={{ htmlInput: { 'data-testid': 'my-email-input' } }}
                 type="email"
                 value={myEmail}
@@ -128,13 +130,13 @@ export default function ContactEditScreen({ role }: Props) {
                     onChange={e => setMyOptedOut(e.target.checked)}
                   />
                 }
-                label="Opt out of directory listing"
+                label={t('contactEdit.optOut')}
               />
               <Button data-testid="my-contact-btn" type="submit" variant="contained" disabled={mySaving} sx={{ alignSelf: 'flex-start' }}>
                 Save Changes
               </Button>
             </Box>
-            {mySuccess && <Alert data-testid="my-contact-success" severity="success" sx={{ mt: 1 }}>Contact details saved.</Alert>}
+            {mySuccess && <Alert data-testid="my-contact-success" severity="success" sx={{ mt: 1 }}>{t('contactEdit.saved')}</Alert>}
             {myError  && <Alert data-testid="my-contact-error"   severity="error"   sx={{ mt: 1 }}>{myError}</Alert>}
           </CardContent>
         </Card>
@@ -144,7 +146,7 @@ export default function ContactEditScreen({ role }: Props) {
         <>
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Update Household Contact</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('contactEdit.updateContact')}</Typography>
               <Box
                 component="form"
                 data-testid="admin-contact-form"
@@ -152,7 +154,7 @@ export default function ContactEditScreen({ role }: Props) {
                 sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
               >
                 <TextField
-                  label="Household Ref"
+                  label={t('common.householdRef')}
                   slotProps={{ htmlInput: { 'data-testid': 'admin-ref-input' } }}
                   value={adminRef}
                   onChange={e => setAdminRef(e.target.value)}
@@ -161,25 +163,25 @@ export default function ContactEditScreen({ role }: Props) {
                   required
                   fullWidth
                 />
-                <TextField label="Display Name" slotProps={{ htmlInput: { 'data-testid': 'admin-name-input' } }} value={adminName} onChange={e => setAdminName(e.target.value)} size="small" fullWidth />
-                <TextField label="Phone" slotProps={{ htmlInput: { 'data-testid': 'admin-phone-input' } }} value={adminPhone} onChange={e => setAdminPhone(e.target.value)} size="small" fullWidth />
-                <TextField label="Email" slotProps={{ htmlInput: { 'data-testid': 'admin-email-input' } }} type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} size="small" fullWidth />
+                <TextField label={t('common.displayName')} slotProps={{ htmlInput: { 'data-testid': 'admin-name-input' } }} value={adminName} onChange={e => setAdminName(e.target.value)} size="small" fullWidth />
+                <TextField label={t('common.phone')} slotProps={{ htmlInput: { 'data-testid': 'admin-phone-input' } }} value={adminPhone} onChange={e => setAdminPhone(e.target.value)} size="small" fullWidth />
+                <TextField label={t('common.email')} slotProps={{ htmlInput: { 'data-testid': 'admin-email-input' } }} type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} size="small" fullWidth />
                 <FormControlLabel
                   control={<Checkbox data-testid="admin-opted-out" checked={adminOptedOut} onChange={e => setAdminOptedOut(e.target.checked)} />}
-                  label="Opted out"
+                  label={t('contactEdit.optedOut')}
                 />
                 <Button data-testid="admin-contact-btn" type="submit" variant="contained" disabled={adminSaving} sx={{ alignSelf: 'flex-start' }}>
                   Update Contact
                 </Button>
               </Box>
-              {adminSuccess && <Alert data-testid="admin-contact-success" severity="success" sx={{ mt: 1 }}>Contact updated.</Alert>}
+              {adminSuccess && <Alert data-testid="admin-contact-success" severity="success" sx={{ mt: 1 }}>{t('contactEdit.contactUpdated')}</Alert>}
               {adminError  && <Alert data-testid="admin-contact-error"   severity="error"   sx={{ mt: 1 }}>{adminError}</Alert>}
             </CardContent>
           </Card>
 
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Update Notes</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('contactEdit.updateNotes')}</Typography>
               <Box
                 component="form"
                 data-testid="notes-form"
@@ -187,7 +189,7 @@ export default function ContactEditScreen({ role }: Props) {
                 sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
               >
                 <TextField
-                  label="Household Ref"
+                  label={t('common.householdRef')}
                   slotProps={{ htmlInput: { 'data-testid': 'notes-ref-input' } }}
                   value={notesRef}
                   onChange={e => setNotesRef(e.target.value)}
@@ -197,7 +199,7 @@ export default function ContactEditScreen({ role }: Props) {
                   fullWidth
                 />
                 <TextField
-                  label="Notes"
+                  label={t('common.notes')}
                   slotProps={{ htmlInput: { 'data-testid': 'notes-text-input' } }}
                   value={notesText}
                   onChange={e => setNotesText(e.target.value)}
@@ -210,7 +212,7 @@ export default function ContactEditScreen({ role }: Props) {
                   Update Notes
                 </Button>
               </Box>
-              {notesSuccess && <Alert data-testid="notes-success" severity="success" sx={{ mt: 1 }}>Notes updated.</Alert>}
+              {notesSuccess && <Alert data-testid="notes-success" severity="success" sx={{ mt: 1 }}>{t('contactEdit.notesUpdated')}</Alert>}
               {notesError  && <Alert data-testid="notes-error"   severity="error"   sx={{ mt: 1 }}>{notesError}</Alert>}
             </CardContent>
           </Card>

@@ -5,6 +5,7 @@ import {
   TableBody, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
+import { useTranslation } from 'react-i18next';
 import { listPending, activatePending, purgeExpired } from '../api/adminPending';
 import { PendingSignInDto, Role } from '../types';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function AdminPendingScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<PendingSignInDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [forbidden, setForbidden] = useState(false);
@@ -45,12 +47,12 @@ export default function AdminPendingScreen({ role }: Props) {
         setForbidden(true);
         setRows([]);
       } else {
-        setError('Could not load pending sign-ins. Please try again.');
+        setError(t('adminPending.errLoad'));
       }
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -67,13 +69,13 @@ export default function AdminPendingScreen({ role }: Props) {
     try {
       await activatePending(activateOid, householdRef);
       setActivateOpen(false);
-      showToast('Linked successfully.');
+      showToast(t('adminPending.linked'));
       load();
     } catch (e: any) {
-      if (e?.status === 409) setActivateError('Already linked to a household.');
-      else if (e?.status === 404) setActivateError('Pending entry no longer exists — it may have been removed.');
-      else if (e?.status === 403) setActivateError('Admin access required.');
-      else setActivateError('Failed — please try again.');
+      if (e?.status === 409) setActivateError(t('adminPending.alreadyLinked'));
+      else if (e?.status === 404) setActivateError(t('adminPending.gone'));
+      else if (e?.status === 403) setActivateError(t('adminPending.accessDenied'));
+      else setActivateError(t('adminPending.failed'));
     } finally {
       setActivating(false);
     }
@@ -85,12 +87,12 @@ export default function AdminPendingScreen({ role }: Props) {
       const result = await purgeExpired();
       setPurgeOpen(false);
       showToast(result.deleted > 0
-        ? `Deleted ${result.deleted} expired entries.`
-        : 'No expired entries found.');
+        ? t('adminPending.purged', { count: result.deleted })
+        : t('adminPending.noneExpired'));
     } catch (e: any) {
       setPurgeOpen(false);
-      if (e?.status === 403) setError('Admin access required.');
-      else setError('Failed — please try again.');
+      if (e?.status === 403) setError(t('adminPending.accessDenied'));
+      else setError(t('adminPending.failed'));
     } finally {
       setPurging(false);
     }
@@ -103,7 +105,7 @@ export default function AdminPendingScreen({ role }: Props) {
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
         <Box>
-          <Typography variant="h6">Pending Sign-Ins</Typography>
+          <Typography variant="h6">{t('adminPending.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
             Users awaiting household assignment.
           </Typography>
@@ -118,17 +120,17 @@ export default function AdminPendingScreen({ role }: Props) {
       {loading && <CircularProgress size={32} />}
 
       {!loading && forbidden && (
-        <Alert severity="info">Admin access required to view pending sign-ins.</Alert>
+        <Alert severity="info">{t('adminPending.accessRequired')}</Alert>
       )}
 
       {!loading && !forbidden && (
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Display Name</TableCell>
-              <TableCell sx={{ width: 260 }}>Email</TableCell>
-              <TableCell sx={{ width: 220 }}>OID</TableCell>
-              <TableCell sx={{ width: 160 }}>First Seen</TableCell>
+              <TableCell>{t('common.displayName')}</TableCell>
+              <TableCell sx={{ width: 260 }}>{t('common.email')}</TableCell>
+              <TableCell sx={{ width: 220 }}>{t('adminPending.oid')}</TableCell>
+              <TableCell sx={{ width: 160 }}>{t('adminPending.firstSeen')}</TableCell>
               <TableCell sx={{ width: 60 }} />
             </TableRow>
           </TableHead>
@@ -163,23 +165,23 @@ export default function AdminPendingScreen({ role }: Props) {
       )}
 
       <Dialog open={activateOpen} onClose={() => setActivateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Link to Household</DialogTitle>
+        <DialogTitle>{t('adminPending.linkTitle')}</DialogTitle>
         <DialogContent>
           <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block', mb: 2 }}>
             {activateOid}
           </Typography>
           {activateError && <Alert severity="error" sx={{ mb: 2 }}>{activateError}</Alert>}
           <TextField
-            label="Household Ref"
+            label={t('adminPending.householdRefLabel')}
             value={householdRef}
             onChange={(e) => setHouseholdRef(e.target.value)}
             fullWidth
-            placeholder="e.g. AP-101"
+            placeholder={t('adminPending.refPlaceholder')}
             sx={{ mt: 1 }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setActivateOpen(false)} disabled={activating}>Cancel</Button>
+          <Button onClick={() => setActivateOpen(false)} disabled={activating}>{t('common.cancel')}</Button>
           <Button
             onClick={handleActivate}
             loading={activating}
@@ -192,14 +194,14 @@ export default function AdminPendingScreen({ role }: Props) {
       </Dialog>
 
       <Dialog open={purgeOpen} onClose={() => setPurgeOpen(false)} maxWidth="xs">
-        <DialogTitle>Purge Expired Entries?</DialogTitle>
+        <DialogTitle>{t('adminPending.purgeTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
             This will permanently delete all pending sign-ins older than 90 days. This cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPurgeOpen(false)} disabled={purging}>Cancel</Button>
+          <Button onClick={() => setPurgeOpen(false)} disabled={purging}>{t('common.cancel')}</Button>
           <Button onClick={handlePurge} loading={purging} color="warning" variant="contained">
             Purge
           </Button>

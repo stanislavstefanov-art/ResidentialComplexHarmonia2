@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onCheckAgain: () => Promise<void>;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function ResidentPendingScreen({ onCheckAgain, onSignOut }: Props) {
+  const { t } = useTranslation();
   const [checking, setChecking] = useState(false);
 
   const handleCheckAgain = async () => {
@@ -23,7 +25,7 @@ export default function ResidentPendingScreen({ onCheckAgain, onSignOut }: Props
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 12, gap: 2 }}>
       <HomeIcon sx={{ fontSize: 48, color: 'primary.main' }} />
       <Typography variant="h5" sx={{ fontWeight: 700 }} data-testid="pending-heading">
-        Account pending approval
+        {t('residentPending.heading')}
       </Typography>
       <Typography
         variant="body2"
@@ -31,8 +33,7 @@ export default function ResidentPendingScreen({ onCheckAgain, onSignOut }: Props
         sx={{ maxWidth: 480, textAlign: 'center' }}
         data-testid="pending-body"
       >
-        Your account registration is complete, but a building administrator needs to approve it
-        before you can access the portal. This usually takes up to 24 hours.
+        {t('residentPending.body')}
       </Typography>
       <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
         <Button
@@ -43,7 +44,7 @@ export default function ResidentPendingScreen({ onCheckAgain, onSignOut }: Props
           data-testid="check-again-btn"
           startIcon={checking ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          Check again
+          {t('residentPending.checkAgain')}
         </Button>
         <Button
           variant="outlined"
@@ -51,7 +52,7 @@ export default function ResidentPendingScreen({ onCheckAgain, onSignOut }: Props
           onClick={onSignOut}
           data-testid="sign-out-btn"
         >
-          Sign out
+          {t('residentPending.signOut')}
         </Button>
       </Box>
     </Box>
