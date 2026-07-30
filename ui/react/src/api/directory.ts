@@ -1,27 +1,33 @@
 import {
-  AdminDirectoryListResponse,
   AdminUpdateContactRequest,
   DirectoryEntry,
   DirectoryEntryAdmin,
-  DirectoryListResponse,
   UpdateContactRequest,
 } from '../types';
 import { API_BASE, apiFetch } from './config';
 
 const API = API_BASE;
 
+// The API returns a bare JSON array (e.g. `[ {...}, {...} ]`). Guard with
+// Array.isArray: if `body` is an array, `body.entries` would resolve to
+// `Array.prototype.entries` (a function), which must never reach setState.
+// A wrapped `{ entries: [...] }` shape is tolerated for forward-compatibility.
+function unwrapEntries<T>(body: unknown): T[] {
+  if (Array.isArray(body)) return body as T[];
+  const entries = (body as { entries?: T[] } | null)?.entries;
+  return Array.isArray(entries) ? entries : [];
+}
+
 export async function getDirectory(): Promise<DirectoryEntry[]> {
   const res = await apiFetch(`${API}/directory`);
   if (!res.ok) throw new Error(`GET /directory failed: ${res.status}`);
-  const body: DirectoryListResponse = await res.json();
-  return body.entries ?? [];
+  return unwrapEntries<DirectoryEntry>(await res.json());
 }
 
 export async function getAdminDirectory(): Promise<DirectoryEntryAdmin[]> {
   const res = await apiFetch(`${API}/directory/admin`);
   if (!res.ok) throw new Error(`GET /directory/admin failed: ${res.status}`);
-  const body: AdminDirectoryListResponse = await res.json();
-  return body.entries ?? [];
+  return unwrapEntries<DirectoryEntryAdmin>(await res.json());
 }
 
 export async function updateMyContact(req: UpdateContactRequest): Promise<void> {

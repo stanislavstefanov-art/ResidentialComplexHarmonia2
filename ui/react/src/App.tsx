@@ -20,6 +20,7 @@ import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
 import { getMyStatus } from './api/me';
 import ResidentPendingScreen from './components/ResidentPendingScreen';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Role } from './types';
 
 const theme = createTheme(
@@ -206,12 +207,14 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthenticatedTemplate>
-        <AppStatusGate />
-      </AuthenticatedTemplate>
-      <UnauthenticatedTemplate>
-        <SignInPage />
-      </UnauthenticatedTemplate>
+      <ErrorBoundary>
+        <AuthenticatedTemplate>
+          <AppStatusGate />
+        </AuthenticatedTemplate>
+        <UnauthenticatedTemplate>
+          <SignInPage />
+        </UnauthenticatedTemplate>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }
