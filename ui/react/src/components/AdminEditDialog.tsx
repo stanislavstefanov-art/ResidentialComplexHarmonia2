@@ -35,7 +35,7 @@ const AdminEditDialog: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth disableRestoreFocus>
-      <DialogTitle>Edit Resident — {householdRef}</DialogTitle>
+      <DialogTitle>{t('dialog.editResidentTitle', { ref: householdRef })}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <TextField
@@ -75,7 +75,7 @@ const AdminEditDialog: React.FC<Props> = ({
             }
             label={
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Opted out of directory
+                {t('dialog.optedOutOfDirectory')}
               </Typography>
             }
             labelPlacement="start"

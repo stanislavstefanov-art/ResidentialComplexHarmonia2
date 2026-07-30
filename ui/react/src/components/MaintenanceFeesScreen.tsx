@@ -93,7 +93,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
             >
               <TextField
                 label={t('common.householdRef')}
-                slotProps={{ htmlInput: { 'aria-label': 'Household Ref' } }}
+                slotProps={{ htmlInput: { 'aria-label': t('common.householdRef') } }}
                 value={householdRef}
                 onChange={e => setHouseholdRef(e.target.value)}
                 required
@@ -102,7 +102,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
               />
               <TextField
                 label={t('fees.amountEuro')}
-                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' } }}
+                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': t('fees.amountEuro') } }}
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
@@ -175,7 +175,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
             {charges.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={role === 'admin' ? 5 : 4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                  No charges on record.
+                  {t('fees.none')}
                 </TableCell>
               </TableRow>
             ) : (

@@ -138,7 +138,7 @@ export default function NotificationsScreen({ role }: Props) {
               {history.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                    No notifications on record.
+                    {t('notifications.none')}
                   </TableCell>
                 </TableRow>
               ) : (

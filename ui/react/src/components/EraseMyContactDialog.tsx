@@ -19,8 +19,8 @@ const EraseMyContactDialog: React.FC<Props> = ({ open, erasing, onConfirm, onClo
       <DialogTitle>{t('dialog.eraseMineTitle')}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          All your contact information will be <strong>{t('dialog.permanentlyDeleted')}</strong>.
-          This cannot be undone.
+          All your contact information will be <strong>{t('dialog.permanentlyDeleted')}</strong>.{' '}
+          {t('dialog.cannotBeUndone')}
         </DialogContentText>
       </DialogContent>
       <DialogActions>

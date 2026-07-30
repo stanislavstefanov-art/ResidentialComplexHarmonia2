@@ -133,7 +133,7 @@ export default function ContactEditScreen({ role }: Props) {
                 label={t('contactEdit.optOut')}
               />
               <Button data-testid="my-contact-btn" type="submit" variant="contained" disabled={mySaving} sx={{ alignSelf: 'flex-start' }}>
-                Save Changes
+                {t('contactEdit.saveChanges')}
               </Button>
             </Box>
             {mySuccess && <Alert data-testid="my-contact-success" severity="success" sx={{ mt: 1 }}>{t('contactEdit.saved')}</Alert>}
@@ -171,7 +171,7 @@ export default function ContactEditScreen({ role }: Props) {
                   label={t('contactEdit.optedOut')}
                 />
                 <Button data-testid="admin-contact-btn" type="submit" variant="contained" disabled={adminSaving} sx={{ alignSelf: 'flex-start' }}>
-                  Update Contact
+                  {t('contactEdit.updateContactBtn')}
                 </Button>
               </Box>
               {adminSuccess && <Alert data-testid="admin-contact-success" severity="success" sx={{ mt: 1 }}>{t('contactEdit.contactUpdated')}</Alert>}
@@ -209,7 +209,7 @@ export default function ContactEditScreen({ role }: Props) {
                   fullWidth
                 />
                 <Button data-testid="notes-btn" type="submit" variant="contained" disabled={notesSaving} sx={{ alignSelf: 'flex-start' }}>
-                  Update Notes
+                  {t('contactEdit.updateNotes')}
                 </Button>
               </Box>
               {notesSuccess && <Alert data-testid="notes-success" severity="success" sx={{ mt: 1 }}>{t('contactEdit.notesUpdated')}</Alert>}

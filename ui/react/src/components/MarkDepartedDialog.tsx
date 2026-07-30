@@ -8,7 +8,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -27,8 +27,11 @@ const MarkDepartedDialog: React.FC<Props> = ({
       <DialogTitle>{t('dialog.markDepartedTitle')}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Apartment <strong>{householdRef}</strong> will be removed from the active directory.
-          This cannot be undone from this screen.
+          <Trans
+            i18nKey="dialog.markDepartedBody"
+            values={{ ref: householdRef }}
+            components={{ b: <strong /> }}
+          />
         </DialogContentText>
       </DialogContent>
       <DialogActions>

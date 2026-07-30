@@ -119,7 +119,7 @@ export default function FinancialScreen() {
           {charges.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                No charges on record.
+                {t('finance.noCharges')}
               </TableCell>
             </TableRow>
           ) : (
@@ -148,7 +148,7 @@ export default function FinancialScreen() {
           {payments.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                No payments on record.
+                {t('finance.noPayments')}
               </TableCell>
             </TableRow>
           ) : (
@@ -173,7 +173,7 @@ export default function FinancialScreen() {
           <Box data-testid="pay-dialog">
             <Typography>{t('finance.requestInfo')}</Typography>
             <Typography sx={{ mt: 1 }}>
-              Please contact the office to register a payment.
+              {t('finance.contactOffice')}
             </Typography>
           </Box>
         </DialogContent>

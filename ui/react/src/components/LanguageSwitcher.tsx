@@ -13,7 +13,7 @@ const LABELS: Record<Lang, string> = {
 interface Props { color?: string; }
 
 const LanguageSwitcher: React.FC<Props> = ({ color }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
   const current = (i18n.language.split('-')[0] as Lang) || 'bg';
 
@@ -25,7 +25,7 @@ const LanguageSwitcher: React.FC<Props> = ({ color }) => {
   return (
     <>
       <IconButton
-        aria-label="Change language"
+        aria-label={t('app.changeLanguage')}
         onClick={(e) => setAnchor(e.currentTarget)}
         sx={{ color: color ?? 'inherit' }}
         size="small"

@@ -174,7 +174,7 @@ export default function ExpensesScreen({ role }: Props) {
             {expenses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                  No expenses on record.
+                  {t('expenses.none')}
                 </TableCell>
               </TableRow>
             ) : (

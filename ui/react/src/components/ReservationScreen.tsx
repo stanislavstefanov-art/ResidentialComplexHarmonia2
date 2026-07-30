@@ -48,7 +48,7 @@ export default function ReservationScreen() {
       const r = await claimSlot(day, slotKey);
       if (r.outcome === 'confirmed-yours') {
         setSlots(prev => prev.map(s => s.slotKey === slotKey ? { ...s, state: 'taken-mine' as SlotState } : s));
-        setFeedback({ msg: `Slot "${slotKey}" confirmed — it's yours!`, severity: 'success' });
+        setFeedback({ msg: t('reservation.confirmed', { slotKey }), severity: 'success' });
       } else if (r.outcome === 'refused-already-taken') {
         setSlots(prev => prev.map(s => s.slotKey === slotKey ? { ...s, state: 'taken-other' as SlotState } : s));
         setFeedback({ msg: t('reservation.errTaken'), severity: 'warning' });
@@ -103,7 +103,7 @@ export default function ReservationScreen() {
           ))}
           {slots.length === 0 && (
             <Typography color="text.secondary" sx={{ gridColumn: '1/-1', textAlign: 'center', py: 4 }}>
-              No slots available for this day.
+              {t('reservation.noSlots')}
             </Typography>
           )}
         </Box>

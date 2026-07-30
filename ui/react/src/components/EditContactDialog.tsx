@@ -74,10 +74,10 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
             label={
               <span>
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Hide me from the directory
+                  {t('dialog.hideFromDirectory')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  When enabled, your name will not appear to other residents.
+                  {t('dialog.hideFromDirectoryHelp')}
                 </Typography>
               </span>
             }
@@ -88,7 +88,7 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onRequestErase} color="error" disabled={saving} sx={{ mr: 'auto' }}>
-          Delete my data
+          {t('dialog.deleteMine')}
         </Button>
         <Button onClick={onClose} color="inherit" disabled={saving}>
           {t('common.cancel')}

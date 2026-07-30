@@ -107,11 +107,11 @@ export default function AdminPendingScreen({ role }: Props) {
         <Box>
           <Typography variant="h6">{t('adminPending.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Users awaiting household assignment.
+            {t('adminPending.subtitle')}
           </Typography>
         </Box>
         <Button variant="outlined" color="warning" onClick={() => setPurgeOpen(true)}>
-          Purge Expired (&gt;90 days)
+          {t('adminPending.purgeExpiredBtn')}
         </Button>
       </Box>
 
@@ -138,7 +138,7 @@ export default function AdminPendingScreen({ role }: Props) {
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ color: 'text.secondary', py: 4 }}>
-                  No pending sign-ins.
+                  {t('adminPending.none')}
                 </TableCell>
               </TableRow>
             ) : rows.map(row => (
@@ -188,7 +188,7 @@ export default function AdminPendingScreen({ role }: Props) {
             variant="contained"
             disabled={!householdRef || activating}
           >
-            Link
+            {t('adminPending.linkBtn')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -197,13 +197,13 @@ export default function AdminPendingScreen({ role }: Props) {
         <DialogTitle>{t('adminPending.purgeTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This will permanently delete all pending sign-ins older than 90 days. This cannot be undone.
+            {t('adminPending.purgeConfirmBody')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPurgeOpen(false)} disabled={purging}>{t('common.cancel')}</Button>
           <Button onClick={handlePurge} loading={purging} color="warning" variant="contained">
-            Purge
+            {t('adminPending.purgeBtn')}
           </Button>
         </DialogActions>
       </Dialog>

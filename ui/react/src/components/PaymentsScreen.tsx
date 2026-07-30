@@ -107,7 +107,7 @@ export default function PaymentsScreen({ role }: Props) {
             >
               <TextField
                 label={t('common.householdRef')}
-                slotProps={{ htmlInput: { 'aria-label': 'Household Ref' } }}
+                slotProps={{ htmlInput: { 'aria-label': t('common.householdRef') } }}
                 value={householdRef}
                 onChange={e => setHouseholdRef(e.target.value)}
                 required
@@ -116,7 +116,7 @@ export default function PaymentsScreen({ role }: Props) {
               />
               <TextField
                 label={t('payments.amountEuro')}
-                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' } }}
+                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': t('payments.amountEuro') } }}
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
@@ -157,7 +157,7 @@ export default function PaymentsScreen({ role }: Props) {
         <Card variant="outlined">
           <CardContent>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              Balance — {balance.label}
+              {t('payments.balanceLabel', { label: balance.label })}
             </Typography>
             <Table size="small">
               <TableHead>
@@ -217,7 +217,7 @@ export default function PaymentsScreen({ role }: Props) {
               {payments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={role === 'admin' ? 4 : 3} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                    No payments on record.
+                    {t('payments.none')}
                   </TableCell>
                 </TableRow>
               ) : (

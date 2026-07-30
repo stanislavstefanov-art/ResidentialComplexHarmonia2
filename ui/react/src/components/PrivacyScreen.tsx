@@ -96,7 +96,7 @@ export default function PrivacyScreen({ role }: Props) {
           <CardContent>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('privacy.deleteMine')}</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              GDPR Art. 17 — Right to Erasure. This permanently removes your contact data and cannot be undone.
+              {t('privacy.deleteMineDesc')}
             </Typography>
             <Button
               data-testid="delete-my-data-btn"
@@ -105,7 +105,7 @@ export default function PrivacyScreen({ role }: Props) {
               onClick={handleDeleteMyData}
               disabled={deleting}
             >
-              Delete My Data
+              {t('privacy.deleteMyDataBtn')}
             </Button>
             {deleteSuccess && <Alert data-testid="delete-success" severity="success" sx={{ mt: 1 }}>{t('privacy.deletedMine')}</Alert>}
             {deleteError  && <Alert data-testid="delete-error"   severity="error"   sx={{ mt: 1 }}>{deleteError}</Alert>}
@@ -134,7 +134,7 @@ export default function PrivacyScreen({ role }: Props) {
                   required
                 />
                 <Button data-testid="erase-btn" type="submit" variant="contained" color="error" disabled={erasing}>
-                  Erase Contact
+                  {t('privacy.eraseContactBtn')}
                 </Button>
               </Box>
               {eraseResult && <Alert data-testid="erase-result" severity="success" sx={{ mt: 1 }}>{eraseResult}</Alert>}
@@ -161,7 +161,7 @@ export default function PrivacyScreen({ role }: Props) {
                   required
                 />
                 <Button data-testid="depart-btn" type="submit" variant="contained" disabled={departing}>
-                  Mark Departed
+                  {t('privacy.markDepartedBtn')}
                 </Button>
               </Box>
               {departResult && <Alert data-testid="depart-result" severity="success" sx={{ mt: 1 }}>{departResult}</Alert>}
@@ -173,7 +173,7 @@ export default function PrivacyScreen({ role }: Props) {
             <CardContent>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('privacy.sweepTitle')}</Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                Permanently deletes contacts whose retention period has expired.
+                {t('privacy.sweepDesc')}
               </Typography>
               <Button
                 data-testid="purge-btn"
@@ -182,11 +182,11 @@ export default function PrivacyScreen({ role }: Props) {
                 onClick={handlePurge}
                 disabled={purging}
               >
-                Purge Expired Contacts
+                {t('privacy.purgeBtn')}
               </Button>
               {purgeResult !== undefined && (
                 <Alert data-testid="purge-result" severity="success" sx={{ mt: 1 }}>
-                  {purgeResult.deleted} contact(s) purged.
+                  {t('privacy.purgedCount', { count: purgeResult.deleted })}
                 </Alert>
               )}
               {purgeError && <Alert data-testid="purge-error" severity="error" sx={{ mt: 1 }}>{purgeError}</Alert>}
