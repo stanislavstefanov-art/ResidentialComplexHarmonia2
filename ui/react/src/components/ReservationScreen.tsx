@@ -4,6 +4,8 @@ import {
   CircularProgress, Snackbar, Typography
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 import { getSlots, claimSlot } from '../api/reservations';
 import { Slot, SlotState } from '../types';
 
@@ -17,6 +19,7 @@ interface Feedback {
 }
 
 export default function ReservationScreen() {
+  const { t } = useTranslation();
   const [day, setDay] = useState(todayString());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,11 +34,11 @@ export default function ReservationScreen() {
       const r = await getSlots(day);
       setSlots(r.slots);
     } catch {
-      setError('Could not load slots. Check your connection and try again.');
+      setError(t('reservation.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, [day]);
+  }, [day, t]);
 
   useEffect(() => { loadSlots(); }, [loadSlots]);
 
@@ -45,15 +48,15 @@ export default function ReservationScreen() {
       const r = await claimSlot(day, slotKey);
       if (r.outcome === 'confirmed-yours') {
         setSlots(prev => prev.map(s => s.slotKey === slotKey ? { ...s, state: 'taken-mine' as SlotState } : s));
-        setFeedback({ msg: `Slot "${slotKey}" confirmed — it's yours!`, severity: 'success' });
+        setFeedback({ msg: t('reservation.confirmed', { slotKey }), severity: 'success' });
       } else if (r.outcome === 'refused-already-taken') {
         setSlots(prev => prev.map(s => s.slotKey === slotKey ? { ...s, state: 'taken-other' as SlotState } : s));
-        setFeedback({ msg: 'Slot already taken by someone else.', severity: 'warning' });
+        setFeedback({ msg: t('reservation.errTaken'), severity: 'warning' });
       } else {
-        setFeedback({ msg: 'Could not confirm booking. Please try again.', severity: 'error' });
+        setFeedback({ msg: t('reservation.errConfirm'), severity: 'error' });
       }
     } catch {
-      setFeedback({ msg: 'Network error. Please try again.', severity: 'error' });
+      setFeedback({ msg: t('reservation.errNetwork'), severity: 'error' });
     } finally {
       setClaimInFlight('');
     }
@@ -62,7 +65,7 @@ export default function ReservationScreen() {
   return (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Select date:</Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{t('reservation.selectDate')}</Typography>
         <input
           type="date"
           value={day}
@@ -82,7 +85,7 @@ export default function ReservationScreen() {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 6 }}>
           <Alert severity="error">{error}</Alert>
           <Button variant="outlined" startIcon={<Refresh />} onClick={loadSlots}>
-            Retry
+            {t('common.retry')}
           </Button>
         </Box>
       )}
@@ -95,11 +98,12 @@ export default function ReservationScreen() {
               slot={slot}
               onClaim={handleClaim}
               loading={claimInFlight === slot.slotKey}
+              t={t}
             />
           ))}
           {slots.length === 0 && (
             <Typography color="text.secondary" sx={{ gridColumn: '1/-1', textAlign: 'center', py: 4 }}>
-              No slots available for this day.
+              {t('reservation.noSlots')}
             </Typography>
           )}
         </Box>
@@ -123,15 +127,16 @@ function stateColor(state: SlotState): 'success' | 'primary' | 'default' {
   return state === 'free' ? 'success' : state === 'taken-mine' ? 'primary' : 'default';
 }
 
-function stateLabel(state: SlotState): string {
-  return state === 'free' ? 'Free' : state === 'taken-mine' ? 'Yours' : 'Taken';
-}
-
-function SlotCard({ slot, onClaim, loading }: {
+function SlotCard({ slot, onClaim, loading, t }: {
   slot: Slot;
   onClaim: (key: string) => void;
   loading: boolean;
+  t: TFunction;
 }) {
+  const stateLabel = (state: SlotState): string => {
+    return state === 'free' ? t('reservation.free') : state === 'taken-mine' ? t('reservation.yours') : t('reservation.taken');
+  };
+
   return (
     <Card
       variant="outlined"
@@ -157,7 +162,7 @@ function SlotCard({ slot, onClaim, loading }: {
             onClick={() => onClaim(slot.slotKey)}
             sx={{ mt: 0.5 }}
           >
-            {loading ? 'Claiming…' : 'Claim'}
+            {loading ? t('reservation.claiming') : t('reservation.claim')}
           </Button>
         )}
       </CardContent>

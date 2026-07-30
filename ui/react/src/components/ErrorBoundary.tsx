@@ -1,7 +1,8 @@
 import React from 'react';
 import { Alert, AlertTitle, Box, Button } from '@mui/material';
+import { withTranslation, WithTranslation } from 'react-i18next';
 
-interface Props { children: React.ReactNode; }
+interface Props extends WithTranslation { children: React.ReactNode; }
 interface State { error: Error | null; }
 
 /**
@@ -29,6 +30,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   render() {
+    const { t } = this.props;
     if (this.state.error) {
       return (
         <Box sx={{ maxWidth: 720, mx: 'auto', mt: 8, px: 2 }}>
@@ -36,11 +38,11 @@ class ErrorBoundary extends React.Component<Props, State> {
             severity="error"
             action={
               <Button color="inherit" size="small" onClick={() => window.location.reload()}>
-                Reload
+                {t('errorBoundary.reload')}
               </Button>
             }
           >
-            <AlertTitle>Something went wrong</AlertTitle>
+            <AlertTitle>{t('errorBoundary.title')}</AlertTitle>
             {this.state.error.message}
           </Alert>
         </Box>
@@ -50,4 +52,4 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+export default withTranslation()(ErrorBoundary);

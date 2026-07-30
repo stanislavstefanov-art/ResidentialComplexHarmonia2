@@ -5,6 +5,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow, Typography
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { getPeriodSummary, getMyCharges, getMyPayments } from '../api/financial';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from '../types';
 
@@ -18,6 +19,7 @@ function formatEur(n: number): string {
 }
 
 export default function FinancialScreen() {
+  const { t } = useTranslation();
   const [period, setPeriod]               = useState(currentMonth());
   const [summary, setSummary]             = useState<PeriodSummaryDto | null>(null);
   const [charges, setCharges]             = useState<ChargeDto[]>([]);
@@ -39,11 +41,11 @@ export default function FinancialScreen() {
       setCharges(chargesData);
       setPayments(paymentsData);
     } catch {
-      setError('Could not load financial data. Please try again.');
+      setError(t('finance.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, t]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -59,7 +61,7 @@ export default function FinancialScreen() {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 8 }}>
         <Alert severity="error">{error}</Alert>
-        <Button variant="outlined" startIcon={<Refresh />} onClick={loadData}>Retry</Button>
+        <Button variant="outlined" startIcon={<Refresh />} onClick={loadData}>{t('common.retry')}</Button>
       </Box>
     );
   }
@@ -67,7 +69,7 @@ export default function FinancialScreen() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Period:</Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{t('finance.periodLabel')}</Typography>
         <input
           type="month"
           value={period}
@@ -80,7 +82,7 @@ export default function FinancialScreen() {
         <Card variant="outlined" sx={{ mb: 3 }}>
           <CardContent sx={{ display: 'flex', gap: 4 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">Total charges this period</Typography>
+              <Typography variant="caption" color="text.secondary">{t('finance.totalCharges')}</Typography>
               <Typography
                 data-testid="summary-charges"
                 variant="h6"
@@ -90,7 +92,7 @@ export default function FinancialScreen() {
               </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">Total expenses this period</Typography>
+              <Typography variant="caption" color="text.secondary">{t('finance.totalExpenses')}</Typography>
               <Typography
                 data-testid="summary-expenses"
                 variant="h6"
@@ -103,21 +105,21 @@ export default function FinancialScreen() {
         </Card>
       )}
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>My Charges</Typography>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('finance.myCharges')}</Typography>
       <Table size="small" sx={{ mb: 3 }}>
         <TableHead>
           <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Period</TableCell>
-            <TableCell align="right">Amount</TableCell>
+            <TableCell>{t('common.date')}</TableCell>
+            <TableCell>{t('common.description')}</TableCell>
+            <TableCell>{t('common.period')}</TableCell>
+            <TableCell align="right">{t('common.amount')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {charges.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                No charges on record.
+                {t('finance.noCharges')}
               </TableCell>
             </TableRow>
           ) : (
@@ -133,20 +135,20 @@ export default function FinancialScreen() {
         </TableBody>
       </Table>
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>My Payments</Typography>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('finance.myPayments')}</Typography>
       <Table size="small" sx={{ mb: 3 }}>
         <TableHead>
           <TableRow>
-            <TableCell>Date received</TableCell>
-            <TableCell>Period</TableCell>
-            <TableCell align="right">Amount</TableCell>
+            <TableCell>{t('finance.dateReceived')}</TableCell>
+            <TableCell>{t('common.period')}</TableCell>
+            <TableCell align="right">{t('common.amount')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {payments.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                No payments on record.
+                {t('finance.noPayments')}
               </TableCell>
             </TableRow>
           ) : (
@@ -162,21 +164,21 @@ export default function FinancialScreen() {
       </Table>
 
       <Button data-testid="pay-btn" variant="contained" onClick={() => setShowPayDialog(true)}>
-        Request Payment
+        {t('finance.requestPayment')}
       </Button>
 
       <Dialog open={showPayDialog} onClose={() => setShowPayDialog(false)}>
-        <DialogTitle>Request Payment</DialogTitle>
+        <DialogTitle>{t('finance.requestPayment')}</DialogTitle>
         <DialogContent>
           <Box data-testid="pay-dialog">
-            <Typography>Payments are recorded by the building administrator.</Typography>
+            <Typography>{t('finance.requestInfo')}</Typography>
             <Typography sx={{ mt: 1 }}>
-              Please contact the office to register a payment.
+              {t('finance.contactOffice')}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowPayDialog(false)}>Close</Button>
+          <Button onClick={() => setShowPayDialog(false)}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

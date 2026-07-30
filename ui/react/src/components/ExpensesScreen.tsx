@@ -5,6 +5,7 @@ import {
   TextField, Typography
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { getExpenses, recordExpense } from '../api/expenses';
 import { ExpenseDto, EXPENSE_CATEGORIES } from '../types';
 
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function ExpensesScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [expenses, setExpenses]         = useState<ExpenseDto[]>([]);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string>('');
@@ -39,11 +41,11 @@ export default function ExpensesScreen({ role }: Props) {
     try {
       setExpenses(await getExpenses());
     } catch {
-      setError('Could not load expenses. Please try again.');
+      setError(t('expenses.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { loadExpenses(); }, [loadExpenses]);
 
@@ -53,7 +55,7 @@ export default function ExpensesScreen({ role }: Props) {
     setSubmitError('');
     const parsed = parseFloat(amount);
     if (!amount || isNaN(parsed) || parsed <= 0) {
-      setSubmitError('Enter a valid amount greater than zero.');
+      setSubmitError(t('expenses.errAmount'));
       return;
     }
     setSubmitting(true);
@@ -72,7 +74,7 @@ export default function ExpensesScreen({ role }: Props) {
       setExpDate(today());
       await loadExpenses();
     } catch {
-      setSubmitError('Could not record expense. Please try again.');
+      setSubmitError(t('expenses.errRecord'));
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +85,7 @@ export default function ExpensesScreen({ role }: Props) {
       {role === 'admin' && (
         <Card variant="outlined" sx={{ mb: 3 }}>
           <CardContent>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Record Expense</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('expenses.record')}</Typography>
             <Box
               component="form"
               data-testid="record-form"
@@ -91,7 +93,7 @@ export default function ExpensesScreen({ role }: Props) {
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
-                label="Amount (€)"
+                label={t('expenses.amountEuro')}
                 type="number"
                 slotProps={{ htmlInput: { step: '0.01', min: '0.01' } }}
                 value={amount}
@@ -100,7 +102,7 @@ export default function ExpensesScreen({ role }: Props) {
                 size="small"
               />
               <TextField
-                label="Description"
+                label={t('common.description')}
                 value={description}
                 onChange={e => setDesc(e.target.value)}
                 required
@@ -116,7 +118,7 @@ export default function ExpensesScreen({ role }: Props) {
                 ))}
               </Select>
               <TextField
-                label="Expense date"
+                label={t('expenses.expenseDate')}
                 type="date"
                 value={expenseDate}
                 onChange={e => setExpDate(e.target.value)}
@@ -130,10 +132,10 @@ export default function ExpensesScreen({ role }: Props) {
                 variant="contained"
                 disabled={submitting}
               >
-                Record Expense
+                {t('expenses.record')}
               </Button>
               {submitSuccess && (
-                <Alert data-testid="submit-success" severity="success">Expense recorded.</Alert>
+                <Alert data-testid="submit-success" severity="success">{t('expenses.recorded')}</Alert>
               )}
               {submitError && (
                 <Alert data-testid="submit-error" severity="error">{submitError}</Alert>
@@ -143,7 +145,7 @@ export default function ExpensesScreen({ role }: Props) {
         </Card>
       )}
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Expense Ledger</Typography>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('expenses.ledger')}</Typography>
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -154,7 +156,7 @@ export default function ExpensesScreen({ role }: Props) {
       {error && !loading && (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
           <Alert severity="error">{error}</Alert>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={loadExpenses}>Retry</Button>
+          <Button variant="outlined" startIcon={<Refresh />} onClick={loadExpenses}>{t('common.retry')}</Button>
         </Box>
       )}
 
@@ -162,17 +164,17 @@ export default function ExpensesScreen({ role }: Props) {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Amount</TableCell>
+              <TableCell>{t('common.date')}</TableCell>
+              <TableCell>{t('expenses.category')}</TableCell>
+              <TableCell>{t('common.description')}</TableCell>
+              <TableCell align="right">{t('common.amount')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {expenses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                  No expenses on record.
+                  {t('expenses.none')}
                 </TableCell>
               </TableRow>
             ) : (

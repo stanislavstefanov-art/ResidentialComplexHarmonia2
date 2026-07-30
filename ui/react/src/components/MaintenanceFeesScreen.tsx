@@ -5,6 +5,7 @@ import {
   TextField, Typography,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { getMyCharges, getAllCharges, recordCharge } from '../api/maintenanceFees';
 import { ChargeDto } from '../types';
 
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function MaintenanceFeesScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [charges, setCharges]           = useState<ChargeDto[]>([]);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string>('');
@@ -39,11 +41,11 @@ export default function MaintenanceFeesScreen({ role }: Props) {
     try {
       setCharges(role === 'admin' ? await getAllCharges() : await getMyCharges());
     } catch {
-      setError('Could not load charges. Please try again.');
+      setError(t('fees.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, t]);
 
   useEffect(() => { loadCharges(); }, [loadCharges]);
 
@@ -53,7 +55,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
     setSubmitError('');
     const parsed = parseFloat(amount);
     if (!householdRef || !amount || isNaN(parsed) || parsed <= 0) {
-      setSubmitError('Enter a valid household ref and amount greater than zero.');
+      setSubmitError(t('fees.errInput'));
       return;
     }
     setSubmitting(true);
@@ -71,7 +73,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
       setPeriod(currentMonth());
       await loadCharges();
     } catch {
-      setSubmitError('Could not record charge. Please try again.');
+      setSubmitError(t('fees.errRecord'));
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +84,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
       {role === 'admin' && (
         <Card variant="outlined" sx={{ mb: 3 }}>
           <CardContent>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Record Charge</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('fees.record')}</Typography>
             <Box
               component="form"
               data-testid="record-form"
@@ -90,8 +92,8 @@ export default function MaintenanceFeesScreen({ role }: Props) {
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
-                label="Household Ref"
-                slotProps={{ htmlInput: { 'aria-label': 'Household Ref' } }}
+                label={t('common.householdRef')}
+                slotProps={{ htmlInput: { 'aria-label': t('common.householdRef') } }}
                 value={householdRef}
                 onChange={e => setHouseholdRef(e.target.value)}
                 required
@@ -99,8 +101,8 @@ export default function MaintenanceFeesScreen({ role }: Props) {
                 placeholder="e.g. H001"
               />
               <TextField
-                label="Amount (€)"
-                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': 'Amount (€)' } }}
+                label={t('fees.amountEuro')}
+                slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'aria-label': t('fees.amountEuro') } }}
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
@@ -108,13 +110,13 @@ export default function MaintenanceFeesScreen({ role }: Props) {
                 size="small"
               />
               <TextField
-                label="Description"
+                label={t('common.description')}
                 value={description}
                 onChange={e => setDesc(e.target.value)}
                 size="small"
               />
               <TextField
-                label="Period (YYYY-MM)"
+                label={t('fees.periodYm')}
                 type="month"
                 value={period}
                 onChange={e => setPeriod(e.target.value)}
@@ -128,10 +130,10 @@ export default function MaintenanceFeesScreen({ role }: Props) {
                 variant="contained"
                 disabled={submitting}
               >
-                Record Charge
+                {t('fees.record')}
               </Button>
               {submitSuccess && (
-                <Alert data-testid="submit-success" severity="success">Charge recorded.</Alert>
+                <Alert data-testid="submit-success" severity="success">{t('fees.recorded')}</Alert>
               )}
               {submitError && (
                 <Alert data-testid="submit-error" severity="error">{submitError}</Alert>
@@ -142,7 +144,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
       )}
 
       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        {role === 'admin' ? 'All Charges' : 'My Charges'}
+        {t(role === 'admin' ? 'fees.allCharges' : 'fees.myCharges')}
       </Typography>
 
       {loading && (
@@ -154,7 +156,7 @@ export default function MaintenanceFeesScreen({ role }: Props) {
       {error && !loading && (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
           <Alert severity="error">{error}</Alert>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={loadCharges}>Retry</Button>
+          <Button variant="outlined" startIcon={<Refresh />} onClick={loadCharges}>{t('common.retry')}</Button>
         </Box>
       )}
 
@@ -162,18 +164,18 @@ export default function MaintenanceFeesScreen({ role }: Props) {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Period</TableCell>
-              {role === 'admin' && <TableCell>Household</TableCell>}
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Amount</TableCell>
-              <TableCell>Charged At</TableCell>
+              <TableCell>{t('common.period')}</TableCell>
+              {role === 'admin' && <TableCell>{t('common.household')}</TableCell>}
+              <TableCell>{t('common.description')}</TableCell>
+              <TableCell align="right">{t('common.amount')}</TableCell>
+              <TableCell>{t('fees.chargedAt')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {charges.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={role === 'admin' ? 5 : 4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                  No charges on record.
+                  {t('fees.none')}
                 </TableCell>
               </TableRow>
             ) : (

@@ -21,3 +21,10 @@ if (typeof globalThis.TextEncoder === 'undefined') {
   // @ts-ignore
   globalThis.TextDecoder = TextDecoder;
 }
+
+// i18n: run the suite in English so existing English-text assertions hold.
+// Real users default to Bulgarian (see src/i18n/index.ts).
+import i18n from './i18n';
+beforeAll(async () => {
+  await i18n.changeLanguage('en');
+});

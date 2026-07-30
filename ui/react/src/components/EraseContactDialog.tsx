@@ -3,6 +3,7 @@ import {
   Button, CircularProgress,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -12,28 +13,31 @@ interface Props {
   onClose: () => void;
 }
 
-const EraseContactDialog: React.FC<Props> = ({ open, householdRef, erasing, onConfirm, onClose }) => (
-  <Dialog open={open} onClose={erasing ? undefined : onClose} maxWidth="xs" fullWidth>
-    <DialogTitle>Erase contact data?</DialogTitle>
-    <DialogContent>
-      <DialogContentText>
-        All data for apartment <strong>{householdRef}</strong> will be{' '}
-        <strong>permanently deleted</strong>. This cannot be undone.
-      </DialogContentText>
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose} color="inherit" disabled={erasing}>Cancel</Button>
-      <Button
-        onClick={onConfirm}
-        variant="contained"
-        color="error"
-        disabled={erasing}
-        startIcon={erasing ? <CircularProgress size={16} color="inherit" /> : undefined}
-      >
-        {erasing ? 'Erasing…' : 'Erase contact'}
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+const EraseContactDialog: React.FC<Props> = ({ open, householdRef, erasing, onConfirm, onClose }) => {
+  const { t } = useTranslation();
+  return (
+    <Dialog open={open} onClose={erasing ? undefined : onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{t('dialog.eraseContactTitle')}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          All data for apartment <strong>{householdRef}</strong> will be{' '}
+          <strong>{t('dialog.permanentlyDeleted')}</strong>. This cannot be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit" disabled={erasing}>{t('common.cancel')}</Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color="error"
+          disabled={erasing}
+          startIcon={erasing ? <CircularProgress size={16} color="inherit" /> : undefined}
+        >
+          {erasing ? t('dialog.erasing') : t('dialog.eraseContact')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 export default EraseContactDialog;

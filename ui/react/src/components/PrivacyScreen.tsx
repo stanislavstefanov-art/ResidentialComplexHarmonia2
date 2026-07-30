@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, TextField, Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { eraseMyContact, eraseContact, markDeparted, purgeExpired } from '../api/privacy';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function PrivacyScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [deleting, setDeleting]           = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [deleteError, setDeleteError]     = useState<string>('');
@@ -35,7 +37,7 @@ export default function PrivacyScreen({ role }: Props) {
       await eraseMyContact();
       setDeleteSuccess(true);
     } catch {
-      setDeleteError('Could not delete contact data. Please try again.');
+      setDeleteError(t('privacy.errDelete'));
     } finally {
       setDeleting(false);
     }
@@ -48,10 +50,10 @@ export default function PrivacyScreen({ role }: Props) {
     setErasing(true);
     try {
       const outcome = await eraseContact(eraseRef);
-      setEraseResult(outcome === 'erased' ? 'Contact erased.' : 'Contact not found.');
+      setEraseResult(outcome === 'erased' ? t('privacy.toastErased') : t('privacy.toastNotFound'));
       setEraseRef('');
     } catch {
-      setEraseError('Could not complete erasure. Please try again.');
+      setEraseError(t('privacy.errErase'));
     } finally {
       setErasing(false);
     }
@@ -64,10 +66,10 @@ export default function PrivacyScreen({ role }: Props) {
     setDeparting(true);
     try {
       const outcome = await markDeparted(departRef);
-      setDepartResult(outcome === 'ok' ? 'Household marked as departed.' : 'Household not found.');
+      setDepartResult(outcome === 'ok' ? t('privacy.toastDeparted') : t('privacy.toastDepartNotFound'));
       setDepartRef('');
     } catch {
-      setDepartError('Could not mark as departed. Please try again.');
+      setDepartError(t('privacy.errDepart'));
     } finally {
       setDeparting(false);
     }
@@ -80,7 +82,7 @@ export default function PrivacyScreen({ role }: Props) {
     try {
       setPurgeResult(await purgeExpired());
     } catch {
-      setPurgeError('Could not run retention sweep. Please try again.');
+      setPurgeError(t('privacy.errSweep'));
     } finally {
       setPurging(false);
     }
@@ -92,9 +94,9 @@ export default function PrivacyScreen({ role }: Props) {
       {role === 'resident' && (
         <Card variant="outlined">
           <CardContent>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Delete My Contact Data</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('privacy.deleteMine')}</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              GDPR Art. 17 — Right to Erasure. This permanently removes your contact data and cannot be undone.
+              {t('privacy.deleteMineDesc')}
             </Typography>
             <Button
               data-testid="delete-my-data-btn"
@@ -103,9 +105,9 @@ export default function PrivacyScreen({ role }: Props) {
               onClick={handleDeleteMyData}
               disabled={deleting}
             >
-              Delete My Data
+              {t('privacy.deleteMyDataBtn')}
             </Button>
-            {deleteSuccess && <Alert data-testid="delete-success" severity="success" sx={{ mt: 1 }}>Your contact data has been deleted.</Alert>}
+            {deleteSuccess && <Alert data-testid="delete-success" severity="success" sx={{ mt: 1 }}>{t('privacy.deletedMine')}</Alert>}
             {deleteError  && <Alert data-testid="delete-error"   severity="error"   sx={{ mt: 1 }}>{deleteError}</Alert>}
           </CardContent>
         </Card>
@@ -115,7 +117,7 @@ export default function PrivacyScreen({ role }: Props) {
         <>
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>DSAR Contact Erasure</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('privacy.dsarTitle')}</Typography>
               <Box
                 component="form"
                 data-testid="erase-form"
@@ -123,7 +125,7 @@ export default function PrivacyScreen({ role }: Props) {
                 sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}
               >
                 <TextField
-                  label="Erase Household Ref"
+                  label={t('privacy.eraseRefLabel')}
                   slotProps={{ htmlInput: { 'data-testid': 'erase-ref-input' } }}
                   value={eraseRef}
                   onChange={e => setEraseRef(e.target.value)}
@@ -132,7 +134,7 @@ export default function PrivacyScreen({ role }: Props) {
                   required
                 />
                 <Button data-testid="erase-btn" type="submit" variant="contained" color="error" disabled={erasing}>
-                  Erase Contact
+                  {t('privacy.eraseContactBtn')}
                 </Button>
               </Box>
               {eraseResult && <Alert data-testid="erase-result" severity="success" sx={{ mt: 1 }}>{eraseResult}</Alert>}
@@ -142,7 +144,7 @@ export default function PrivacyScreen({ role }: Props) {
 
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Mark Household as Departed</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('privacy.departTitle')}</Typography>
               <Box
                 component="form"
                 data-testid="depart-form"
@@ -150,7 +152,7 @@ export default function PrivacyScreen({ role }: Props) {
                 sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}
               >
                 <TextField
-                  label="Depart Household Ref"
+                  label={t('privacy.departRefLabel')}
                   slotProps={{ htmlInput: { 'data-testid': 'depart-ref-input' } }}
                   value={departRef}
                   onChange={e => setDepartRef(e.target.value)}
@@ -159,7 +161,7 @@ export default function PrivacyScreen({ role }: Props) {
                   required
                 />
                 <Button data-testid="depart-btn" type="submit" variant="contained" disabled={departing}>
-                  Mark Departed
+                  {t('privacy.markDepartedBtn')}
                 </Button>
               </Box>
               {departResult && <Alert data-testid="depart-result" severity="success" sx={{ mt: 1 }}>{departResult}</Alert>}
@@ -169,9 +171,9 @@ export default function PrivacyScreen({ role }: Props) {
 
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Annual Retention Sweep</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('privacy.sweepTitle')}</Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                Permanently deletes contacts whose retention period has expired.
+                {t('privacy.sweepDesc')}
               </Typography>
               <Button
                 data-testid="purge-btn"
@@ -180,11 +182,11 @@ export default function PrivacyScreen({ role }: Props) {
                 onClick={handlePurge}
                 disabled={purging}
               >
-                Purge Expired Contacts
+                {t('privacy.purgeBtn')}
               </Button>
               {purgeResult !== undefined && (
                 <Alert data-testid="purge-result" severity="success" sx={{ mt: 1 }}>
-                  {purgeResult.deleted} contact(s) purged.
+                  {t('privacy.purgedCount', { count: purgeResult.deleted })}
                 </Alert>
               )}
               {purgeError && <Alert data-testid="purge-error" severity="error" sx={{ mt: 1 }}>{purgeError}</Alert>}

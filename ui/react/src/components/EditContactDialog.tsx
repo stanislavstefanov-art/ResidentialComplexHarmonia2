@@ -13,6 +13,7 @@ import {
   Divider,
   CircularProgress,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { MyContact } from '../types';
 
 interface Props {
@@ -26,36 +27,37 @@ interface Props {
 }
 
 const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSave, onClose, onRequestErase }) => {
+  const { t } = useTranslation();
   const set = (field: keyof MyContact, value: string | boolean) =>
     onChange({ ...form, [field]: value });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth disableRestoreFocus>
-      <DialogTitle>My Profile</DialogTitle>
+      <DialogTitle>{t('dialog.myProfileTitle')}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <TextField
-            label="Display Name"
+            label={t('common.displayName')}
             value={form.displayName}
             onChange={e => set('displayName', e.target.value)}
-            placeholder="Your name as shown to neighbours"
+            placeholder={t('dialog.nameHelp')}
             fullWidth
             size="small"
           />
           <TextField
-            label="Phone"
+            label={t('common.phone')}
             value={form.phone}
             onChange={e => set('phone', e.target.value)}
-            placeholder="+359 88 …"
+            placeholder={t('dialog.phonePlaceholder')}
             fullWidth
             size="small"
           />
           <TextField
-            label="Email"
+            label={t('common.email')}
             type="email"
             value={form.email}
             onChange={e => set('email', e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t('dialog.emailPlaceholder')}
             fullWidth
             size="small"
           />
@@ -72,10 +74,10 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
             label={
               <span>
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Hide me from the directory
+                  {t('dialog.hideFromDirectory')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  When enabled, your name will not appear to other residents.
+                  {t('dialog.hideFromDirectoryHelp')}
                 </Typography>
               </span>
             }
@@ -86,10 +88,10 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onRequestErase} color="error" disabled={saving} sx={{ mr: 'auto' }}>
-          Delete my data
+          {t('dialog.deleteMine')}
         </Button>
         <Button onClick={onClose} color="inherit" disabled={saving}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           onClick={onSave}
@@ -97,7 +99,7 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
           disabled={saving}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? t('common.saving') : t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>

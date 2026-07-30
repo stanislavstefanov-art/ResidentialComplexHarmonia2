@@ -5,6 +5,7 @@ import {
   TextField, Typography,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { getHistory, sendAnnouncement } from '../api/notifications';
 import { NotificationRecordDto } from '../types';
 
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function NotificationsScreen({ role }: Props) {
+  const { t } = useTranslation();
   const [history, setHistory]             = useState<NotificationRecordDto[]>([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState<string>('');
@@ -33,11 +35,11 @@ export default function NotificationsScreen({ role }: Props) {
     try {
       setHistory(await getHistory());
     } catch {
-      setError('Could not load notifications. Please try again.');
+      setError(t('notifications.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
@@ -46,7 +48,7 @@ export default function NotificationsScreen({ role }: Props) {
     setSubmitSuccess(false);
     setSubmitError('');
     if (!title || !body) {
-      setSubmitError('Title and body are required.');
+      setSubmitError(t('notifications.errRequired'));
       return;
     }
     setSubmitting(true);
@@ -57,7 +59,7 @@ export default function NotificationsScreen({ role }: Props) {
       setBody('');
       await loadHistory();
     } catch {
-      setSubmitError('Could not send announcement. Please try again.');
+      setSubmitError(t('notifications.errSend'));
     } finally {
       setSubmitting(false);
     }
@@ -68,7 +70,7 @@ export default function NotificationsScreen({ role }: Props) {
       {role === 'admin' && (
         <Card variant="outlined">
           <CardContent>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Send Announcement</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>{t('notifications.send')}</Typography>
             <Box
               component="form"
               data-testid="announce-form"
@@ -76,30 +78,30 @@ export default function NotificationsScreen({ role }: Props) {
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
-                label="Title"
-                slotProps={{ htmlInput: { 'aria-label': 'Title' } }}
+                label={t('notifications.title')}
+                slotProps={{ htmlInput: { 'aria-label': t('notifications.title') } }}
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 required
                 size="small"
-                placeholder="Announcement title"
+                placeholder={t('notifications.titlePlaceholder')}
               />
               <TextField
-                label="Body"
-                slotProps={{ htmlInput: { 'aria-label': 'Body' } }}
+                label={t('notifications.body')}
+                slotProps={{ htmlInput: { 'aria-label': t('notifications.body') } }}
                 value={body}
                 onChange={e => setBody(e.target.value)}
                 required
                 size="small"
                 multiline
                 rows={3}
-                placeholder="Message body"
+                placeholder={t('notifications.bodyPlaceholder')}
               />
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Button data-testid="submit-btn" type="submit" variant="contained" disabled={submitting}>
-                  Send Announcement
+                  {t('notifications.send')}
                 </Button>
-                {submitSuccess && <Alert data-testid="submit-success" severity="success">Announcement sent.</Alert>}
+                {submitSuccess && <Alert data-testid="submit-success" severity="success">{t('notifications.sent')}</Alert>}
                 {submitError  && <Alert data-testid="submit-error"   severity="error">{submitError}</Alert>}
               </Box>
             </Box>
@@ -108,7 +110,7 @@ export default function NotificationsScreen({ role }: Props) {
       )}
 
       <Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Notification History</Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('notifications.history')}</Typography>
 
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -119,7 +121,7 @@ export default function NotificationsScreen({ role }: Props) {
         {error && !loading && (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
             <Alert severity="error">{error}</Alert>
-            <Button variant="outlined" startIcon={<Refresh />} onClick={loadHistory}>Retry</Button>
+            <Button variant="outlined" startIcon={<Refresh />} onClick={loadHistory}>{t('common.retry')}</Button>
           </Box>
         )}
 
@@ -127,16 +129,16 @@ export default function NotificationsScreen({ role }: Props) {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Sent</TableCell>
-                <TableCell>Title</TableCell>
-                <TableCell>Channel</TableCell>
+                <TableCell>{t('notifications.sentAt')}</TableCell>
+                <TableCell>{t('notifications.title')}</TableCell>
+                <TableCell>{t('notifications.channel')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {history.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                    No notifications on record.
+                    {t('notifications.none')}
                   </TableCell>
                 </TableRow>
               ) : (
