@@ -96,7 +96,7 @@ function MainApp() {
             <Tab label={t('nav.notifications')} value="notifications" />
             <Tab label={t('nav.privacy')} value="privacy" />
             <Tab label={t('nav.contactEdit')} value="contact-edit" />
-            <Tab label={t('nav.adminPending')} value="admin-pending" />
+            {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
           </Tabs>
           {initialRole === 'admin' && roleScreens.includes(screen) && (
             <>
@@ -164,7 +164,7 @@ function MainApp() {
         {screen === 'notifications' && <NotificationsScreen role={role} />}
         {screen === 'privacy' && <PrivacyScreen role={role} />}
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
-        {screen === 'admin-pending' && <AdminPendingScreen role={role} />}
+        {screen === 'admin-pending' && initialRole === 'admin' && <AdminPendingScreen role={role} />}
       </Box>
     </>
   );

@@ -16,6 +16,7 @@ import { MessageService } from 'primeng/api';
 
 import { DirectoryService } from './directory.service';
 import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './models';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-directory-list',
@@ -53,7 +54,8 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        @if (isAdmin) {
         <span class="role-label">View as:</span>
         <p-selectbutton
           [options]="roleOptions"
@@ -63,6 +65,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
           optionValue="value"
           styleClass="role-toggle"
         />
+        }
       </header>
 
       <main class="harmonia-content" [class.wide]="selectedRole === 'admin'">
@@ -491,6 +494,7 @@ import { AdminContact, DirectoryEntry, DirectoryEntryAdmin, MyContact } from './
 export class DirectoryListComponent implements OnInit {
   private readonly svc = inject(DirectoryService);
   private readonly msg = inject(MessageService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   // ── shared ──
   loading = signal(false);

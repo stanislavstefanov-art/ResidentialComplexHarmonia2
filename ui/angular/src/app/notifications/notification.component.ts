@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationService } from './notification.service';
 import { NotificationRecordDto } from './models';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-notifications',
@@ -27,11 +28,13 @@ import { NotificationRecordDto } from './models';
         <a routerLink="/notifications" class="nav-link nav-active">Notifications</a>
         <a routerLink="/privacy" class="nav-link">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        @if (isAdmin) {
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>
         </span>
+        }
       </header>
 
       <main class="harmonia-content">
@@ -144,6 +147,7 @@ export class NotificationComponent implements OnInit {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(NotificationService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly history       = signal<NotificationRecordDto[]>([]);
   readonly loading       = signal(true);

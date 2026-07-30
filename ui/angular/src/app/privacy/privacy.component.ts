@@ -6,6 +6,7 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { PrivacyService } from './privacy.service';
 import { PurgeExpiredResult } from './models';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-privacy',
@@ -26,11 +27,13 @@ import { PurgeExpiredResult } from './models';
         <a routerLink="/notifications" class="nav-link">Notifications</a>
         <a routerLink="/privacy" class="nav-link nav-active">Privacy</a>
         <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        <a routerLink="/admin-pending" class="nav-link">Pending Users</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        @if (isAdmin) {
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">Resident</button>
           <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">Admin</button>
         </span>
+        }
       </header>
 
       <main class="harmonia-content">
@@ -174,6 +177,7 @@ export class PrivacyComponent {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(PrivacyService);
+  readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly deleting      = signal(false);
   readonly deleteSuccess = signal(false);
