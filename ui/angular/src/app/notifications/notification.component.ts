@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { NotificationService } from './notification.service';
 import { NotificationRecordDto } from './models';
 import { RoleService } from '../role.service';
@@ -12,51 +14,52 @@ import { RoleService } from '../role.service';
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link nav-active">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link nav-active">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
         <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
-          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
         </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
 
         @if (role === 'admin') {
           <p-card styleClass="mb-card">
-            <ng-template #title>Send Announcement</ng-template>
+            <ng-template #title>{{ 'notifications.send' | translate }}</ng-template>
             <ng-template #content>
               <form data-testid="announce-form" class="record-form" (ngSubmit)="onSubmit()">
                 <div class="form-col">
                   <div class="form-row">
-                    <label>Title</label>
-                    <input type="text" [(ngModel)]="form.title" name="title" required class="form-input" placeholder="Announcement title" />
+                    <label>{{ 'notifications.title' | translate }}</label>
+                    <input type="text" [(ngModel)]="form.title" name="title" required class="form-input" [placeholder]="'notifications.titlePlaceholder' | translate" />
                   </div>
                   <div class="form-row">
-                    <label>Body</label>
-                    <textarea [(ngModel)]="form.body" name="body" required class="form-input form-textarea" rows="3" placeholder="Message body"></textarea>
+                    <label>{{ 'notifications.body' | translate }}</label>
+                    <textarea [(ngModel)]="form.body" name="body" required class="form-input form-textarea" rows="3" [placeholder]="'notifications.bodyPlaceholder' | translate"></textarea>
                   </div>
                 </div>
-                <button type="submit" data-testid="submit-btn" class="submit-btn" [disabled]="submitting()">Send Announcement</button>
+                <button type="submit" data-testid="submit-btn" class="submit-btn" [disabled]="submitting()">{{ 'notifications.send' | translate }}</button>
                 @if (submitSuccess()) {
-                  <p data-testid="submit-success" class="success-msg">Announcement sent.</p>
+                  <p data-testid="submit-success" class="success-msg">{{ 'notifications.sent' | translate }}</p>
                 }
                 @if (submitError()) {
                   <p data-testid="submit-error" class="error-msg">{{ submitError() }}</p>
@@ -67,7 +70,7 @@ import { RoleService } from '../role.service';
         }
 
         <p-card>
-          <ng-template #title>Notification History</ng-template>
+          <ng-template #title>{{ 'notifications.history' | translate }}</ng-template>
           <ng-template #content>
             @if (loading()) {
               <div class="center-state"><p-progressspinner strokeWidth="4" [style]="{width:'48px',height:'48px'}" /></div>
@@ -75,16 +78,16 @@ import { RoleService } from '../role.service';
             @if (error()) {
               <div data-testid="error-state" class="error-state">
                 <p>{{ error() }}</p>
-                <button (click)="reload()">Retry</button>
+                <button (click)="reload()">{{ 'common.retry' | translate }}</button>
               </div>
             }
             @if (!loading() && !error()) {
               <table class="notif-table">
                 <thead>
                   <tr>
-                    <th>Sent</th>
-                    <th>Title</th>
-                    <th>Channel</th>
+                    <th>{{ 'notifications.sentAt' | translate }}</th>
+                    <th>{{ 'notifications.title' | translate }}</th>
+                    <th>{{ 'notifications.channel' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -96,7 +99,7 @@ import { RoleService } from '../role.service';
                     </tr>
                   }
                   @if (history().length === 0) {
-                    <tr><td colspan="3" class="empty-cell">No notifications on record.</td></tr>
+                    <tr><td colspan="3" class="empty-cell">{{ 'notifications.none' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -147,6 +150,7 @@ export class NotificationComponent implements OnInit {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(NotificationService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly history       = signal<NotificationRecordDto[]>([]);
@@ -171,7 +175,7 @@ export class NotificationComponent implements OnInit {
     this.error.set(null);
     this.svc.getHistory().subscribe({
       next: list => { this.history.set(list); this.loading.set(false); },
-      error: () => { this.error.set('Could not load notifications. Please try again.'); this.loading.set(false); },
+      error: () => { this.error.set(this.t.instant('notifications.errLoad')); this.loading.set(false); },
     });
   }
 
@@ -179,7 +183,7 @@ export class NotificationComponent implements OnInit {
     this.submitSuccess.set(false);
     this.submitError.set(null);
     if (!this.form.title || !this.form.body) {
-      this.submitError.set('Title and body are required.');
+      this.submitError.set(this.t.instant('notifications.errRequired'));
       return;
     }
     this.submitting.set(true);
@@ -191,7 +195,7 @@ export class NotificationComponent implements OnInit {
         this.reload();
       },
       error: () => {
-        this.submitError.set('Could not send announcement. Please try again.');
+        this.submitError.set(this.t.instant('notifications.errSend'));
         this.submitting.set(false);
       },
     });

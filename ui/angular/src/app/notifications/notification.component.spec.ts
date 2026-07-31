@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import { NotificationComponent } from './notification.component';
 import { NotificationService } from './notification.service';
@@ -7,6 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { NotificationRecordDto } from './models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const NOTIFICATION: NotificationRecordDto = {
   id: 'n1', title: 'Test notice', sentAt: '2026-07-17T10:00:00Z', channel: 'web-push',
@@ -23,7 +26,9 @@ describe('NotificationComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateTesting(),
         { provide: NotificationService, useValue: serviceMock },
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(NotificationComponent);
@@ -82,7 +87,7 @@ describe('NotificationComponent', () => {
     }, 'resident');
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent).toContain('No notifications on record.');
+    expect(el.querySelector('.empty-cell')).not.toBeNull();
   });
 
   it('shows submit-error when sendAnnouncement fails', async () => {
