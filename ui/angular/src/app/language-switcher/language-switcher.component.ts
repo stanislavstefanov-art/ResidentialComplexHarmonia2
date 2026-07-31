@@ -21,7 +21,7 @@ import { LanguageService } from '../language.service';
       padding: 4px 6px; cursor: pointer; font-size: .8125rem; border-radius: 4px;
     }
     .lang-switcher button:hover { color: white; background: rgba(255,255,255,.1); }
-    .lang-switcher button.lang-active { color: white; font-weight: 600; }
+    .lang-switcher button.lang-active { color: white; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
     .lang-sep { color: rgba(255,255,255,.3); font-size: .75rem; }
   `],
 })

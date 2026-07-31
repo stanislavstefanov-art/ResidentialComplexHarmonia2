@@ -77,7 +77,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
           @if (loading()) {
             <div class="loading-row">
               <i class="pi pi-spin pi-spinner" style="font-size:1.5rem"></i>
-              <span>Loading…</span>
+              <span>{{ 'adminPending.loading' | translate }}</span>
             </div>
           } @else if (forbidden()) {
             <div data-testid="forbidden-state" class="info-row">
@@ -101,8 +101,8 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
             >
               <ng-template #header>
                 <tr>
-                  <th pSortableColumn="displayName">Display Name <p-sort-icon field="displayName" /></th>
-                  <th pSortableColumn="email" style="width:16rem">Email <p-sort-icon field="email" /></th>
+                  <th pSortableColumn="displayName">{{ 'common.displayName' | translate }} <p-sort-icon field="displayName" /></th>
+                  <th pSortableColumn="email" style="width:16rem">{{ 'common.email' | translate }} <p-sort-icon field="email" /></th>
                   <th style="width:14rem">{{ 'adminPending.oid' | translate }}</th>
                   <th pSortableColumn="firstSeenAt" style="width:10rem">{{ 'adminPending.firstSeen' | translate }} <p-sort-icon field="firstSeenAt" /></th>
                   <th style="width:7rem"></th>
@@ -174,7 +174,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
       [resizable]="false"
     >
       <p class="purge-message">
-        This will permanently delete all pending sign-ins older than 90 days. This cannot be undone.
+        {{ 'adminPending.purgeConfirmBody' | translate }}
       </p>
       <ng-template #footer>
         <p-button [label]="'common.cancel' | translate" severity="secondary" [outlined]="true"
