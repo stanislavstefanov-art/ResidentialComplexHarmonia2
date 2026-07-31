@@ -9,14 +9,13 @@ import localeBg from '@angular/common/locales/bg';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { MeService } from './me.service';
 import { ResidentPendingComponent } from './resident-pending/resident-pending.component';
+import { LanguageService } from './language.service';
 
 registerLocaleData(localeBg);
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ProgressSpinner, ResidentPendingComponent],
-  // MsalRedirectComponent is rendered in a hidden iframe for redirect flows;
-  // the guard redirects back here once authentication completes.
   template: `
     @if (meStatus() === 'loading') {
       <div style="display:flex;justify-content:center;margin-top:4rem">
@@ -36,16 +35,15 @@ export class App implements OnInit, OnDestroy {
   constructor(
     private readonly authService: MsalService,
     private readonly broadcastService: MsalBroadcastService,
-    private readonly meService: MeService
+    private readonly meService: MeService,
+    private readonly langService: LanguageService,
   ) {}
 
   ngOnInit(): void {
-    // Must be called in every component that uses redirects so MSAL can
-    // process the authorization response on the redirect return.
+    this.langService.init();
+
     this.authService.handleRedirectObservable().subscribe();
 
-    // Once all in-progress interactions complete, ensure an active account is
-    // set so acquireTokenSilent knows which account to use.
     this.broadcastService.inProgress$
       .pipe(
         filter((status) => status === InteractionStatus.None),
