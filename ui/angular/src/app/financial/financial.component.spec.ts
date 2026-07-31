@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { FinancialComponent } from './financial.component';
 import { FinancialService } from './financial.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -6,6 +7,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from './models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const SUMMARY: PeriodSummaryDto = { period: '2026-07', totalChargesEur: 450, totalExpensesEur: 120 };
 const CHARGE: ChargeDto = {
@@ -26,6 +29,8 @@ describe('FinancialComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: FinancialService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(FinancialComponent);

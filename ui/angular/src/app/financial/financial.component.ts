@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { forkJoin } from 'rxjs';
 import { FinancialService } from './financial.service';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from './models';
@@ -29,28 +31,31 @@ function formatEur(n: number): string {
     CardModule,
     ButtonModule,
     ProgressSpinnerModule,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link nav-active">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link nav-active">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
         <p-card>
-          <ng-template #title>Financial Summary</ng-template>
+          <ng-template #title>{{ 'finance.cardTitle' | translate }}</ng-template>
           <ng-template #content>
 
             @if (loading()) {
@@ -62,13 +67,13 @@ function formatEur(n: number): string {
             @if (error()) {
               <div data-testid="error-state" class="error-state">
                 <p>{{ error() }}</p>
-                <button data-testid="retry-btn" (click)="loadAll()">Retry</button>
+                <button data-testid="retry-btn" (click)="loadAll()">{{ 'common.retry' | translate }}</button>
               </div>
             }
 
             @if (!loading() && !error()) {
               <div class="period-row">
-                <label class="period-label">Period:</label>
+                <label class="period-label">{{ 'finance.periodLabel' | translate }}</label>
                 <input
                   type="month"
                   [(ngModel)]="period"
@@ -80,13 +85,13 @@ function formatEur(n: number): string {
               @if (summary()) {
                 <div class="summary-card">
                   <div class="summary-item">
-                    <span class="summary-label">Total charges this period</span>
+                    <span class="summary-label">{{ 'finance.totalCharges' | translate }}</span>
                     <span data-testid="summary-charges" class="summary-value">
                       {{ formatEur(summary()!.totalChargesEur) }}
                     </span>
                   </div>
                   <div class="summary-item">
-                    <span class="summary-label">Total expenses this period</span>
+                    <span class="summary-label">{{ 'finance.totalExpenses' | translate }}</span>
                     <span data-testid="summary-expenses" class="summary-value">
                       {{ formatEur(summary()!.totalExpensesEur) }}
                     </span>
@@ -94,10 +99,10 @@ function formatEur(n: number): string {
                 </div>
               }
 
-              <h3 class="section-title">My Charges</h3>
+              <h3 class="section-title">{{ 'finance.myCharges' | translate }}</h3>
               <table class="fin-table">
                 <thead>
-                  <tr><th>Date</th><th>Description</th><th>Period</th><th>Amount</th></tr>
+                  <tr><th>{{ 'common.date' | translate }}</th><th>{{ 'common.description' | translate }}</th><th>{{ 'common.period' | translate }}</th><th>{{ 'common.amount' | translate }}</th></tr>
                 </thead>
                 <tbody>
                   @for (c of charges(); track c.id) {
@@ -109,15 +114,15 @@ function formatEur(n: number): string {
                     </tr>
                   }
                   @if (charges().length === 0) {
-                    <tr><td colspan="4" class="empty-cell">No charges on record.</td></tr>
+                    <tr><td colspan="4" class="empty-cell">{{ 'finance.noCharges' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
 
-              <h3 class="section-title">My Payments</h3>
+              <h3 class="section-title">{{ 'finance.myPayments' | translate }}</h3>
               <table class="fin-table">
                 <thead>
-                  <tr><th>Date received</th><th>Period</th><th>Amount</th></tr>
+                  <tr><th>{{ 'finance.dateReceived' | translate }}</th><th>{{ 'common.period' | translate }}</th><th>{{ 'common.amount' | translate }}</th></tr>
                 </thead>
                 <tbody>
                   @for (p of payments(); track p.id) {
@@ -128,14 +133,14 @@ function formatEur(n: number): string {
                     </tr>
                   }
                   @if (payments().length === 0) {
-                    <tr><td colspan="3" class="empty-cell">No payments on record.</td></tr>
+                    <tr><td colspan="3" class="empty-cell">{{ 'finance.noPayments' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
 
               <div class="pay-row">
                 <button data-testid="pay-btn" class="pay-btn" (click)="showPayDialog = true">
-                  Request Payment
+                  {{ 'finance.requestPayment' | translate }}
                 </button>
               </div>
             }
@@ -143,9 +148,9 @@ function formatEur(n: number): string {
             @if (showPayDialog) {
               <div class="dialog-backdrop">
                 <div class="dialog-box" data-testid="pay-dialog">
-                  <h4 class="dialog-title">Request Payment</h4>
-                  <p>Payments are recorded by the building administrator.</p>
-                  <p>Please contact the office to register a payment.</p>
+                  <h4 class="dialog-title">{{ 'finance.requestPayment' | translate }}</h4>
+                  <p>{{ 'finance.requestInfo' | translate }}</p>
+                  <p>{{ 'finance.contactOffice' | translate }}</p>
                   <button class="dialog-close-btn" (click)="showPayDialog = false">Close</button>
                 </div>
               </div>
@@ -194,6 +199,7 @@ function formatEur(n: number): string {
 })
 export class FinancialComponent implements OnInit {
   private readonly svc = inject(FinancialService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly summary   = signal<PeriodSummaryDto | null>(null);
@@ -223,7 +229,7 @@ export class FinancialComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Could not load financial data. Please try again.');
+        this.error.set(this.t.instant('finance.errLoad'));
         this.loading.set(false);
       },
     });
