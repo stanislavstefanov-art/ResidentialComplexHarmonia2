@@ -4,68 +4,71 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ContactEditService } from './contact-edit.service';
 import { RoleService } from '../role.service';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-contact-edit',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link nav-active">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link nav-active">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
         <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">Resident</button>
-          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">Admin</button>
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
         </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
 
         @if (role === 'resident') {
           <p-card>
-            <ng-template #title>My Contact Details</ng-template>
+            <ng-template #title>{{ 'contactEdit.myTitle' | translate }}</ng-template>
             <ng-template #content>
               <form data-testid="my-contact-form" (ngSubmit)="onUpdateMyContact()">
                 <div class="field-row">
-                  <label>Display Name</label>
+                  <label>{{ 'common.displayName' | translate }}</label>
                   <input type="text" [(ngModel)]="myForm.displayName" name="displayName" class="form-input" />
                 </div>
                 <div class="field-row">
-                  <label>Phone</label>
+                  <label>{{ 'common.phone' | translate }}</label>
                   <input type="text" [(ngModel)]="myForm.phone" name="phone" class="form-input" />
                 </div>
                 <div class="field-row">
-                  <label>Email</label>
+                  <label>{{ 'common.email' | translate }}</label>
                   <input type="email" [(ngModel)]="myForm.email" name="email" class="form-input" />
                 </div>
                 <div class="field-row check-row">
                   <label>
                     <input type="checkbox" [(ngModel)]="myForm.optedOut" name="optedOut" />
-                    Opt out of directory listing
+                    {{ 'contactEdit.optOut' | translate }}
                   </label>
                 </div>
                 <button type="submit" data-testid="my-contact-btn" class="action-btn" [disabled]="mySaving()">
-                  Save Changes
+                  {{ 'contactEdit.saveChanges' | translate }}
                 </button>
               </form>
               @if (mySuccess()) {
-                <p data-testid="my-contact-success" class="success-msg">Contact details saved.</p>
+                <p data-testid="my-contact-success" class="success-msg">{{ 'contactEdit.saved' | translate }}</p>
               }
               @if (myError()) {
                 <p data-testid="my-contact-error" class="error-msg">{{ myError() }}</p>
@@ -76,23 +79,23 @@ import { RoleService } from '../role.service';
 
         @if (role === 'admin') {
           <p-card styleClass="mb-card">
-            <ng-template #title>Update Household Contact</ng-template>
+            <ng-template #title>{{ 'contactEdit.updateContact' | translate }}</ng-template>
             <ng-template #content>
               <form data-testid="admin-contact-form" (ngSubmit)="onUpdateContact()">
                 <div class="field-row">
-                  <label>Household Ref</label>
+                  <label>{{ 'common.householdRef' | translate }}</label>
                   <input type="text" [(ngModel)]="adminRef" name="adminRef" class="form-input" placeholder="e.g. H001" required />
                 </div>
                 <div class="field-row">
-                  <label>Display Name</label>
+                  <label>{{ 'common.displayName' | translate }}</label>
                   <input type="text" [(ngModel)]="adminForm.displayName" name="displayName" class="form-input" />
                 </div>
                 <div class="field-row">
-                  <label>Phone</label>
+                  <label>{{ 'common.phone' | translate }}</label>
                   <input type="text" [(ngModel)]="adminForm.phone" name="phone" class="form-input" />
                 </div>
                 <div class="field-row">
-                  <label>Email</label>
+                  <label>{{ 'common.email' | translate }}</label>
                   <input type="email" [(ngModel)]="adminForm.email" name="email" class="form-input" />
                 </div>
                 <div class="field-row check-row">
@@ -102,11 +105,11 @@ import { RoleService } from '../role.service';
                   </label>
                 </div>
                 <button type="submit" data-testid="admin-contact-btn" class="action-btn" [disabled]="adminSaving()">
-                  Update Contact
+                  {{ 'contactEdit.updateContactBtn' | translate }}
                 </button>
               </form>
               @if (adminSuccess()) {
-                <p data-testid="admin-contact-success" class="success-msg">Contact updated.</p>
+                <p data-testid="admin-contact-success" class="success-msg">{{ 'contactEdit.contactUpdated' | translate }}</p>
               }
               @if (adminError()) {
                 <p data-testid="admin-contact-error" class="error-msg">{{ adminError() }}</p>
@@ -115,23 +118,23 @@ import { RoleService } from '../role.service';
           </p-card>
 
           <p-card>
-            <ng-template #title>Update Notes</ng-template>
+            <ng-template #title>{{ 'contactEdit.updateNotes' | translate }}</ng-template>
             <ng-template #content>
               <form data-testid="notes-form" (ngSubmit)="onUpdateNotes()">
                 <div class="field-row">
-                  <label>Household Ref</label>
+                  <label>{{ 'common.householdRef' | translate }}</label>
                   <input type="text" [(ngModel)]="notesRef" name="notesRef" class="form-input" placeholder="e.g. H001" required />
                 </div>
                 <div class="field-row">
-                  <label>Notes</label>
+                  <label>{{ 'common.notes' | translate }}</label>
                   <textarea [(ngModel)]="notesText" name="notes" class="form-textarea" rows="3"></textarea>
                 </div>
                 <button type="submit" data-testid="notes-btn" class="action-btn" [disabled]="notesSaving()">
-                  Update Notes
+                  {{ 'contactEdit.updateNotes' | translate }}
                 </button>
               </form>
               @if (notesSuccess()) {
-                <p data-testid="notes-success" class="success-msg">Notes updated.</p>
+                <p data-testid="notes-success" class="success-msg">{{ 'contactEdit.notesUpdated' | translate }}</p>
               }
               @if (notesError()) {
                 <p data-testid="notes-error" class="error-msg">{{ notesError() }}</p>
@@ -176,6 +179,7 @@ export class ContactEditComponent {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(ContactEditService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   myForm = { displayName: '', phone: '', email: '', optedOut: false };
@@ -206,12 +210,12 @@ export class ContactEditComponent {
       optedOut:    this.myForm.optedOut,
     }).subscribe({
       next:  () => { this.mySuccess.set(true); this.mySaving.set(false); },
-      error: () => { this.myError.set('Could not save contact details. Please try again.'); this.mySaving.set(false); },
+      error: () => { this.myError.set(this.t.instant('contactEdit.errSave')); this.mySaving.set(false); },
     });
   }
 
   onUpdateContact(): void {
-    if (!this.adminRef) { this.adminError.set('Enter a household ref.'); return; }
+    if (!this.adminRef) { this.adminError.set(this.t.instant('contactEdit.errUpdate')); return; }
     this.adminSuccess.set(false);
     this.adminError.set(null);
     this.adminSaving.set(true);
@@ -222,18 +226,18 @@ export class ContactEditComponent {
       optedOut:    this.adminForm.optedOut,
     }).subscribe({
       next:  () => { this.adminSuccess.set(true); this.adminSaving.set(false); },
-      error: () => { this.adminError.set('Could not update contact. Please try again.'); this.adminSaving.set(false); },
+      error: () => { this.adminError.set(this.t.instant('contactEdit.errUpdate')); this.adminSaving.set(false); },
     });
   }
 
   onUpdateNotes(): void {
-    if (!this.notesRef) { this.notesError.set('Enter a household ref.'); return; }
+    if (!this.notesRef) { this.notesError.set(this.t.instant('contactEdit.errNotes')); return; }
     this.notesSuccess.set(false);
     this.notesError.set(null);
     this.notesSaving.set(true);
     this.svc.updateNotes(this.notesRef, this.notesText || null).subscribe({
       next:  () => { this.notesSuccess.set(true); this.notesSaving.set(false); },
-      error: () => { this.notesError.set('Could not update notes. Please try again.'); this.notesSaving.set(false); },
+      error: () => { this.notesError.set(this.t.instant('contactEdit.errNotes')); this.notesSaving.set(false); },
     });
   }
 }
