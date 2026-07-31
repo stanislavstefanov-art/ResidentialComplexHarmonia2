@@ -1,6 +1,6 @@
-import en from '../assets/i18n/en.json';
-import bg from '../assets/i18n/bg.json';
-import ru from '../assets/i18n/ru.json';
+import en from '../../public/assets/i18n/en.json';
+import bg from '../../public/assets/i18n/bg.json';
+import ru from '../../public/assets/i18n/ru.json';
 
 const flatKeys = (obj: object, prefix = ''): string[] =>
   Object.entries(obj).flatMap(([k, v]) =>
