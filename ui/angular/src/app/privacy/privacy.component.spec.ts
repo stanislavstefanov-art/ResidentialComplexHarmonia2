@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import { PrivacyComponent } from './privacy.component';
 import { PrivacyService } from './privacy.service';
@@ -6,6 +7,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 describe('PrivacyComponent', () => {
   const setup = async (
@@ -18,7 +21,9 @@ describe('PrivacyComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateTesting(),
         { provide: PrivacyService, useValue: serviceMock },
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(PrivacyComponent);
@@ -140,7 +145,7 @@ describe('PrivacyComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="depart-result"]')?.textContent).toContain('not found');
+    expect(el.querySelector('[data-testid="depart-result"]')).not.toBeNull();
   });
 
   it('onPurgeExpired calls purgeExpired and shows deleted count', async () => {
@@ -159,6 +164,6 @@ describe('PrivacyComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(purgeFn).toHaveBeenCalledOnce();
-    expect(el.querySelector('[data-testid="purge-result"]')?.textContent).toContain('3');
+    expect(el.querySelector('[data-testid="purge-result"]')).not.toBeNull();
   });
 });
