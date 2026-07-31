@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { ExpenseService } from './expense.service';
 import { ExpenseDto, EXPENSE_CATEGORIES } from './models';
 import { RoleService } from '../role.service';
@@ -16,42 +18,35 @@ function formatEur(n: number): string {
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link nav-active">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link nav-active">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
         <span class="role-toggle">
-          <button
-            [class.role-active]="role === 'resident'"
-            (click)="role = 'resident'"
-            class="role-btn"
-          >Resident</button>
-          <button
-            [class.role-active]="role === 'admin'"
-            (click)="role = 'admin'"
-            class="role-btn"
-          >Admin</button>
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
         </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
         <p-card>
-          <ng-template #title>Building Expenses</ng-template>
+          <ng-template #title>{{ 'expenses.cardTitle' | translate }}</ng-template>
           <ng-template #content>
 
             @if (loading()) {
@@ -63,23 +58,23 @@ function formatEur(n: number): string {
             @if (error()) {
               <div data-testid="error-state" class="error-state">
                 <p>{{ error() }}</p>
-                <button (click)="loadExpenses()">Retry</button>
+                <button (click)="loadExpenses()">{{ 'common.retry' | translate }}</button>
               </div>
             }
 
             @if (role === 'admin') {
               <form data-testid="record-form" class="record-form" (ngSubmit)="onSubmit()">
-                <h3 class="form-title">Record Expense</h3>
+                <h3 class="form-title">{{ 'expenses.record' | translate }}</h3>
                 <div class="form-row">
-                  <label>Amount (€)</label>
+                  <label>{{ 'expenses.amountEuro' | translate }}</label>
                   <input type="number" step="0.01" min="0.01" [(ngModel)]="form.amountEur" name="amountEur" required class="form-input" />
                 </div>
                 <div class="form-row">
-                  <label>Description</label>
+                  <label>{{ 'common.description' | translate }}</label>
                   <input type="text" [(ngModel)]="form.description" name="description" required class="form-input" />
                 </div>
                 <div class="form-row">
-                  <label>Category</label>
+                  <label>{{ 'expenses.category' | translate }}</label>
                   <select [(ngModel)]="form.category" name="category" class="form-input">
                     @for (cat of categories; track cat) {
                       <option [value]="cat">{{ cat }}</option>
@@ -87,14 +82,14 @@ function formatEur(n: number): string {
                   </select>
                 </div>
                 <div class="form-row">
-                  <label>Expense date</label>
+                  <label>{{ 'expenses.expenseDate' | translate }}</label>
                   <input type="date" [(ngModel)]="form.expenseDate" name="expenseDate" required class="form-input" />
                 </div>
                 <div class="form-row">
-                  <button type="submit" data-testid="submit-btn" class="submit-btn">Record Expense</button>
+                  <button type="submit" data-testid="submit-btn" class="submit-btn">{{ 'expenses.record' | translate }}</button>
                 </div>
                 @if (submitSuccess()) {
-                  <p data-testid="submit-success" class="success-msg">Expense recorded.</p>
+                  <p data-testid="submit-success" class="success-msg">{{ 'expenses.recorded' | translate }}</p>
                 }
                 @if (submitError()) {
                   <p data-testid="submit-error" class="error-msg">{{ submitError() }}</p>
@@ -103,14 +98,14 @@ function formatEur(n: number): string {
             }
 
             @if (!loading() && !error()) {
-              <h3 class="section-title">Expense Ledger</h3>
+              <h3 class="section-title">{{ 'expenses.ledger' | translate }}</h3>
               <table class="fin-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th>Amount</th>
+                    <th>{{ 'common.date' | translate }}</th>
+                    <th>{{ 'expenses.category' | translate }}</th>
+                    <th>{{ 'common.description' | translate }}</th>
+                    <th>{{ 'common.amount' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -123,7 +118,7 @@ function formatEur(n: number): string {
                     </tr>
                   }
                   @if (expenses().length === 0) {
-                    <tr><td colspan="4" class="empty-cell">No expenses on record.</td></tr>
+                    <tr><td colspan="4" class="empty-cell">{{ 'expenses.none' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -172,6 +167,7 @@ export class ExpenseComponent implements OnInit {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(ExpenseService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly expenses      = signal<ExpenseDto[]>([]);
@@ -201,7 +197,7 @@ export class ExpenseComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Could not load expenses. Please try again.');
+        this.error.set(this.t.instant('expenses.errLoad'));
         this.loading.set(false);
       },
     });
@@ -227,7 +223,7 @@ export class ExpenseComponent implements OnInit {
         this.loadExpenses();
       },
       error: () => {
-        this.submitError.set('Could not record expense. Please try again.');
+        this.submitError.set(this.t.instant('expenses.errRecord'));
       },
     });
   }
