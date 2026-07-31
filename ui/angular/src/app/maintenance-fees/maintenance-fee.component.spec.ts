@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { signal } from '@angular/core';
 import { MaintenanceFeeComponent } from './maintenance-fee.component';
 import { MaintenanceFeeService } from './maintenance-fee.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,6 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ChargeDto } from './models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const CHARGE: ChargeDto = {
   id: 'c1', householdRef: 'H001', amountEur: 150, description: 'Monthly fee',
@@ -25,6 +28,8 @@ describe('MaintenanceFeeComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: MaintenanceFeeService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(MaintenanceFeeComponent);

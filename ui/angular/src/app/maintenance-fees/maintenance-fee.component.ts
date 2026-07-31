@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { MaintenanceFeeService } from './maintenance-fee.service';
 import { ChargeDto } from './models';
 import { RoleService } from '../role.service';
@@ -20,34 +22,35 @@ function currentMonth(): string {
 @Component({
   selector: 'app-maintenance-fees',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link nav-active">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link nav-active">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
         <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
-          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
         </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
         <p-card>
-          <ng-template #title>Maintenance Fee Charges</ng-template>
+          <ng-template #title>{{ 'fees.cardTitle' | translate }}</ng-template>
           <ng-template #content>
 
             @if (loading()) {
@@ -59,34 +62,34 @@ function currentMonth(): string {
             @if (error()) {
               <div data-testid="error-state" class="error-state">
                 <p>{{ error() }}</p>
-                <button (click)="reload()">Retry</button>
+                <button (click)="reload()">{{ 'common.retry' | translate }}</button>
               </div>
             }
 
             @if (role === 'admin') {
               <form data-testid="record-form" class="record-form" (ngSubmit)="onSubmit()">
-                <h3 class="form-title">Record Charge</h3>
+                <h3 class="form-title">{{ 'fees.record' | translate }}</h3>
                 <div class="form-row">
-                  <label>Household Ref</label>
+                  <label>{{ 'common.householdRef' | translate }}</label>
                   <input type="text" [(ngModel)]="form.householdRef" name="householdRef" required class="form-input" placeholder="e.g. H001" />
                 </div>
                 <div class="form-row">
-                  <label>Amount (€)</label>
+                  <label>{{ 'fees.amountEuro' | translate }}</label>
                   <input type="number" step="0.01" min="0.01" [(ngModel)]="form.amountEurStr" name="amountEur" required class="form-input" />
                 </div>
                 <div class="form-row">
-                  <label>Description</label>
+                  <label>{{ 'common.description' | translate }}</label>
                   <input type="text" [(ngModel)]="form.description" name="description" required class="form-input" />
                 </div>
                 <div class="form-row">
-                  <label>Period (YYYY-MM)</label>
+                  <label>{{ 'fees.periodYm' | translate }}</label>
                   <input type="month" [(ngModel)]="form.period" name="period" required class="form-input" />
                 </div>
                 <div class="form-row">
-                  <button type="submit" data-testid="submit-btn" class="submit-btn" [disabled]="submitting()">Record Charge</button>
+                  <button type="submit" data-testid="submit-btn" class="submit-btn" [disabled]="submitting()">{{ 'fees.record' | translate }}</button>
                 </div>
                 @if (submitSuccess()) {
-                  <p data-testid="submit-success" class="success-msg">Charge recorded.</p>
+                  <p data-testid="submit-success" class="success-msg">{{ 'fees.recorded' | translate }}</p>
                 }
                 @if (submitError()) {
                   <p data-testid="submit-error" class="error-msg">{{ submitError() }}</p>
@@ -95,15 +98,15 @@ function currentMonth(): string {
             }
 
             @if (!loading() && !error()) {
-              <h3 class="section-title">{{ role === 'admin' ? 'All Charges' : 'My Charges' }}</h3>
+              <h3 class="section-title">{{ role === 'admin' ? ('fees.allCharges' | translate) : ('fees.myCharges' | translate) }}</h3>
               <table class="fee-table">
                 <thead>
                   <tr>
-                    <th>Period</th>
-                    @if (role === 'admin') { <th>Household</th> }
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Date</th>
+                    <th>{{ 'common.period' | translate }}</th>
+                    @if (role === 'admin') { <th>{{ 'common.household' | translate }}</th> }
+                    <th>{{ 'common.description' | translate }}</th>
+                    <th>{{ 'common.amount' | translate }}</th>
+                    <th>{{ 'fees.chargedAt' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,7 +120,7 @@ function currentMonth(): string {
                     </tr>
                   }
                   @if (charges().length === 0) {
-                    <tr><td [attr.colspan]="role === 'admin' ? 5 : 4" class="empty-cell">No charges on record.</td></tr>
+                    <tr><td [attr.colspan]="role === 'admin' ? 5 : 4" class="empty-cell">{{ 'fees.none' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -167,6 +170,7 @@ export class MaintenanceFeeComponent implements OnInit {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(MaintenanceFeeService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly charges       = signal<ChargeDto[]>([]);
@@ -193,7 +197,7 @@ export class MaintenanceFeeComponent implements OnInit {
     const obs = this.role === 'admin' ? this.svc.getAllCharges() : this.svc.getMyCharges();
     obs.subscribe({
       next: list => { this.charges.set(list); this.loading.set(false); },
-      error: () => { this.error.set('Could not load charges. Please try again.'); this.loading.set(false); },
+      error: () => { this.error.set(this.t.instant('fees.errLoad')); this.loading.set(false); },
     });
   }
 
@@ -202,7 +206,7 @@ export class MaintenanceFeeComponent implements OnInit {
     this.submitError.set(null);
     const parsed = parseFloat(this.form.amountEurStr);
     if (!this.form.householdRef || !this.form.amountEurStr || isNaN(parsed) || parsed <= 0) {
-      this.submitError.set('Enter a valid household ref and amount greater than zero.');
+      this.submitError.set(this.t.instant('fees.errInput'));
       return;
     }
     this.submitting.set(true);
@@ -220,7 +224,7 @@ export class MaintenanceFeeComponent implements OnInit {
         this.reload();
       },
       error: () => {
-        this.submitError.set('Could not record charge. Please try again.');
+        this.submitError.set(this.t.instant('fees.errRecord'));
         this.submitting.set(false);
       },
     });
