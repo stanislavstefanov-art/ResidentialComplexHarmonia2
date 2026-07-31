@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { signal } from '@angular/core';
 import { ExpenseComponent } from './expense.component';
 import { ExpenseService } from './expense.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,6 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ExpenseDto } from './models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const EXPENSE: ExpenseDto = {
   id: 'e1', amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
@@ -22,6 +25,8 @@ describe('ExpenseComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ExpenseService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(ExpenseComponent);

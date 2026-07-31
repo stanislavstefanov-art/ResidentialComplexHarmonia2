@@ -9,6 +9,8 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { DatePicker } from 'primeng/datepicker';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { ReservationsService } from './reservations.service';
 import { Slot } from './models';
 import { RoleService } from '../role.service';
@@ -26,34 +28,37 @@ import { RoleService } from '../role.service';
     ToastModule,
     TagModule,
     DatePicker,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   providers: [MessageService],
   template: `
     <p-toast />
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link nav-active">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link nav-active">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
         <p-card>
-          <ng-template #title>BBQ Reservations</ng-template>
+          <ng-template #title>{{ 'reservation.bbqTitle' | translate }}</ng-template>
           <ng-template #content>
 
             <div class="date-row">
-              <label class="date-label">Select date:</label>
+              <label class="date-label">{{ 'reservation.selectDate' | translate }}</label>
               <p-datepicker
                 [(ngModel)]="selectedDate"
                 [minDate]="today"
@@ -72,7 +77,7 @@ import { RoleService } from '../role.service';
               <div class="center-state" data-testid="error-state">
                 <p class="error-msg">{{ error() }}</p>
                 <p-button
-                  label="Retry"
+                  [label]="'common.retry' | translate"
                   icon="pi pi-refresh"
                   severity="secondary"
                   data-testid="retry-btn"
@@ -96,7 +101,7 @@ import { RoleService } from '../role.service';
                     />
                     @if (slot.state === 'free') {
                       <p-button
-                        label="Claim"
+                        [label]="'reservation.claim' | translate"
                         size="small"
                         data-testid="claim-btn"
                         [loading]="claimInFlight() === slot.slotKey"
@@ -109,7 +114,7 @@ import { RoleService } from '../role.service';
             }
 
             @if (!loading() && !error() && slots().length === 0 && selectedDate) {
-              <p class="no-slots">No slots available for this day.</p>
+              <p class="no-slots">{{ 'reservation.noSlots' | translate }}</p>
             }
 
           </ng-template>
@@ -146,6 +151,7 @@ import { RoleService } from '../role.service';
 export class ReservationsComponent implements OnInit {
   private readonly svc = inject(ReservationsService);
   private readonly msg = inject(MessageService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly today = new Date();
@@ -174,7 +180,7 @@ export class ReservationsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Could not load slots. Check your connection and try again.');
+        this.error.set(this.t.instant('reservation.errLoad'));
         this.loading.set(false);
       },
     });
@@ -193,25 +199,45 @@ export class ReservationsComponent implements OnInit {
           this.slots.update(list =>
             list.map(s => s.slotKey === slotKey ? { ...s, state: 'taken-mine' as const } : s)
           );
-          this.msg.add({ severity: 'success', summary: 'Booking confirmed', detail: `Slot "${slotKey}" is now yours.` });
+          this.msg.add({
+            severity: 'success',
+            summary: this.t.instant('reservation.bookingConfirmedSummary'),
+            detail: this.t.instant('reservation.confirmed', { slotKey }),
+          });
         } else if (r.outcome === 'refused-already-taken') {
           this.slots.update(list =>
             list.map(s => s.slotKey === slotKey ? { ...s, state: 'taken-other' as const } : s)
           );
-          this.msg.add({ severity: 'warn', summary: 'Slot taken', detail: 'Someone else just claimed this slot.' });
+          this.msg.add({
+            severity: 'warn',
+            summary: this.t.instant('reservation.slotTakenSummary'),
+            detail: this.t.instant('reservation.errTaken'),
+          });
         } else {
-          this.msg.add({ severity: 'error', summary: 'Could not confirm', detail: 'Please try again in a moment.' });
+          this.msg.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: this.t.instant('reservation.errConfirm'),
+          });
         }
       },
       error: () => {
         this.claimInFlight.set(null);
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not reach the server. Please try again.' });
+        this.msg.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: this.t.instant('reservation.errNetwork'),
+        });
       },
     });
   }
 
   stateLabel(state: string): string {
-    return state === 'free' ? 'Free' : state === 'taken-mine' ? 'Yours' : 'Taken';
+    return state === 'free'
+      ? this.t.instant('reservation.free')
+      : state === 'taken-mine'
+        ? this.t.instant('reservation.yours')
+        : this.t.instant('reservation.taken');
   }
 
   stateSeverity(state: string): 'success' | 'info' | 'secondary' {

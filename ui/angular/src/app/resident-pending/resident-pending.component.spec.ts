@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import { ResidentPendingComponent } from './resident-pending.component';
 import { MeService } from '../me.service';
@@ -6,8 +7,15 @@ import { MsalService } from '@azure/msal-angular';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const mockLogout = vi.fn();
+
+const mockLanguageService = {
+  current: signal('bg' as const),
+  setLang: () => {},
+};
 
 const setup = async (meStatusValue: string) => {
   TestBed.resetTestingModule();
@@ -16,8 +24,10 @@ const setup = async (meStatusValue: string) => {
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      provideTranslateTesting(),
       { provide: MeService, useValue: { getStatus: () => of({ status: meStatusValue }) } },
       { provide: MsalService, useValue: { logoutRedirect: mockLogout, instance: {} } },
+      { provide: LanguageService, useValue: mockLanguageService },
     ],
   }).compileComponents();
   const fixture = TestBed.createComponent(ResidentPendingComponent);
@@ -30,12 +40,10 @@ const setup = async (meStatusValue: string) => {
 describe('ResidentPendingComponent', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders heading "Account pending approval"', async () => {
+  it('renders pending-heading element', async () => {
     const fixture = await setup('pending');
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('[data-testid="pending-heading"]')?.textContent).toContain(
-      'Account pending approval',
-    );
+    expect(el.querySelector('[data-testid="pending-heading"]')).toBeTruthy();
   });
 
   it('"Check again" with pending response does not emit activated', async () => {
@@ -77,8 +85,10 @@ describe('ResidentPendingComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslateTesting(),
         { provide: MeService, useValue: { getStatus: () => throwError(() => new Error('network error')) } },
         { provide: MsalService, useValue: { logoutRedirect: mockLogout, instance: {} } },
+        { provide: LanguageService, useValue: mockLanguageService },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(ResidentPendingComponent);

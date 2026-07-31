@@ -1,9 +1,11 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { PrivacyService } from './privacy.service';
 import { PurgeExpiredResult } from './models';
 import { RoleService } from '../role.service';
@@ -11,49 +13,48 @@ import { RoleService } from '../role.service';
 @Component({
   selector: 'app-privacy',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link nav-active">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link nav-active">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
         <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">Resident</button>
-          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">Admin</button>
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
         </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
 
         @if (role === 'resident') {
           <p-card>
-            <ng-template #title>Delete My Contact Data</ng-template>
+            <ng-template #title>{{ 'privacy.deleteMine' | translate }}</ng-template>
             <ng-template #content>
-              <p class="warn-text">
-                GDPR Art. 17 — Right to Erasure. This permanently removes your contact data and cannot be undone.
-              </p>
+              <p class="warn-text">{{ 'privacy.deleteMineDesc' | translate }}</p>
               <button
                 data-testid="delete-my-data-btn"
                 class="danger-btn"
                 [disabled]="deleting()"
                 (click)="onDeleteMyData()">
-                Delete My Data
+                {{ 'privacy.deleteMyDataBtn' | translate }}
               </button>
               @if (deleteSuccess()) {
-                <p data-testid="delete-success" class="success-msg">Your contact data has been deleted.</p>
+                <p data-testid="delete-success" class="success-msg">{{ 'privacy.deletedMine' | translate }}</p>
               }
               @if (deleteError()) {
                 <p data-testid="delete-error" class="error-msg">{{ deleteError() }}</p>
@@ -64,7 +65,7 @@ import { RoleService } from '../role.service';
 
         @if (role === 'admin') {
           <p-card styleClass="mb-card">
-            <ng-template #title>DSAR Contact Erasure</ng-template>
+            <ng-template #title>{{ 'privacy.dsarTitle' | translate }}</ng-template>
             <ng-template #content>
               <div data-testid="erase-form" class="action-row">
                 <input
@@ -72,14 +73,14 @@ import { RoleService } from '../role.service';
                   [(ngModel)]="eraseRef"
                   name="eraseRef"
                   class="form-input"
-                  placeholder="Household Ref (e.g. H001)"
+                  [placeholder]="'common.householdRef' | translate"
                 />
                 <button
                   data-testid="erase-btn"
                   class="danger-btn"
                   [disabled]="erasing()"
                   (click)="onEraseContact()">
-                  Erase Contact
+                  {{ 'privacy.eraseContactBtn' | translate }}
                 </button>
               </div>
               @if (eraseResult()) {
@@ -92,7 +93,7 @@ import { RoleService } from '../role.service';
           </p-card>
 
           <p-card styleClass="mb-card">
-            <ng-template #title>Mark Household as Departed</ng-template>
+            <ng-template #title>{{ 'privacy.departTitle' | translate }}</ng-template>
             <ng-template #content>
               <div data-testid="depart-form" class="action-row">
                 <input
@@ -100,14 +101,14 @@ import { RoleService } from '../role.service';
                   [(ngModel)]="departRef"
                   name="departRef"
                   class="form-input"
-                  placeholder="Household Ref (e.g. H001)"
+                  [placeholder]="'common.householdRef' | translate"
                 />
                 <button
                   data-testid="depart-btn"
                   class="action-btn"
                   [disabled]="departing()"
                   (click)="onMarkDeparted()">
-                  Mark Departed
+                  {{ 'privacy.markDepartedBtn' | translate }}
                 </button>
               </div>
               @if (departResult()) {
@@ -120,18 +121,18 @@ import { RoleService } from '../role.service';
           </p-card>
 
           <p-card>
-            <ng-template #title>Annual Retention Sweep</ng-template>
+            <ng-template #title>{{ 'privacy.sweepTitle' | translate }}</ng-template>
             <ng-template #content>
-              <p class="warn-text">Permanently deletes contacts whose retention period has expired.</p>
+              <p class="warn-text">{{ 'privacy.sweepDesc' | translate }}</p>
               <button
                 data-testid="purge-btn"
                 class="danger-btn"
                 [disabled]="purging()"
                 (click)="onPurgeExpired()">
-                Purge Expired Contacts
+                {{ 'privacy.purgeBtn' | translate }}
               </button>
-              @if (purgeResult()) {
-                <p data-testid="purge-result" class="success-msg">{{ purgeResult()!.deleted }} contact(s) purged.</p>
+              @if (purgeMessage()) {
+                <p data-testid="purge-result" class="success-msg">{{ purgeMessage() }}</p>
               }
               @if (purgeError()) {
                 <p data-testid="purge-error" class="error-msg">{{ purgeError() }}</p>
@@ -177,6 +178,7 @@ export class PrivacyComponent {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(PrivacyService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly deleting      = signal(false);
@@ -193,9 +195,9 @@ export class PrivacyComponent {
   readonly departResult  = signal<string | null>(null);
   readonly departError   = signal<string | null>(null);
 
-  readonly purging     = signal(false);
-  readonly purgeResult = signal<PurgeExpiredResult | null>(null);
-  readonly purgeError  = signal<string | null>(null);
+  readonly purging      = signal(false);
+  readonly purgeMessage = signal<string | null>(null);
+  readonly purgeError   = signal<string | null>(null);
 
   onDeleteMyData(): void {
     this.deleteSuccess.set(false);
@@ -203,45 +205,45 @@ export class PrivacyComponent {
     this.deleting.set(true);
     this.svc.eraseMyContact().subscribe({
       next: () => { this.deleteSuccess.set(true); this.deleting.set(false); },
-      error: () => { this.deleteError.set('Could not delete contact data. Please try again.'); this.deleting.set(false); },
+      error: () => { this.deleteError.set(this.t.instant('privacy.errDelete')); this.deleting.set(false); },
     });
   }
 
   onEraseContact(): void {
-    if (!this.eraseRef) { this.eraseError.set('Enter a household ref.'); return; }
+    if (!this.eraseRef) { this.eraseError.set(this.t.instant('privacy.errErase')); return; }
     this.eraseResult.set(null);
     this.eraseError.set(null);
     this.erasing.set(true);
     this.svc.eraseContact(this.eraseRef).subscribe({
       next: outcome => {
-        this.eraseResult.set(outcome === 'erased' ? 'Contact erased.' : 'Contact not found.');
+        this.eraseResult.set(outcome === 'erased' ? this.t.instant('privacy.toastErased') : this.t.instant('privacy.toastNotFound'));
         this.erasing.set(false);
       },
-      error: () => { this.eraseError.set('Could not complete erasure. Please try again.'); this.erasing.set(false); },
+      error: () => { this.eraseError.set(this.t.instant('privacy.errErase')); this.erasing.set(false); },
     });
   }
 
   onMarkDeparted(): void {
-    if (!this.departRef) { this.departError.set('Enter a household ref.'); return; }
+    if (!this.departRef) { this.departError.set(this.t.instant('privacy.errDepart')); return; }
     this.departResult.set(null);
     this.departError.set(null);
     this.departing.set(true);
     this.svc.markDeparted(this.departRef).subscribe({
       next: outcome => {
-        this.departResult.set(outcome === 'ok' ? 'Household marked as departed.' : 'Household not found.');
+        this.departResult.set(outcome === 'ok' ? this.t.instant('privacy.toastDeparted') : this.t.instant('privacy.toastDepartNotFound'));
         this.departing.set(false);
       },
-      error: () => { this.departError.set('Could not mark as departed. Please try again.'); this.departing.set(false); },
+      error: () => { this.departError.set(this.t.instant('privacy.errDepart')); this.departing.set(false); },
     });
   }
 
   onPurgeExpired(): void {
-    this.purgeResult.set(null);
+    this.purgeMessage.set(null);
     this.purgeError.set(null);
     this.purging.set(true);
     this.svc.purgeExpired().subscribe({
-      next: result => { this.purgeResult.set(result); this.purging.set(false); },
-      error: () => { this.purgeError.set('Could not run retention sweep. Please try again.'); this.purging.set(false); },
+      next: result => { this.purgeMessage.set(this.t.instant('privacy.purgedCount', { count: result.deleted })); this.purging.set(false); },
+      error: () => { this.purgeError.set(this.t.instant('privacy.errSweep')); this.purging.set(false); },
     });
   }
 }

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { signal } from '@angular/core';
 import { PaymentComponent } from './payment.component';
 import { PaymentService } from './payment.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,6 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { PaymentDto, BalanceDto } from './models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const PAYMENT: PaymentDto = {
   id: 'p1', householdRef: 'H001', amountEur: 150, period: '2026-07',
@@ -30,6 +33,8 @@ describe('PaymentComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PaymentService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(PaymentComponent);

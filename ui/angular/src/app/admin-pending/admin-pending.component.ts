@@ -10,9 +10,11 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AdminPendingService } from './admin-pending.service';
 import { PendingSignInDto } from './models';
 import { RoleService } from '../role.service';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-admin-pending',
@@ -29,6 +31,8 @@ import { RoleService } from '../role.service';
     ToastModule,
     TagModule,
     CardModule,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   providers: [MessageService],
   template: `
@@ -36,32 +40,39 @@ import { RoleService } from '../role.service';
 
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link nav-active">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link nav-active">{{ 'nav.adminPending' | translate }}</a> }
+        @if (isAdmin) {
+        <span class="role-toggle">
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
+        </span>
+        }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
         <p-card>
           <ng-template #title>
             <div class="card-title-row">
-              <span>Pending Sign-Ins</span>
+              <span>{{ 'adminPending.title' | translate }}</span>
               <button class="purge-btn" (click)="purgeVisible = true">
-                Purge Expired (&gt;90 days)
+                {{ 'adminPending.purgeExpiredBtn' | translate }}
               </button>
             </div>
           </ng-template>
-          <ng-template #subtitle>Users awaiting household assignment.</ng-template>
+          <ng-template #subtitle>{{ 'adminPending.subtitle' | translate }}</ng-template>
 
           @if (loading()) {
             <div class="loading-row">
@@ -71,13 +82,13 @@ import { RoleService } from '../role.service';
           } @else if (forbidden()) {
             <div data-testid="forbidden-state" class="info-row">
               <i class="pi pi-lock"></i>
-              <span>Admin access required to view pending sign-ins.</span>
+              <span>{{ 'adminPending.accessRequired' | translate }}</span>
             </div>
           } @else if (error()) {
             <div data-testid="error-state" class="error-row">
               <i class="pi pi-exclamation-circle"></i>
               <span>{{ error() }}</span>
-              <button class="retry-btn" (click)="load()">Retry</button>
+              <button class="retry-btn" (click)="load()">{{ 'common.retry' | translate }}</button>
             </div>
           } @else {
             <p-table
@@ -92,8 +103,8 @@ import { RoleService } from '../role.service';
                 <tr>
                   <th pSortableColumn="displayName">Display Name <p-sort-icon field="displayName" /></th>
                   <th pSortableColumn="email" style="width:16rem">Email <p-sort-icon field="email" /></th>
-                  <th style="width:14rem">OID</th>
-                  <th pSortableColumn="firstSeenAt" style="width:10rem">First Seen <p-sort-icon field="firstSeenAt" /></th>
+                  <th style="width:14rem">{{ 'adminPending.oid' | translate }}</th>
+                  <th pSortableColumn="firstSeenAt" style="width:10rem">{{ 'adminPending.firstSeen' | translate }} <p-sort-icon field="firstSeenAt" /></th>
                   <th style="width:7rem"></th>
                 </tr>
               </ng-template>
@@ -105,13 +116,13 @@ import { RoleService } from '../role.service';
                   <td>{{ entry.firstSeenAt | date:'mediumDate' }}</td>
                   <td>
                     <button class="link-btn" (click)="openActivate(entry)">
-                      <i class="pi pi-link"></i> Link
+                      <i class="pi pi-link"></i> {{ 'adminPending.linkBtn' | translate }}
                     </button>
                   </td>
                 </tr>
               </ng-template>
               <ng-template #emptymessage>
-                <tr><td colspan="5" class="empty-message">No pending sign-ins found.</td></tr>
+                <tr><td colspan="5" class="empty-message">{{ 'adminPending.none' | translate }}</td></tr>
               </ng-template>
             </p-table>
           }
@@ -122,7 +133,7 @@ import { RoleService } from '../role.service';
     <!-- Activate dialog -->
     <p-dialog
       [(visible)]="activateVisible"
-      header="Link to Household"
+      [header]="'adminPending.linkTitle' | translate"
       [modal]="true"
       [style]="{ width: '32rem' }"
       [draggable]="false"
@@ -134,20 +145,20 @@ import { RoleService } from '../role.service';
           <p class="activate-error">{{ activateError }}</p>
         }
         <div class="field">
-          <label for="householdRef">Household Ref</label>
+          <label for="householdRef">{{ 'adminPending.householdRefLabel' | translate }}</label>
           <input
             id="householdRef"
             pInputText
             [(ngModel)]="householdRef"
-            placeholder="e.g. AP-101"
+            [placeholder]="'adminPending.refPlaceholder' | translate"
             class="w-full"
           />
         </div>
       </div>
       <ng-template #footer>
-        <p-button label="Cancel" severity="secondary" [outlined]="true"
+        <p-button [label]="'common.cancel' | translate" severity="secondary" [outlined]="true"
           (onClick)="activateVisible = false" [disabled]="activating()" />
-        <p-button label="Link" icon="pi pi-link"
+        <p-button [label]="'adminPending.linkBtn' | translate" icon="pi pi-link"
           [loading]="activating()" (onClick)="confirmActivate()"
           [disabled]="!householdRef" />
       </ng-template>
@@ -156,7 +167,7 @@ import { RoleService } from '../role.service';
     <!-- Purge dialog -->
     <p-dialog
       [(visible)]="purgeVisible"
-      header="Purge Expired Entries?"
+      [header]="'adminPending.purgeTitle' | translate"
       [modal]="true"
       [style]="{ width: '28rem' }"
       [draggable]="false"
@@ -166,9 +177,9 @@ import { RoleService } from '../role.service';
         This will permanently delete all pending sign-ins older than 90 days. This cannot be undone.
       </p>
       <ng-template #footer>
-        <p-button label="Cancel" severity="secondary" [outlined]="true"
+        <p-button [label]="'common.cancel' | translate" severity="secondary" [outlined]="true"
           (onClick)="purgeVisible = false" [disabled]="purging()" />
-        <p-button label="Purge" severity="warn"
+        <p-button [label]="'adminPending.purgeBtn' | translate" severity="warn"
           [loading]="purging()" (onClick)="confirmPurge()" />
       </ng-template>
     </p-dialog>
@@ -206,12 +217,18 @@ import { RoleService } from '../role.service';
     .field label { font-size: .875rem; font-weight: 500; }
     .w-full { width: 100%; }
     .purge-message { margin: 0; line-height: 1.6; color: var(--p-text-color); }
+    .role-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); margin-left: 8px; }
+    .role-btn { background: transparent; color: rgba(255,255,255,.75); border: none; padding: 4px 12px; cursor: pointer; font-size: .8125rem; }
+    .role-btn.role-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
   `],
 })
 export class AdminPendingComponent implements OnInit {
   private readonly svc = inject(AdminPendingService);
   private readonly msg = inject(MessageService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
+
+  role: 'resident' | 'admin' = 'resident';
 
   loading   = signal(false);
   forbidden = signal(false);
@@ -243,7 +260,7 @@ export class AdminPendingComponent implements OnInit {
           this.forbidden.set(true);
           this.rows.set([]);
         } else {
-          this.error.set('Could not reach the Harmonia API. Is it running on port 5000?');
+          this.error.set(this.t.instant('adminPending.errLoad'));
         }
       },
     });
@@ -263,15 +280,15 @@ export class AdminPendingComponent implements OnInit {
       next: () => {
         this.activating.set(false);
         this.activateVisible = false;
-        this.msg.add({ severity: 'success', summary: 'Linked', detail: 'Linked successfully.' });
+        this.msg.add({ severity: 'success', summary: this.t.instant('adminPending.linked'), detail: this.t.instant('adminPending.linked') });
         this.load();
       },
       error: (err: { status?: number }) => {
         this.activating.set(false);
-        if (err?.status === 409) this.activateError = 'Already linked to a household.';
-        else if (err?.status === 404) this.activateError = 'Pending entry no longer exists.';
-        else if (err?.status === 403) this.activateError = 'Admin access required.';
-        else this.msg.add({ severity: 'error', summary: 'Error', detail: 'Failed — please try again.' });
+        if (err?.status === 409) this.activateError = this.t.instant('adminPending.alreadyLinked');
+        else if (err?.status === 404) this.activateError = this.t.instant('adminPending.gone');
+        else if (err?.status === 403) this.activateError = this.t.instant('adminPending.accessDenied');
+        else this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('adminPending.failed') });
       },
     });
   }
@@ -283,14 +300,14 @@ export class AdminPendingComponent implements OnInit {
         this.purging.set(false);
         this.purgeVisible = false;
         const detail = result.deleted > 0
-          ? `Deleted ${result.deleted} expired entries.`
-          : 'No expired entries found.';
+          ? this.t.instant('adminPending.purged', { count: result.deleted })
+          : this.t.instant('adminPending.noneExpired');
         this.msg.add({ severity: 'success', summary: 'Done', detail });
       },
       error: () => {
         this.purging.set(false);
         this.purgeVisible = false;
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Failed — please try again.' });
+        this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('adminPending.failed') });
       },
     });
   }

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import { ContactEditComponent } from './contact-edit.component';
 import { ContactEditService } from './contact-edit.service';
@@ -6,6 +7,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 describe('ContactEditComponent', () => {
   const setup = async (
@@ -19,6 +22,8 @@ describe('ContactEditComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ContactEditService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(ContactEditComponent);

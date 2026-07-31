@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ReservationsComponent } from './reservations.component';
 import { ReservationsService } from './reservations.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 describe('ReservationsComponent', () => {
   const setupComponent = async (serviceMock: Partial<ReservationsService>) => {
@@ -15,6 +18,8 @@ describe('ReservationsComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ReservationsService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(ReservationsComponent);
