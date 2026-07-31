@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { PaymentService } from './payment.service';
 import { PaymentDto, BalanceDto } from './models';
 import { RoleService } from '../role.service';
@@ -24,59 +26,60 @@ function currentMonth(): string {
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link nav-active">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link nav-active">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
         <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">Resident</button>
-          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">Admin</button>
+          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
         </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
 
         @if (role === 'admin') {
           <p-card styleClass="mb-card">
-            <ng-template #title>Record Payment</ng-template>
+            <ng-template #title>{{ 'payments.record' | translate }}</ng-template>
             <ng-template #content>
               <form data-testid="record-form" class="record-form" (ngSubmit)="onSubmit()">
                 <div class="form-grid">
                   <div class="form-row">
-                    <label>Household Ref</label>
+                    <label>{{ 'common.householdRef' | translate }}</label>
                     <input type="text" [(ngModel)]="form.householdRef" name="householdRef" required class="form-input" placeholder="e.g. H001" />
                   </div>
                   <div class="form-row">
-                    <label>Amount (€)</label>
+                    <label>{{ 'payments.amountEuro' | translate }}</label>
                     <input type="number" step="0.01" min="0.01" [(ngModel)]="form.amountEurStr" name="amountEur" required class="form-input" />
                   </div>
                   <div class="form-row">
-                    <label>Period (YYYY-MM)</label>
+                    <label>{{ 'payments.periodYm' | translate }}</label>
                     <input type="month" [(ngModel)]="form.period" name="period" required class="form-input" />
                   </div>
                   <div class="form-row">
-                    <label>Date received</label>
+                    <label>{{ 'payments.dateReceived' | translate }}</label>
                     <input type="date" [(ngModel)]="form.dateReceived" name="dateReceived" required class="form-input" />
                   </div>
                 </div>
-                <button type="submit" data-testid="submit-btn" class="submit-btn" [disabled]="submitting()">Record Payment</button>
+                <button type="submit" data-testid="submit-btn" class="submit-btn" [disabled]="submitting()">{{ 'payments.record' | translate }}</button>
                 @if (submitSuccess()) {
-                  <p data-testid="submit-success" class="success-msg">Payment recorded.</p>
+                  <p data-testid="submit-success" class="success-msg">{{ 'payments.recorded' | translate }}</p>
                 }
                 @if (submitError()) {
                   <p data-testid="submit-error" class="error-msg">{{ submitError() }}</p>
@@ -87,7 +90,7 @@ function currentMonth(): string {
         }
 
         <p-card styleClass="mb-card">
-          <ng-template #title>Balance — {{ balance()?.label ?? '…' }}</ng-template>
+          <ng-template #title>{{ 'payments.balance' | translate }} — {{ balance()?.label ?? '…' }}</ng-template>
           <ng-template #content>
             @if (loadingBalance()) {
               <div class="center-state"><p-progressspinner strokeWidth="4" [style]="{width:'36px',height:'36px'}" /></div>
@@ -96,10 +99,10 @@ function currentMonth(): string {
               <table class="pay-table">
                 <thead>
                   <tr>
-                    @if (role === 'admin') { <th>Household</th> }
-                    <th>Charged</th>
-                    <th>Paid</th>
-                    <th>Balance</th>
+                    @if (role === 'admin') { <th>{{ 'common.household' | translate }}</th> }
+                    <th>{{ 'payments.charged' | translate }}</th>
+                    <th>{{ 'payments.paid' | translate }}</th>
+                    <th>{{ 'payments.balance' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,7 +115,7 @@ function currentMonth(): string {
                     </tr>
                   }
                   @if (balance()!.lines.length === 0) {
-                    <tr><td [attr.colspan]="role === 'admin' ? 4 : 3" class="empty-cell">No balance data.</td></tr>
+                    <tr><td [attr.colspan]="role === 'admin' ? 4 : 3" class="empty-cell">{{ 'payments.noBalanceData' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -121,7 +124,7 @@ function currentMonth(): string {
         </p-card>
 
         <p-card>
-          <ng-template #title>{{ role === 'admin' ? 'All Payments' : 'My Payments' }}</ng-template>
+          <ng-template #title>{{ role === 'admin' ? ('payments.allPayments' | translate) : ('payments.myPayments' | translate) }}</ng-template>
           <ng-template #content>
             @if (loading()) {
               <div class="center-state"><p-progressspinner strokeWidth="4" [style]="{width:'48px',height:'48px'}" /></div>
@@ -129,17 +132,17 @@ function currentMonth(): string {
             @if (error()) {
               <div data-testid="error-state" class="error-state">
                 <p>{{ error() }}</p>
-                <button (click)="reload()">Retry</button>
+                <button (click)="reload()">{{ 'common.retry' | translate }}</button>
               </div>
             }
             @if (!loading() && !error()) {
               <table class="pay-table">
                 <thead>
                   <tr>
-                    <th>Period</th>
-                    @if (role === 'admin') { <th>Household</th> }
-                    <th>Amount</th>
-                    <th>Date received</th>
+                    <th>{{ 'common.period' | translate }}</th>
+                    @if (role === 'admin') { <th>{{ 'common.household' | translate }}</th> }
+                    <th>{{ 'common.amount' | translate }}</th>
+                    <th>{{ 'payments.dateReceived' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -152,7 +155,7 @@ function currentMonth(): string {
                     </tr>
                   }
                   @if (payments().length === 0) {
-                    <tr><td [attr.colspan]="role === 'admin' ? 4 : 3" class="empty-cell">No payments on record.</td></tr>
+                    <tr><td [attr.colspan]="role === 'admin' ? 4 : 3" class="empty-cell">{{ 'payments.none' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -203,6 +206,7 @@ export class PaymentComponent implements OnInit {
   @Input() role: 'resident' | 'admin' = 'resident';
 
   private readonly svc = inject(PaymentService);
+  private readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly payments       = signal<PaymentDto[]>([]);
@@ -236,7 +240,7 @@ export class PaymentComponent implements OnInit {
     const obs = this.role === 'admin' ? this.svc.getAllPayments() : this.svc.getMyPayments();
     obs.subscribe({
       next: list => { this.payments.set(list); this.loading.set(false); },
-      error: () => { this.error.set('Could not load payments. Please try again.'); this.loading.set(false); },
+      error: () => { this.error.set(this.t.instant('payments.errLoad')); this.loading.set(false); },
     });
   }
 
@@ -253,7 +257,7 @@ export class PaymentComponent implements OnInit {
     this.submitError.set(null);
     const parsed = parseFloat(this.form.amountEurStr);
     if (!this.form.householdRef || !this.form.amountEurStr || isNaN(parsed) || parsed <= 0) {
-      this.submitError.set('Enter a valid household ref and amount greater than zero.');
+      this.submitError.set(this.t.instant('payments.errInput'));
       return;
     }
     this.submitting.set(true);
@@ -272,7 +276,7 @@ export class PaymentComponent implements OnInit {
         this.reload();
       },
       error: () => {
-        this.submitError.set('Could not record payment. Please try again.');
+        this.submitError.set(this.t.instant('payments.errRecord'));
         this.submitting.set(false);
       },
     });
