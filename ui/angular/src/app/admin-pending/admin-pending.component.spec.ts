@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import { AdminPendingComponent } from './admin-pending.component';
 import { AdminPendingService } from './admin-pending.service';
@@ -7,6 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { PendingSignInDto } from './models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LanguageService } from '../language.service';
 
 const ENTRY: PendingSignInDto = {
   entraObjectId: 'oid-1',
@@ -24,6 +27,8 @@ describe('AdminPendingComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AdminPendingService, useValue: serviceMock },
+        provideTranslateTesting(),
+        { provide: LanguageService, useValue: { current: signal('bg'), setLang: () => {} } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(AdminPendingComponent);
@@ -60,6 +65,6 @@ describe('AdminPendingComponent', () => {
     const fixture = await setup({ listPending: () => of([]) });
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="pending-table"]')).not.toBeNull();
-    expect(el.textContent).toContain('No pending sign-ins found.');
+    expect(el.querySelector('.empty-message')).not.toBeNull();
   });
 });
