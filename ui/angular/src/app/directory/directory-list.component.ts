@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 import { TableModule, SortIcon } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -11,7 +13,6 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
-import { SelectButton } from 'primeng/selectbutton';
 import { MessageService } from 'primeng/api';
 
 import { DirectoryService } from './directory.service';
@@ -34,7 +35,8 @@ import { RoleService } from '../role.service';
     ToastModule,
     TagModule,
     CardModule,
-    SelectButton,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   providers: [MessageService],
   template: `
@@ -42,40 +44,36 @@ import { RoleService } from '../role.service';
 
     <div class="harmonia-shell">
       <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 Harmonia</span>
-        <span class="harmonia-subtitle">Resident Portal</span>
+        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
+        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
-        <a routerLink="/directory" class="nav-link nav-active">Directory</a>
-        <a routerLink="/reservations" class="nav-link">Reservations</a>
-        <a routerLink="/financial" class="nav-link">Finance</a>
-        <a routerLink="/expenses" class="nav-link">Expenses</a>
-        <a routerLink="/maintenance-fees" class="nav-link">Fees</a>
-        <a routerLink="/payments" class="nav-link">Payments</a>
-        <a routerLink="/notifications" class="nav-link">Notifications</a>
-        <a routerLink="/privacy" class="nav-link">Privacy</a>
-        <a routerLink="/contact-edit" class="nav-link">Edit Contact</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">Pending Users</a> }
+        <a routerLink="/directory" class="nav-link nav-active">{{ 'nav.directory' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
+        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
+        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
+        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         @if (isAdmin) {
-        <span class="role-label">View as:</span>
-        <p-selectbutton
-          [options]="roleOptions"
-          [ngModel]="selectedRole"
-          (ngModelChange)="onRoleChange($event)"
-          optionLabel="label"
-          optionValue="value"
-          styleClass="role-toggle"
-        />
+        <span class="role-toggle">
+          <button [class.role-active]="selectedRole === 'resident'" (click)="onRoleChange('resident')" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+          <button [class.role-active]="selectedRole === 'admin'" (click)="onRoleChange('admin')" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
+        </span>
         }
+        <app-language-switcher />
       </header>
 
       <main class="harmonia-content" [class.wide]="selectedRole === 'admin'">
         <p-card>
           <ng-template #title>
             <div class="card-title-row">
-              <span>Member Directory</span>
+              <span>{{ 'directory.title' | translate }}</span>
               @if (selectedRole === 'resident') {
                 <p-button
-                  label="My Profile"
+                  [label]="'directory.myProfile' | translate"
                   icon="pi pi-user-edit"
                   (onClick)="openEditDialog()"
                   [rounded]="true"
@@ -87,22 +85,22 @@ import { RoleService } from '../role.service';
 
           <ng-template #subtitle>
             @if (selectedRole === 'resident') {
-              Showing residents who have shared their details.
+              {{ 'directory.residentSubtitle' | translate }}
             } @else {
-              Admin view — all active residents including opted-out.
+              {{ 'directory.adminSubtitle' | translate }}
             }
           </ng-template>
 
           @if (loading()) {
             <div class="loading-row">
               <i class="pi pi-spin pi-spinner" style="font-size:1.5rem"></i>
-              <span>Loading directory…</span>
+              <span>{{ 'directory.loading' | translate }}</span>
             </div>
           } @else if (error()) {
             <div class="error-row">
               <i class="pi pi-exclamation-circle"></i>
               <span>{{ error() }}</span>
-              <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="load()" />
+              <p-button [label]="'common.retry' | translate" icon="pi pi-refresh" severity="secondary" (onClick)="load()" />
             </div>
           } @else if (selectedRole === 'resident') {
 
@@ -122,7 +120,7 @@ import { RoleService } from '../role.service';
                   <span class="p-input-icon-left">
                     <i class="pi pi-search"></i>
                     <input
-                      pInputText type="text" placeholder="Search…"
+                      pInputText type="text" [placeholder]="'directory.searchResident' | translate"
                       (input)="dt.filterGlobal($any($event.target).value, 'contains')"
                     />
                   </span>
@@ -132,10 +130,10 @@ import { RoleService } from '../role.service';
               <ng-template #header>
                 <tr>
                   <th pSortableColumn="householdRef" style="width:12rem">
-                    Apartment <p-sort-icon field="householdRef" />
+                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
                   </th>
                   <th pSortableColumn="displayName">
-                    Name <p-sort-icon field="displayName" />
+                    {{ 'directory.name' | translate }} <p-sort-icon field="displayName" />
                   </th>
                 </tr>
               </ng-template>
@@ -148,7 +146,7 @@ import { RoleService } from '../role.service';
               </ng-template>
 
               <ng-template #emptymessage>
-                <tr><td colspan="2" class="empty-message">No residents found.</td></tr>
+                <tr><td colspan="2" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
               </ng-template>
             </p-table>
 
@@ -171,7 +169,7 @@ import { RoleService } from '../role.service';
                     <i class="pi pi-search"></i>
                     <input
                       pInputText type="text"
-                      placeholder="Search name, apartment, phone, email…"
+                      [placeholder]="'directory.searchAdmin' | translate"
                       (input)="adminDt.filterGlobal($any($event.target).value, 'contains')"
                     />
                   </span>
@@ -181,20 +179,20 @@ import { RoleService } from '../role.service';
               <ng-template #header>
                 <tr>
                   <th pSortableColumn="householdRef" style="width:10rem">
-                    Apartment <p-sort-icon field="householdRef" />
+                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
                   </th>
                   <th pSortableColumn="displayName" style="width:14rem">
-                    Name <p-sort-icon field="displayName" />
+                    {{ 'directory.name' | translate }} <p-sort-icon field="displayName" />
                   </th>
                   <th pSortableColumn="phone" style="width:12rem">
-                    Phone <p-sort-icon field="phone" />
+                    {{ 'common.phone' | translate }} <p-sort-icon field="phone" />
                   </th>
                   <th pSortableColumn="email" style="width:16rem">
-                    Email <p-sort-icon field="email" />
+                    {{ 'common.email' | translate }} <p-sort-icon field="email" />
                   </th>
-                  <th style="width:9rem">Opt-out</th>
+                  <th style="width:9rem">{{ 'directory.optOut' | translate }}</th>
                   <th pSortableColumn="deactivatedAt" style="width:12rem">
-                    Departed <p-sort-icon field="deactivatedAt" />
+                    {{ 'directory.departed' | translate }} <p-sort-icon field="deactivatedAt" />
                   </th>
                   <th style="width:9rem"></th>
                 </tr>
@@ -208,9 +206,9 @@ import { RoleService } from '../role.service';
                   <td>{{ entry.email ?? '—' }}</td>
                   <td>
                     @if (entry.isOptedOut) {
-                      <p-tag value="Opted out" severity="warn" />
+                      <p-tag [value]="'directory.optedOut' | translate" severity="warn" />
                     } @else {
-                      <p-tag value="Active" severity="success" />
+                      <p-tag [value]="'directory.active' | translate" severity="success" />
                     }
                   </td>
                   <td>{{ entry.deactivatedAt ? (entry.deactivatedAt | date:'MMM d, y') : '—' }}</td>
@@ -220,19 +218,21 @@ import { RoleService } from '../role.service';
                         icon="pi pi-pencil"
                         [rounded]="true" [text]="true"
                         severity="secondary" size="small"
+                        [title]="'directory.tipEdit' | translate"
                         (onClick)="openAdminEdit(entry)"
                       />
                       <p-button
                         icon="pi pi-user-minus"
                         [rounded]="true" [text]="true"
                         severity="danger" size="small"
+                        [title]="'directory.tipDepart' | translate"
                         (onClick)="openDepartConfirm(entry.householdRef)"
                       />
                       <p-button
                         icon="pi pi-trash"
                         [rounded]="true" [text]="true"
                         severity="danger" size="small"
-                        title="Erase contact data"
+                        [title]="'directory.tipErase' | translate"
                         (onClick)="openEraseContact(entry.householdRef)"
                       />
                     </div>
@@ -241,7 +241,7 @@ import { RoleService } from '../role.service';
               </ng-template>
 
               <ng-template #emptymessage>
-                <tr><td colspan="7" class="empty-message">No residents found.</td></tr>
+                <tr><td colspan="7" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
               </ng-template>
             </p-table>
 
@@ -253,32 +253,32 @@ import { RoleService } from '../role.service';
     <!-- ── Resident edit dialog ── -->
     <p-dialog
       [(visible)]="editVisible"
-      header="My Profile"
+      [header]="'dialog.myProfileTitle' | translate"
       [modal]="true" [style]="{ width: '32rem' }"
       [draggable]="false" [resizable]="false"
     >
       <div class="edit-form">
         <div class="field">
-          <label for="displayName">Display Name</label>
+          <label for="displayName">{{ 'common.displayName' | translate }}</label>
           <input id="displayName" pInputText [(ngModel)]="form.displayName"
-            placeholder="Your name as shown to neighbours" class="w-full" />
+            [placeholder]="'dialog.nameHelp' | translate" class="w-full" />
         </div>
         <div class="field">
-          <label for="phone">Phone</label>
+          <label for="phone">{{ 'common.phone' | translate }}</label>
           <input id="phone" pInputText [(ngModel)]="form.phone"
-            placeholder="+359 88 …" class="w-full" />
+            [placeholder]="'dialog.phonePlaceholder' | translate" class="w-full" />
         </div>
         <div class="field">
-          <label for="email">Email</label>
+          <label for="email">{{ 'common.email' | translate }}</label>
           <input id="email" pInputText type="email" [(ngModel)]="form.email"
-            placeholder="you@example.com" class="w-full" />
+            [placeholder]="'dialog.emailPlaceholder' | translate" class="w-full" />
         </div>
         <div class="field opt-out-field">
           <div class="opt-out-row">
             <div>
-              <span class="opt-out-label">Hide me from the directory</span>
+              <span class="opt-out-label">{{ 'dialog.hideFromDirectory' | translate }}</span>
               <p class="opt-out-hint">
-                When enabled, your name will not appear to other residents.
+                {{ 'dialog.hideFromDirectoryHelp' | translate }}
               </p>
             </div>
             <p-toggleswitch [(ngModel)]="form.isOptedOut" />
@@ -286,11 +286,11 @@ import { RoleService } from '../role.service';
         </div>
       </div>
       <ng-template #footer>
-        <p-button label="Delete my data" icon="pi pi-trash" severity="danger"
+        <p-button [label]="'dialog.deleteMine' | translate" icon="pi pi-trash" severity="danger"
           [outlined]="true" (onClick)="openEraseMyContact()" [style]="{'margin-right': 'auto'}" />
-        <p-button label="Cancel" icon="pi pi-times" severity="secondary"
+        <p-button [label]="'common.cancel' | translate" icon="pi pi-times" severity="secondary"
           [outlined]="true" (onClick)="editVisible = false" />
-        <p-button label="Save" icon="pi pi-check"
+        <p-button [label]="'common.save' | translate" icon="pi pi-check"
           [loading]="saving()" (onClick)="save()" />
       </ng-template>
     </p-dialog>
@@ -298,43 +298,43 @@ import { RoleService } from '../role.service';
     <!-- ── Admin edit dialog ── -->
     <p-dialog
       [(visible)]="adminEditVisible"
-      [header]="'Edit Resident — ' + selectedAdminRef"
+      [header]="t.instant('dialog.editResidentTitle', { ref: selectedAdminRef })"
       [modal]="true" [style]="{ width: '36rem' }"
       [draggable]="false" [resizable]="false"
     >
       <div class="edit-form">
         <div class="field">
-          <label>Display Name</label>
+          <label>{{ 'common.displayName' | translate }}</label>
           <input pInputText [(ngModel)]="adminForm.displayName" class="w-full" />
         </div>
         <div class="field">
-          <label>Phone</label>
+          <label>{{ 'common.phone' | translate }}</label>
           <input pInputText [(ngModel)]="adminForm.phone" class="w-full" />
         </div>
         <div class="field">
-          <label>Email</label>
+          <label>{{ 'common.email' | translate }}</label>
           <input pInputText type="email" [(ngModel)]="adminForm.email" class="w-full" />
         </div>
         <div class="field">
-          <label>Notes</label>
+          <label>{{ 'common.notes' | translate }}</label>
           <textarea
             [(ngModel)]="adminForm.notes"
             rows="4"
-            placeholder="Internal notes — not visible to resident"
+            [placeholder]="'dialog.adminNotesPlaceholder' | translate"
             class="admin-notes"
           ></textarea>
         </div>
         <div class="field opt-out-field">
           <div class="opt-out-row">
-            <span class="opt-out-label">Opted out of directory</span>
+            <span class="opt-out-label">{{ 'dialog.optedOutOfDirectory' | translate }}</span>
             <p-toggleswitch [(ngModel)]="adminForm.isOptedOut" />
           </div>
         </div>
       </div>
       <ng-template #footer>
-        <p-button label="Cancel" icon="pi pi-times" severity="secondary"
+        <p-button [label]="'common.cancel' | translate" icon="pi pi-times" severity="secondary"
           [outlined]="true" (onClick)="adminEditVisible = false" />
-        <p-button label="Save" icon="pi pi-check"
+        <p-button [label]="'common.save' | translate" icon="pi pi-check"
           [loading]="adminSaving()" (onClick)="saveAdminEdit()" />
       </ng-template>
     </p-dialog>
@@ -342,24 +342,22 @@ import { RoleService } from '../role.service';
     <!-- ── Mark Departed confirm dialog ── -->
     <p-dialog
       [(visible)]="departVisible"
-      header="Mark as Departed?"
+      [header]="'dialog.markDepartedTitle' | translate"
       [modal]="true" [style]="{ width: '28rem' }"
       [draggable]="false" [resizable]="false"
       [closable]="!departing()"
     >
-      <p class="depart-message">
-        Apartment <strong>{{ departRef }}</strong> will be removed from the
-        active directory. This cannot be undone from this screen.
+      <p class="depart-message" [innerHTML]="t.instant('dialog.markDepartedBody', { ref: departRef })">
       </p>
       <ng-template #footer>
         <p-button
-          label="Cancel" icon="pi pi-times"
+          [label]="'common.cancel' | translate" icon="pi pi-times"
           severity="secondary" [outlined]="true"
           [disabled]="departing()"
           (onClick)="departVisible = false"
         />
         <p-button
-          label="Mark Departed" icon="pi pi-user-minus"
+          [label]="'dialog.markDeparted' | translate" icon="pi pi-user-minus"
           severity="danger"
           [loading]="departing()"
           (onClick)="confirmDepart()"
@@ -370,24 +368,23 @@ import { RoleService } from '../role.service';
     <!-- ── Erase my contact dialog ── -->
     <p-dialog
       [(visible)]="eraseMyVisible"
-      header="Delete my data?"
+      [header]="'dialog.eraseMineTitle' | translate"
       [modal]="true" [style]="{ width: '28rem' }"
       [draggable]="false" [resizable]="false"
       [closable]="!erasing()"
     >
       <p class="depart-message">
-        All your contact information will be <strong>permanently deleted</strong>.
-        This cannot be undone.
+        {{ 'dialog.permanentlyDeleted' | translate }}. {{ 'dialog.cannotBeUndone' | translate }}
       </p>
       <ng-template #footer>
         <p-button
-          label="Cancel" icon="pi pi-times"
+          [label]="'common.cancel' | translate" icon="pi pi-times"
           severity="secondary" [outlined]="true"
           [disabled]="erasing()"
           (onClick)="eraseMyVisible = false"
         />
         <p-button
-          label="Delete my data" icon="pi pi-trash"
+          [label]="'dialog.deleteMine' | translate" icon="pi pi-trash"
           severity="danger"
           [loading]="erasing()"
           (onClick)="confirmEraseMyContact()"
@@ -398,24 +395,24 @@ import { RoleService } from '../role.service';
     <!-- ── Erase contact dialog (admin) ── -->
     <p-dialog
       [(visible)]="eraseContactVisible"
-      header="Erase contact data?"
+      [header]="'dialog.eraseContactTitle' | translate"
       [modal]="true" [style]="{ width: '28rem' }"
       [draggable]="false" [resizable]="false"
       [closable]="!erasingContact()"
     >
       <p class="depart-message">
-        All data for apartment <strong>{{ eraseContactRef }}</strong> will be
-        <strong>permanently deleted</strong>. This cannot be undone.
+        {{ t.instant('dialog.markDepartedBody', { ref: eraseContactRef }) }}
+        {{ 'dialog.permanentlyDeleted' | translate }}. {{ 'dialog.cannotBeUndone' | translate }}
       </p>
       <ng-template #footer>
         <p-button
-          label="Cancel" icon="pi pi-times"
+          [label]="'common.cancel' | translate" icon="pi pi-times"
           severity="secondary" [outlined]="true"
           [disabled]="erasingContact()"
           (onClick)="eraseContactVisible = false"
         />
         <p-button
-          label="Erase contact" icon="pi pi-trash"
+          [label]="'dialog.eraseContact' | translate" icon="pi pi-trash"
           severity="danger"
           [loading]="erasingContact()"
           (onClick)="confirmEraseContact()"
@@ -442,11 +439,11 @@ import { RoleService } from '../role.service';
     .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; }
     .nav-link:hover { background: rgba(255,255,255,.1); }
     .nav-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
-    .role-label      { font-size: 0.8125rem; opacity: 0.75; white-space: nowrap; }
 
-    ::ng-deep .role-toggle .p-selectbutton { border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; overflow: hidden; }
-    ::ng-deep .role-toggle .p-togglebutton { background: transparent !important; color: rgba(255,255,255,0.8) !important; border: none !important; padding: 0.375rem 1rem; font-size: 0.8125rem; }
-    ::ng-deep .role-toggle .p-togglebutton.p-highlight { background: rgba(255,255,255,0.22) !important; color: white !important; font-weight: 600; }
+    .role-toggle { display: flex; gap: 0; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; overflow: hidden; }
+    .role-btn { background: transparent; color: rgba(255,255,255,0.8); border: none; padding: 0.375rem 1rem; font-size: 0.8125rem; cursor: pointer; }
+    .role-btn:hover { background: rgba(255,255,255,0.1); }
+    .role-active { background: rgba(255,255,255,0.22) !important; color: white !important; font-weight: 600; }
 
     .harmonia-content { max-width: 900px; margin: 2rem auto; padding: 0 1rem; transition: max-width 0.2s; }
     .harmonia-content.wide { max-width: 1200px; }
@@ -494,6 +491,7 @@ import { RoleService } from '../role.service';
 export class DirectoryListComponent implements OnInit {
   private readonly svc = inject(DirectoryService);
   private readonly msg = inject(MessageService);
+  readonly t = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   // ── shared ──
@@ -502,10 +500,13 @@ export class DirectoryListComponent implements OnInit {
 
   // ── role ──
   selectedRole: 'resident' | 'admin' = 'resident';
-  roleOptions = [
-    { label: 'Resident', value: 'resident' },
-    { label: 'Admin',    value: 'admin'    },
-  ];
+
+  get roleOptions() {
+    return [
+      { label: this.t.instant('app.roleResident'), value: 'resident' },
+      { label: this.t.instant('app.roleAdmin'),    value: 'admin'    },
+    ];
+  }
 
   onRoleChange(role: 'resident' | 'admin') {
     this.selectedRole = role;
@@ -547,12 +548,12 @@ export class DirectoryListComponent implements OnInit {
     if (this.selectedRole === 'resident') {
       this.svc.getDirectory().subscribe({
         next: e  => { this.entries.set(e);      this.loading.set(false); },
-        error: () => { this.error.set(API_ERROR); this.loading.set(false); },
+        error: () => { this.error.set(this.t.instant('directory.errApi')); this.loading.set(false); },
       });
     } else {
       this.svc.getAdminDirectory().subscribe({
         next: e  => { this.adminEntries.set(e); this.loading.set(false); },
-        error: () => { this.error.set(API_ERROR); this.loading.set(false); },
+        error: () => { this.error.set(this.t.instant('directory.errApi')); this.loading.set(false); },
       });
     }
   }
@@ -574,12 +575,12 @@ export class DirectoryListComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.editVisible = false;
-        this.msg.add({ severity: 'success', summary: 'Saved', detail: 'Your profile has been updated.' });
+        this.msg.add({ severity: 'success', summary: 'Saved', detail: this.t.instant('directory.toastProfileUpdated') });
         this.load();
       },
       error: () => {
         this.saving.set(false);
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not save. Please try again.' });
+        this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('directory.errSave') });
       },
     });
   }
@@ -609,12 +610,12 @@ export class DirectoryListComponent implements OnInit {
       next: () => {
         this.adminSaving.set(false);
         this.adminEditVisible = false;
-        this.msg.add({ severity: 'success', summary: 'Saved', detail: 'Resident updated.' });
+        this.msg.add({ severity: 'success', summary: 'Saved', detail: this.t.instant('directory.toastResidentUpdated') });
         this.load();
       },
       error: () => {
         this.adminSaving.set(false);
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not save. Please try again.' });
+        this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('directory.errSave') });
       },
     });
   }
@@ -635,12 +636,12 @@ export class DirectoryListComponent implements OnInit {
         this.msg.add({
           severity: 'success',
           summary: 'Departed',
-          detail: `${this.departRef} marked as departed.`,
+          detail: this.t.instant('directory.toastDeparted', { ref: this.departRef }),
         });
       },
       error: () => {
         this.departing.set(false);
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not mark as departed.' });
+        this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('directory.errDepart') });
       },
     });
   }
@@ -658,11 +659,11 @@ export class DirectoryListComponent implements OnInit {
         this.erasing.set(false);
         this.eraseMyVisible = false;
         this.entries.set([]);
-        this.msg.add({ severity: 'success', summary: 'Deleted', detail: 'Your data has been permanently deleted.' });
+        this.msg.add({ severity: 'success', summary: 'Deleted', detail: this.t.instant('directory.toastMyDataDeleted') });
       },
       error: () => {
         this.erasing.set(false);
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not delete your data.' });
+        this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('directory.errDeleteMine') });
       },
     });
   }
@@ -680,14 +681,12 @@ export class DirectoryListComponent implements OnInit {
         this.erasingContact.set(false);
         this.eraseContactVisible = false;
         this.adminEntries.update(list => list.filter(e => e.householdRef !== this.eraseContactRef));
-        this.msg.add({ severity: 'success', summary: 'Erased', detail: `Data for ${this.eraseContactRef} permanently deleted.` });
+        this.msg.add({ severity: 'success', summary: 'Erased', detail: this.t.instant('directory.toastContactErased', { ref: this.eraseContactRef }) });
       },
       error: () => {
         this.erasingContact.set(false);
-        this.msg.add({ severity: 'error', summary: 'Error', detail: 'Could not erase contact data.' });
+        this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('directory.errErase') });
       },
     });
   }
 }
-
-const API_ERROR = 'Could not reach the Harmonia API. Is it running on port 5000?';
