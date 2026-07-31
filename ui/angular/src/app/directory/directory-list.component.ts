@@ -116,7 +116,7 @@ import { RoleService } from '../role.service';
             >
               <ng-template #caption>
                 <div class="table-caption">
-                  <span>{{ entries().length }} resident(s)</span>
+                  <span>{{ 'directory.residentCount' | translate: { count: entries().length } }}</span>
                   <span class="p-input-icon-left">
                     <i class="pi pi-search"></i>
                     <input
@@ -164,7 +164,7 @@ import { RoleService } from '../role.service';
             >
               <ng-template #caption>
                 <div class="table-caption">
-                  <span>{{ adminEntries().length }} resident(s)</span>
+                  <span>{{ 'directory.residentCount' | translate: { count: adminEntries().length } }}</span>
                   <span class="p-input-icon-left">
                     <i class="pi pi-search"></i>
                     <input

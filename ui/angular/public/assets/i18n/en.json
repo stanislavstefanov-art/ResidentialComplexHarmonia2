@@ -71,7 +71,8 @@
     "errSave": "Could not save. Please try again.",
     "errDepart": "Could not mark as departed. Please try again.",
     "errDeleteMine": "Could not delete your data. Please try again.",
-    "errErase": "Could not erase contact data. Please try again."
+    "errErase": "Could not erase contact data. Please try again.",
+    "residentCount": "{{count}} resident(s)"
   },
   "dialog": {
     "myProfileTitle": "My Profile",
@@ -214,6 +215,7 @@
   },
   "adminPending": {
     "title": "Pending Sign-Ins",
+    "loading": "Loading…",
     "subtitle": "Users awaiting household assignment.",
     "accessRequired": "Admin access required to view pending sign-ins.",
     "oid": "OID",
