@@ -27,58 +27,140 @@ describe('ReservationsComponent', () => {
     return fixture;
   };
 
-  it('renders slot cards from API response', async () => {
+  it('renders 14 day buttons in the strip', async () => {
+    const fixture = await setupComponent({
+      getSlots: () => of({ day: '2026-08-01', slots: [] }),
+      claimSlot: () => of({ outcome: 'confirmed-yours' as const }),
+    });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.day-btn').length).toBe(14);
+  });
+
+  it('selecting a day loads slots and shows 16 hour buttons', async () => {
+    const fixture = await setupComponent({
+      getSlots: () => of({ day: '2026-08-02', slots: [] }),
+      claimSlot: () => of({ outcome: 'confirmed-yours' as const }),
+    });
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // Click first non-disabled (non-past) day button
+    const nonPast = Array.from(el.querySelectorAll<HTMLButtonElement>('.day-btn')).find(b => !b.disabled);
+    nonPast?.click();
+    fixture.detectChanges();
+
+    expect(el.querySelectorAll('.hour-btn').length).toBe(16); // hours 8..23
+  });
+
+  it('tapping start then end reveals summary pill and book button', async () => {
     const fixture = await setupComponent({
       getSlots: () => of({
-        day: '2026-07-16',
+        day: '2026-08-03',
         slots: [
-          { slotKey: 'morning', state: 'free' as const },
-          { slotKey: 'afternoon', state: 'taken-mine' as const },
-          { slotKey: 'evening', state: 'taken-other' as const },
+          { slotKey: '20', state: 'free' as const },
+          { slotKey: '21', state: 'free' as const },
+          { slotKey: '22', state: 'free' as const },
         ],
       }),
       claimSlot: () => of({ outcome: 'confirmed-yours' as const }),
     });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('[data-testid="slot-card"]').length).toBe(3);
-    expect(el.querySelector('[data-testid="slot-card"][data-state="free"]')).not.toBeNull();
-    expect(el.querySelector('[data-testid="slot-card"][data-state="taken-mine"]')).not.toBeNull();
+
+    // Select a future day (second non-disabled = tomorrow)
+    const nonPastBtns = Array.from(el.querySelectorAll<HTMLButtonElement>('.day-btn')).filter(b => !b.disabled);
+    (nonPastBtns[1] ?? nonPastBtns[0])?.click();
+    fixture.detectChanges();
+
+    // Tap hour 20 (start)
+    const h20 = el.querySelector<HTMLButtonElement>('[data-hour="20"]');
+    h20?.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.summary-pill')).toBeNull(); // no end yet
+
+    // Tap hour 22 (end = 22:00, range 20:00–22:00)
+    const h22 = el.querySelector<HTMLButtonElement>('[data-hour="22"]');
+    h22?.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.summary-pill')).not.toBeNull();
+    expect(el.querySelector('.book-btn')).not.toBeNull();
   });
 
-  it('claim happy path flips slot to taken-mine', async () => {
+  it('whole-evening chip sets start=17 end=23 without prior tap', async () => {
     const fixture = await setupComponent({
-      getSlots: () => of({ day: '2026-07-16', slots: [{ slotKey: 'morning', state: 'free' as const }] }),
+      getSlots: () => of({ day: '2026-08-04', slots: [] }),
       claimSlot: () => of({ outcome: 'confirmed-yours' as const }),
     });
     fixture.detectChanges();
-    const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="claim-btn"]');
-    btn?.click();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const nonPastBtns = Array.from(el.querySelectorAll<HTMLButtonElement>('.day-btn')).filter(b => !b.disabled);
+    (nonPastBtns[1] ?? nonPastBtns[0])?.click();
     fixture.detectChanges();
-    const card = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="slot-card"]');
-    expect(card?.getAttribute('data-state')).toBe('taken-mine');
+
+    // Click "Whole evening" chip (last dur-chip)
+    const chips = el.querySelectorAll<HTMLButtonElement>('.dur-chip');
+    chips[chips.length - 1]?.click();
+    fixture.detectChanges();
+
+    const pill = el.querySelector('.summary-pill');
+    expect(pill).not.toBeNull();
+    expect(pill?.textContent).toContain('17:00');
+    expect(pill?.textContent).toContain('23:00');
   });
 
-  it('conflict outcome flips slot to taken-other', async () => {
+  it('booking happy path calls claimSlot for each hour and flips cells to occupied', async () => {
+    let callCount = 0;
     const fixture = await setupComponent({
-      getSlots: () => of({ day: '2026-07-16', slots: [{ slotKey: 'morning', state: 'free' as const }] }),
-      claimSlot: () => of({ outcome: 'refused-already-taken' as const }),
+      getSlots: () => of({
+        day: '2026-08-05',
+        slots: [
+          { slotKey: '20', state: 'free' as const },
+          { slotKey: '21', state: 'free' as const },
+        ],
+      }),
+      claimSlot: (_day: string, _key: string) => {
+        callCount++;
+        return of({ outcome: 'confirmed-yours' as const });
+      },
     });
     fixture.detectChanges();
-    const btn = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="claim-btn"]');
-    btn?.click();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const nonPastBtns = Array.from(el.querySelectorAll<HTMLButtonElement>('.day-btn')).filter(b => !b.disabled);
+    (nonPastBtns[1] ?? nonPastBtns[0])?.click();
     fixture.detectChanges();
-    const card = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="slot-card"]');
-    expect(card?.getAttribute('data-state')).toBe('taken-other');
+
+    el.querySelector<HTMLButtonElement>('[data-hour="20"]')?.click();
+    fixture.detectChanges();
+    el.querySelector<HTMLButtonElement>('[data-hour="22"]')?.click();
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.book-btn')?.click();
+    fixture.detectChanges();
+
+    expect(callCount).toBe(2); // hours 20 and 21
+
+    // After booking, hours 20 and 21 become occupied (taken-mine in cache → h-occ)
+    expect(el.querySelector('[data-hour="20"]')?.classList.contains('h-occ')).toBe(true);
+    expect(el.querySelector('[data-hour="21"]')?.classList.contains('h-occ')).toBe(true);
   });
 
-  it('API error shows error state with retry button', async () => {
+  it('slot load error shows error state with retry button', async () => {
     const fixture = await setupComponent({
       getSlots: () => throwError(() => new Error('Network error')),
       claimSlot: () => of({ outcome: 'confirmed-yours' as const }),
     });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
+
+    // Select a day to trigger load
+    const nonPast = Array.from(el.querySelectorAll<HTMLButtonElement>('.day-btn')).find(b => !b.disabled);
+    nonPast?.click();
+    fixture.detectChanges();
+
     expect(el.querySelector('[data-testid="error-state"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="retry-btn"]')).not.toBeNull();
   });
