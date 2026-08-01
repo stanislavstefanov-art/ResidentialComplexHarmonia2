@@ -231,6 +231,9 @@
     "noneExpired": "No expired entries found."
   },
   "reservation": {
+    "bbqTitle": "BBQ Terrace",
+    "bookingConfirmedSummary": "Booking confirmed",
+    "slotTakenSummary": "Slot taken",
     "selectDate": "Select date:",
     "free": "Free",
     "yours": "Yours",
@@ -242,7 +245,22 @@
     "errLoad": "Could not load slots. Check your connection and try again.",
     "errTaken": "Slot already taken by someone else.",
     "errConfirm": "Could not confirm booking. Please try again.",
-    "errNetwork": "Network error. Please try again."
+    "errNetwork": "Network error. Please try again.",
+    "newReservation": "New Reservation",
+    "hintSelectDate": "Select a date.",
+    "hintSelectStart": "Tap a start time or choose 'Whole Evening'.",
+    "hintSelectEnd": "Tap an end time or select a duration.",
+    "duration": "Duration:",
+    "wholeEvening": "Whole evening",
+    "book": "Save",
+    "legendSelected": "Selected",
+    "legendOccupied": "Occupied",
+    "legendPast": "Past",
+    "upcomingTitle": "Upcoming Reservations",
+    "upcomingEmpty": "No upcoming reservations in the next period.",
+    "errOccupied": "Selected range contains occupied hours.",
+    "viewTimeline": "Timeline",
+    "viewCards": "Cards"
   },
   "residentPending": {
     "heading": "Account pending approval",
