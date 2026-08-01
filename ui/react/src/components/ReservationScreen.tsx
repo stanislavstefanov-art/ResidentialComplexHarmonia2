@@ -216,7 +216,7 @@ export default function ReservationScreen() {
     setSlotError(null);
     try {
       const r = await getSlots(key);
-      setSlotsMap(prev => new Map([...prev, [key, r.slots]]));
+      setSlotsMap(prev => { const m = new Map(prev); m.set(key, r.slots); return m; });
     } catch {
       slotsCache.current.delete(key);
       setSlotError(t('reservation.errLoad'));
