@@ -212,7 +212,7 @@ export default function ReservationScreen() {
   const loadDay = useCallback(async (key: string, force = false) => {
     if (!force && slotsCache.current.has(key)) return;
     slotsCache.current.add(key);
-    setLoadingKeys(prev => new Set([...prev, key]));
+    setLoadingKeys(prev => { const n = new Set(prev); n.add(key); return n; });
     setSlotError(null);
     try {
       const r = await getSlots(key);
