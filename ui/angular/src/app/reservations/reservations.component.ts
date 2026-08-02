@@ -737,8 +737,9 @@ export class ReservationsComponent implements OnInit {
       this.startHour.set(cell.hour);
       this.endHour.set(null);
     } else {
-      // Tap after start → set end (cell.hour = exclusive end time)
-      this.endHour.set(cell.hour);
+      // Tap after start → tapped hour is the last SELECTED slot (inclusive),
+      // so endHour is one past it (exclusive end used by the range logic).
+      this.endHour.set(Math.min(cell.hour + 1, H_END));
     }
   }
 

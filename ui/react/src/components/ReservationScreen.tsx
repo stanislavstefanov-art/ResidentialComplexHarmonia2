@@ -247,7 +247,8 @@ export default function ReservationScreen() {
       setStartHour(cell.hour);
       setEndHour(null);
     } else {
-      setEndHour(cell.hour);
+      // Tapped hour is the last selected slot (inclusive); endHour is one past it.
+      setEndHour(Math.min(cell.hour + 1, H_END));
     }
   };
 

@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners, LOCALE_ID, inject } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners, LOCALE_ID, inject, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, HttpClient } from '@angular/common/http';
@@ -20,6 +20,7 @@ import {
 } from '@azure/msal-angular';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
+import { provideServiceWorker } from '@angular/service-worker';
 
 const msalInstance = new PublicClientApplication({
   auth: {
@@ -77,6 +78,9 @@ export const appConfig: ApplicationConfig = {
         deps: [HttpClient],
       },
       defaultLanguage: 'bg',
-    }),
+    }), provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }),
   ],
 };

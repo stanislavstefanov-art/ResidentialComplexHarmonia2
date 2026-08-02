@@ -135,7 +135,7 @@ describe('ReservationsComponent', () => {
 
     el.querySelector<HTMLButtonElement>('[data-hour="20"]')?.click();
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('[data-hour="22"]')?.click();
+    el.querySelector<HTMLButtonElement>('[data-hour="21"]')?.click(); // inclusive end → endHour=22, range [20,22)
     fixture.detectChanges();
 
     el.querySelector<HTMLButtonElement>('.book-btn')?.click();

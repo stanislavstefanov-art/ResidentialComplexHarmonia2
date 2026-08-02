@@ -4,6 +4,7 @@ import './index.css';
 import './i18n';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { register as registerSW } from './serviceWorkerRegistration';
 import { MsalProvider } from '@azure/msal-react';
 import { msalInstance } from './authConfig';
 
@@ -23,3 +24,4 @@ msalInstance.initialize().then(() => {
 });
 
 reportWebVitals();
+registerSW();
