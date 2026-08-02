@@ -639,7 +639,7 @@ export class ReservationsComponent implements OnInit {
     const sel = this.selectedDate();
     const isToday = sel ? sofiaDateStr(sel) === sofiaDateStr(todayLocal()) : false;
     const nowH = isToday ? sofiaHourNow() : -1;
-    return Array.from({ length: H_END - H_START }, (_, i) => {
+    return Array.from({ length: H_END - H_START + 1 }, (_, i) => {
       const hour = H_START + i;
       const slot = slots.find(s => parseHour(s.slotKey) === hour);
       return {
