@@ -19,7 +19,7 @@ const STRIP_DAYS = 14;
 const DURATIONS = [1, 2, 3, 4] as const;
 
 // ── Timeline types ────────────────────────────────────────────────────────────
-type HourState = 'free' | 'occupied' | 'past' | 'sel' | 'sel-start';
+type HourState = 'free' | 'occupied' | 'past' | 'sel' | 'sel-start' | 'mine';
 interface DayCell { date: Date; abbr: string; num: number; isPast: boolean; isToday: boolean; isSelected: boolean; key: string; }
 interface HourCell { hour: number; slotKey: string; state: HourState; }
 interface UpcomingEntry { sortKey: string; label: string; range: string; }
@@ -165,7 +165,10 @@ export default function ReservationScreen() {
       const hour = H_START + i;
       const slot = hourSlot.get(hour);
       let state: HourState = 'free';
-      if (slot && slot.state !== 'free') state = 'occupied';
+      if (slot) {
+        if (slot.state === 'taken-mine') state = 'mine';
+        else if (slot.state !== 'free') state = 'occupied';
+      }
       if (isToday && hour < nowH) state = 'past';
       if (state === 'free') {
         if (startHour !== null && endHour !== null && hour >= startHour && hour < endHour) {
@@ -237,7 +240,7 @@ export default function ReservationScreen() {
   };
 
   const onHourTap = (cell: HourCell) => {
-    if (cell.state === 'occupied' || cell.state === 'past') return;
+    if (cell.state === 'occupied' || cell.state === 'past' || cell.state === 'mine') return;
     setBookError(null);
     if (startHour === null) {
       // First tap: immediately a 1-hour selection so the "1 ч" chip lights up.
@@ -270,7 +273,7 @@ export default function ReservationScreen() {
 
   const book = async () => {
     if (!selectedDate || startHour === null || endHour === null) return;
-    const blockedCells = hourCells.filter(c => c.hour >= startHour! && c.hour < endHour! && c.state === 'occupied');
+    const blockedCells = hourCells.filter(c => c.hour >= startHour! && c.hour < endHour! && (c.state === 'occupied' || c.state === 'mine'));
     if (blockedCells.length) { setBookError(t('reservation.errOccupied')); return; }
     const key = dateKey(selectedDate);
     const rangeCells = hourCells.filter(c => c.hour >= startHour! && c.hour < endHour!);
@@ -490,7 +493,7 @@ export default function ReservationScreen() {
                           key={cell.hour}
                           className="hour-btn"
                           data-hour={cell.hour}
-                          disabled={cell.state === 'occupied' || cell.state === 'past'}
+                          disabled={cell.state === 'occupied' || cell.state === 'past' || cell.state === 'mine'}
                           aria-pressed={cell.state === 'sel' || cell.state === 'sel-start'}
                           onClick={() => onHourTap(cell)}
                           sx={{
@@ -499,6 +502,7 @@ export default function ReservationScreen() {
                             transition: 'background .12s, border-color .12s, color .12s',
                             ...(cell.state === 'occupied' && { background: '#e53935', borderColor: '#c62828', color: 'white', cursor: 'not-allowed' }),
                             ...(cell.state === 'past' && { background: '#ebebeb', color: '#bbb', borderColor: '#ddd', cursor: 'not-allowed' }),
+                            ...(cell.state === 'mine' && { background: '#b2d4bf', borderColor: '#2e6b4f', color: '#1a3d2b', cursor: 'not-allowed' }),
                             ...(cell.state === 'sel' && { background: '#2e6b4f', borderColor: '#1e4f37', color: 'white' }),
                             ...(cell.state === 'sel-start' && { background: '#2e6b4f', borderColor: '#1a3d2b', color: 'white', boxShadow: '0 0 0 2.5px white, 0 0 0 4px #2e6b4f' }),
                             ...(cell.state === 'free' && { background: '#f4f4f4', borderColor: '#ddd', color: '#333', '&:hover': { borderColor: '#2e6b4f', background: '#e8f3ed' } }),
@@ -513,12 +517,13 @@ export default function ReservationScreen() {
                   {/* Legend */}
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '14px', mb: 1.5 }}>
                     {[
-                      { color: '#2e6b4f', filled: true, label: t('reservation.legendSelected') },
+                      { color: '#2e6b4f', filled: true, label: t('reservation.yours') },
+                      { color: '#2e6b4f', filled: true, label: t('reservation.legendSelected'), style: 'italic' as const },
                       { color: '#e53935', filled: true, label: t('reservation.legendOccupied') },
                       { color: '#aaa', filled: false, label: t('reservation.free') },
                       { color: '#ccc', filled: false, label: t('reservation.legendPast') },
                     ].map(leg => (
-                      <Typography key={leg.label} sx={{ fontSize: '.78rem', color: leg.color }}>
+                      <Typography key={leg.label} sx={{ fontSize: '.78rem', color: leg.color, ...('style' in leg && leg.style === 'italic' ? { fontStyle: 'italic' } : {}) }}>
                         {leg.filled ? '●' : '○'} {leg.label}
                       </Typography>
                     ))}
