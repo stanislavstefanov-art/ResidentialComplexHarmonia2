@@ -90,6 +90,7 @@ export default function ReservationScreen() {
   const [tlBooking, setTlBooking] = useState(false);
   const [bookError, setBookError] = useState<string | null>(null);
   const slotsCache = useRef<Set<string>>(new Set());
+  const prevViewModeRef = useRef(viewMode);
 
   // ── Cards handlers ──────────────────────────────────────────────────────────
   const loadSlots = useCallback(async () => {
@@ -306,6 +307,31 @@ export default function ReservationScreen() {
       setTlBooking(false);
     }
   };
+
+  // Sync date and re-fetch slot data when switching between views.
+  // Cards uses `day` (string); timeline uses `selectedDate` (Date) + slotsMap.
+  // Without this, bookings made in one view are invisible in the other.
+  useEffect(() => {
+    const prev = prevViewModeRef.current;
+    prevViewModeRef.current = viewMode;
+    if (prev === viewMode) return;
+    if (viewMode === 'timeline') {
+      const [y, m, d] = day.split('-').map(Number);
+      const target = new Date(y, m - 1, d);
+      if (target >= todayDate()) {
+        setSelectedDate(target);
+        const diff = Math.floor((target.getTime() - weekStart.getTime()) / 86400000);
+        if (diff < 0 || diff >= STRIP_DAYS) setWeekStart(addDays(target, -1));
+        setStartHour(null);
+        setEndHour(null);
+        loadDay(day, true);
+      }
+    } else if (selectedDate) {
+      setDay(dateKey(selectedDate));
+    }
+  // viewMode is the only trigger; other values are read from the current render's closure.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
 
   const tlLoadingCurrent = selectedDate ? loadingKeys.has(dateKey(selectedDate)) : false;
   const isDurActive = (n: number) => startHour !== null && endHour !== null && endHour - startHour === n;
