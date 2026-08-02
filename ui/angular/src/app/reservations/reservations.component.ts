@@ -25,7 +25,7 @@ const EVENING_END = 23;
 const STRIP_DAYS = 14;
 
 // ── Types ────────────────────────────────────────────────────────────────────
-type HourState = 'free' | 'occupied' | 'past' | 'sel' | 'sel-start';
+type HourState = 'free' | 'occupied' | 'past' | 'sel' | 'sel-start' | 'mine';
 
 interface PrimTranslation {
   dayNames: string[];
@@ -204,7 +204,8 @@ function fmtDate(d: Date): string {
                         [class.h-past]="cell.state === 'past'"
                         [class.h-sel]="cell.state === 'sel'"
                         [class.h-start]="cell.state === 'sel-start'"
-                        [disabled]="cell.state === 'occupied' || cell.state === 'past'"
+                        [class.h-mine]="cell.state === 'mine'"
+                        [disabled]="cell.state === 'occupied' || cell.state === 'past' || cell.state === 'mine'"
                         [attr.aria-label]="cell.hour + ':00'"
                         [attr.aria-pressed]="cell.state === 'sel' || cell.state === 'sel-start'"
                         [attr.data-hour]="cell.hour"
@@ -216,6 +217,7 @@ function fmtDate(d: Date): string {
 
                 <!-- Legend -->
                 <div class="legend">
+                  <span class="leg leg-mine">&#9679; {{ 'reservation.yours' | translate }}</span>
                   <span class="leg leg-sel">&#9679; {{ 'reservation.legendSelected' | translate }}</span>
                   <span class="leg leg-occ">&#9679; {{ 'reservation.legendOccupied' | translate }}</span>
                   <span class="leg leg-free">&#9675; {{ 'reservation.free' | translate }}</span>
@@ -388,6 +390,7 @@ function fmtDate(d: Date): string {
     .hour-btn:disabled { cursor: not-allowed; }
     .hour-btn.h-occ { background: #e53935; border-color: #c62828; color: white; }
     .hour-btn.h-past { background: #ebebeb; color: #bbb; border-color: #ddd; }
+    .hour-btn.h-mine { background: #b2d4bf; border-color: #2e6b4f; color: #1a3d2b; }
     .hour-btn.h-sel { background: #2e6b4f; border-color: #1e4f37; color: white; }
     .hour-btn.h-start {
       background: #2e6b4f; border-color: #1a3d2b; color: white;
@@ -397,7 +400,8 @@ function fmtDate(d: Date): string {
     /* Legend */
     .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
     .leg { font-size: .78rem; color: #555; }
-    .leg-sel { color: #2e6b4f; }
+    .leg-mine { color: #2e6b4f; }
+    .leg-sel { color: #2e6b4f; font-style: italic; }
     .leg-occ { color: #e53935; }
     .leg-free { color: #aaa; }
     .leg-past { color: #ccc; }
@@ -617,7 +621,10 @@ export class ReservationsComponent implements OnInit {
       const slot = hourSlot.get(hour);
 
       let state: HourState = 'free';
-      if (slot && slot.state !== 'free') state = 'occupied';
+      if (slot) {
+        if (slot.state === 'taken-mine') state = 'mine';
+        else if (slot.state !== 'free') state = 'occupied';
+      }
       if (isToday && hour < nowH) state = 'past';
 
       // Overlay selection (only on free hours)
@@ -722,20 +729,22 @@ export class ReservationsComponent implements OnInit {
   }
 
   onHourTap(cell: HourCell): void {
-    if (cell.state === 'occupied' || cell.state === 'past') return;
+    if (cell.state === 'occupied' || cell.state === 'past' || cell.state === 'mine') return;
     this.bookError.set(null);
     const s = this.startHour();
 
     if (s === null) {
+      // First tap: immediately a 1-hour selection so the "1 ч" chip lights up.
       this.startHour.set(cell.hour);
+      this.endHour.set(Math.min(cell.hour + 1, H_END));
     } else if (cell.hour === s) {
       // Tap start again → deselect
       this.startHour.set(null);
       this.endHour.set(null);
     } else if (cell.hour < s) {
-      // Tap before start → move start
+      // Tap before start → reset to new 1-hour selection.
       this.startHour.set(cell.hour);
-      this.endHour.set(null);
+      this.endHour.set(Math.min(cell.hour + 1, H_END));
     } else {
       // Tap after start → tapped hour is the last SELECTED slot (inclusive),
       // so endHour is one past it (exclusive end used by the range logic).

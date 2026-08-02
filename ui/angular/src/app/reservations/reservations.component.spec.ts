@@ -77,9 +77,11 @@ describe('ReservationsComponent', () => {
     h20?.click();
     fixture.detectChanges();
 
-    expect(el.querySelector('.summary-pill')).toBeNull(); // no end yet
+    // First tap immediately produces a 1-hour selection (20:00–21:00)
+    expect(el.querySelector('.summary-pill')).not.toBeNull();
+    expect(el.querySelector('.book-btn')).not.toBeNull();
 
-    // Tap hour 22 (end = 22:00, range 20:00–22:00)
+    // Tap hour 22 (end = 22:00, range 20:00–23:00)
     const h22 = el.querySelector<HTMLButtonElement>('[data-hour="22"]');
     h22?.click();
     fixture.detectChanges();
@@ -143,9 +145,9 @@ describe('ReservationsComponent', () => {
 
     expect(callCount).toBe(2); // hours 20 and 21
 
-    // After booking, hours 20 and 21 become occupied (taken-mine in cache → h-occ)
-    expect(el.querySelector('[data-hour="20"]')?.classList.contains('h-occ')).toBe(true);
-    expect(el.querySelector('[data-hour="21"]')?.classList.contains('h-occ')).toBe(true);
+    // After booking, hours 20 and 21 become mine (taken-mine → h-mine, distinct from h-occ)
+    expect(el.querySelector('[data-hour="20"]')?.classList.contains('h-mine')).toBe(true);
+    expect(el.querySelector('[data-hour="21"]')?.classList.contains('h-mine')).toBe(true);
   });
 
   it('slot load error shows error state with retry button', async () => {
