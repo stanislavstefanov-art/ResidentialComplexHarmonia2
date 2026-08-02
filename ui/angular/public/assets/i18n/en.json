@@ -266,7 +266,9 @@
     "legendPast": "Past",
     "upcomingTitle": "Upcoming Reservations",
     "upcomingEmpty": "No upcoming reservations in the next period.",
-    "errOccupied": "Selected range contains occupied hours."
+    "errOccupied": "Selected range contains occupied hours.",
+    "viewTimeline": "Timeline",
+    "viewCards": "Cards"
   },
   "residentPending": {
     "heading": "Account pending approval",

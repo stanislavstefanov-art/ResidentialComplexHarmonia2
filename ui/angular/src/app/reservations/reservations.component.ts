@@ -136,6 +136,16 @@ function fmtDate(d: Date): string {
           <ng-template #title>{{ 'reservation.newReservation' | translate }}</ng-template>
           <ng-template #content>
 
+            <!-- View mode toggle -->
+            <div class="view-toggle">
+              <button class="vt-btn" [class.vt-active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
+                {{ 'reservation.viewTimeline' | translate }}
+              </button>
+              <button class="vt-btn" [class.vt-active]="viewMode() === 'cards'" (click)="setViewMode('cards')">
+                {{ 'reservation.viewCards' | translate }}
+              </button>
+            </div>
+
             <!-- Week navigation -->
             <div class="week-nav">
               <button class="arrow-btn" (click)="prevWeek()" aria-label="Предишна седмица">&#8249;</button>
@@ -181,7 +191,7 @@ function fmtDate(d: Date): string {
                   </button>
                 </div>
 
-              } @else {
+              } @else if (viewMode() === 'timeline') {
 
                 <!-- Hour timeline -->
                 <div class="timeline-scroll-wrap">
@@ -249,6 +259,34 @@ function fmtDate(d: Date): string {
 
                   @if (bookError()) {
                     <p class="hint-text err-text">{{ bookError() }}</p>
+                  }
+                </div>
+
+              } @else {
+
+                <!-- Card grid -->
+                <div class="slot-grid" role="group">
+                  @for (card of cardSlots(); track card.hour) {
+                    <div class="slot-card"
+                      [class.sc-free]="card.state === 'free' && !card.isPast"
+                      [class.sc-mine]="card.state === 'taken-mine'"
+                      [class.sc-other]="card.state === 'taken-other'"
+                      [class.sc-past]="card.isPast">
+                      <span class="sc-hour">{{ card.hour | number:'2.0-0' }}:00</span>
+                      <span class="sc-badge">
+                        @if (card.isPast) { {{ 'reservation.legendPast' | translate }}
+                        } @else if (card.state === 'taken-mine') { {{ 'reservation.yours' | translate }}
+                        } @else if (card.state === 'taken-other') { {{ 'reservation.taken' | translate }}
+                        } @else { {{ 'reservation.free' | translate }} }
+                      </span>
+                      @if (card.state === 'free' && !card.isPast) {
+                        <button class="sc-btn"
+                          [disabled]="claimingSlot() === card.slotKey"
+                          (click)="claimSingle(card.slotKey)">
+                          {{ (claimingSlot() === card.slotKey ? 'reservation.claiming' : 'reservation.book') | translate }}
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
 
@@ -402,6 +440,46 @@ function fmtDate(d: Date): string {
     .spinner-wrap { display: flex; justify-content: center; padding: 32px; }
     .center-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 0; }
 
+    /* View toggle */
+    .view-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
+    .vt-btn {
+      padding: 5px 16px; border-radius: 16px; font-size: .85rem;
+      background: white; border: 1px solid #bbb; cursor: pointer; color: #555;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+    .vt-btn:hover { border-color: #2e6b4f; color: #2e6b4f; }
+    .vt-btn.vt-active { background: #2e6b4f; border-color: #2e6b4f; color: white; font-weight: 600; }
+
+    /* Card grid */
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px; margin-bottom: 12px;
+    }
+    .slot-card {
+      border: 1px solid #ddd; border-left: 4px solid #aaa;
+      border-radius: 6px; padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+      background: white;
+    }
+    .slot-card.sc-free { border-left-color: #2e6b4f; }
+    .slot-card.sc-mine { border-left-color: #1976d2; }
+    .slot-card.sc-other { border-left-color: #e53935; }
+    .slot-card.sc-past { border-left-color: #ccc; opacity: .6; }
+    .sc-hour { font-size: .95rem; font-weight: 700; color: #333; }
+    .sc-badge { font-size: .75rem; color: #666; }
+    .slot-card.sc-free .sc-badge { color: #2e6b4f; }
+    .slot-card.sc-mine .sc-badge { color: #1976d2; }
+    .slot-card.sc-other .sc-badge { color: #e53935; }
+    .sc-btn {
+      margin-top: 2px; padding: 5px 0; border-radius: 4px;
+      background: #2e6b4f; color: white; border: none;
+      font-size: .8rem; font-weight: 600; cursor: pointer;
+      transition: background .12s;
+    }
+    .sc-btn:hover:not(:disabled) { background: #1e4f37; }
+    .sc-btn:disabled { opacity: .6; cursor: not-allowed; }
+
     /* Upcoming */
     .upcoming { padding: 0; }
     .upcoming-title { font-size: .9rem; color: #2e6b4f; margin: 0 0 8px; font-weight: 400; }
@@ -444,6 +522,12 @@ export class ReservationsComponent implements OnInit {
   // ── Booking in-flight state ───────────────────────────────────────────────
   readonly booking = signal(false);
   readonly bookError = signal<string | null>(null);
+
+  // ── View mode ─────────────────────────────────────────────────────────────
+  readonly viewMode = signal<'timeline' | 'cards'>(
+    (localStorage.getItem('harmonia-reservation-view') as 'timeline' | 'cards') ?? 'timeline'
+  );
+  readonly claimingSlot = signal<string>('');
 
   // ── Locale-aware computed helpers ─────────────────────────────────────────
   private readonly dayMins = computed(() => {
@@ -546,6 +630,24 @@ export class ReservationsComponent implements OnInit {
       }
 
       return { hour, slotKey: slot?.slotKey ?? String(hour), state };
+    });
+  });
+
+  // ── Card-grid slots (raw state, no range overlay) ────────────────────────
+  readonly cardSlots = computed(() => {
+    const slots = this.currentSlots();
+    const sel = this.selectedDate();
+    const isToday = sel ? sofiaDateStr(sel) === sofiaDateStr(todayLocal()) : false;
+    const nowH = isToday ? sofiaHourNow() : -1;
+    return Array.from({ length: H_END - H_START }, (_, i) => {
+      const hour = H_START + i;
+      const slot = slots.find(s => parseHour(s.slotKey) === hour);
+      return {
+        hour,
+        slotKey: slot?.slotKey ?? String(hour),
+        state: slot?.state ?? 'free',
+        isPast: isToday && hour < nowH,
+      };
     });
   });
 
@@ -725,6 +827,42 @@ export class ReservationsComponent implements OnInit {
       } else {
         this.bookError.set(this.t.instant('reservation.errNetwork'));
       }
+    });
+  }
+
+  setViewMode(mode: 'timeline' | 'cards'): void {
+    this.viewMode.set(mode);
+    localStorage.setItem('harmonia-reservation-view', mode);
+  }
+
+  claimSingle(slotKey: string): void {
+    const sel = this.selectedDate();
+    if (!sel) return;
+    const day = sofiaDateStr(sel);
+    this.claimingSlot.set(slotKey);
+    this.svc.claimSlot(day, slotKey).subscribe({
+      next: r => {
+        this.claimingSlot.set('');
+        if (r.outcome === 'confirmed-yours') {
+          this.slotsMap.update(map => {
+            const newMap = new Map(map);
+            const daySlots = [...(newMap.get(day) ?? [])];
+            const idx = daySlots.findIndex(s => s.slotKey === slotKey);
+            if (idx >= 0) daySlots[idx] = { ...daySlots[idx], state: 'taken-mine' };
+            else daySlots.push({ slotKey, state: 'taken-mine' });
+            newMap.set(day, daySlots);
+            return newMap;
+          });
+          this.msg.add({ severity: 'success', summary: this.t.instant('reservation.bookingConfirmedSummary'), life: 3000 });
+        } else if (r.outcome === 'refused-already-taken') {
+          this.loadDay(day, true);
+          this.msg.add({ severity: 'warn', summary: this.t.instant('reservation.slotTakenSummary'), life: 3000 });
+        }
+      },
+      error: () => {
+        this.claimingSlot.set('');
+        this.msg.add({ severity: 'error', summary: this.t.instant('reservation.errNetwork'), life: 3000 });
+      },
     });
   }
 
