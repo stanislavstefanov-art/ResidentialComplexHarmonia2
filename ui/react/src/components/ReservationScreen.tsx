@@ -60,7 +60,7 @@ interface Feedback { msg: string; severity: 'success' | 'warning' | 'error'; }
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ReservationScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // ── View mode ───────────────────────────────────────────────────────────────
   const [viewMode, setViewModeState] = useState<'timeline' | 'cards'>(() =>
@@ -372,6 +372,7 @@ export default function ReservationScreen() {
               type="date"
               value={day}
               min={todayString()}
+              lang={i18n.language}
               onChange={e => setDay(e.target.value)}
               style={{ padding: '6px 8px', borderRadius: 4, border: '1px solid #ccc', fontSize: 14 }}
             />
@@ -495,6 +496,7 @@ export default function ReservationScreen() {
                           data-hour={cell.hour}
                           disabled={cell.state === 'occupied' || cell.state === 'past' || cell.state === 'mine'}
                           aria-pressed={cell.state === 'sel' || cell.state === 'sel-start'}
+                          title={cell.state === 'mine' ? t('reservation.yours') : undefined}
                           onClick={() => onHourTap(cell)}
                           sx={{
                             minWidth: 54, height: 50, borderRadius: '4px', border: '1px solid',
@@ -515,15 +517,19 @@ export default function ReservationScreen() {
                   </Box>
 
                   {/* Legend */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '14px', mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '14px', mb: 1.5, alignItems: 'center' }}>
+                    {/* 'mine' uses a swatch that matches the actual button appearance */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '.78rem', color: '#1a3d2b' }}>
+                      <Box sx={{ width: 14, height: 11, background: '#b2d4bf', border: '1.5px solid #2e6b4f', borderRadius: '2px', flexShrink: 0 }} />
+                      {t('reservation.yours')}
+                    </Box>
                     {[
-                      { color: '#2e6b4f', filled: true, label: t('reservation.yours') },
-                      { color: '#2e6b4f', filled: true, label: t('reservation.legendSelected'), style: 'italic' as const },
+                      { color: '#2e6b4f', filled: true, label: t('reservation.legendSelected'), italic: true },
                       { color: '#e53935', filled: true, label: t('reservation.legendOccupied') },
                       { color: '#aaa', filled: false, label: t('reservation.free') },
                       { color: '#ccc', filled: false, label: t('reservation.legendPast') },
                     ].map(leg => (
-                      <Typography key={leg.label} sx={{ fontSize: '.78rem', color: leg.color, ...('style' in leg && leg.style === 'italic' ? { fontStyle: 'italic' } : {}) }}>
+                      <Typography key={leg.label} sx={{ fontSize: '.78rem', color: leg.color, ...(leg.italic ? { fontStyle: 'italic' } : {}) }}>
                         {leg.filled ? '●' : '○'} {leg.label}
                       </Typography>
                     ))}
