@@ -206,6 +206,7 @@ function fmtDate(d: Date): string {
                         [class.h-start]="cell.state === 'sel-start'"
                         [class.h-mine]="cell.state === 'mine'"
                         [disabled]="cell.state === 'occupied' || cell.state === 'past' || cell.state === 'mine'"
+                        [attr.title]="cell.state === 'mine' ? ('reservation.yours' | translate) : null"
                         [attr.aria-label]="cell.hour + ':00'"
                         [attr.aria-pressed]="cell.state === 'sel' || cell.state === 'sel-start'"
                         [attr.data-hour]="cell.hour"
@@ -217,7 +218,7 @@ function fmtDate(d: Date): string {
 
                 <!-- Legend -->
                 <div class="legend">
-                  <span class="leg leg-mine">&#9679; {{ 'reservation.yours' | translate }}</span>
+                  <span class="leg leg-mine"><span class="mine-swatch" aria-hidden="true"></span>{{ 'reservation.yours' | translate }}</span>
                   <span class="leg leg-sel">&#9679; {{ 'reservation.legendSelected' | translate }}</span>
                   <span class="leg leg-occ">&#9679; {{ 'reservation.legendOccupied' | translate }}</span>
                   <span class="leg leg-free">&#9675; {{ 'reservation.free' | translate }}</span>
@@ -400,7 +401,8 @@ function fmtDate(d: Date): string {
     /* Legend */
     .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
     .leg { font-size: .78rem; color: #555; }
-    .leg-mine { color: #2e6b4f; }
+    .leg-mine { color: #1a3d2b; }
+    .mine-swatch { display: inline-block; width: 14px; height: 11px; background: #b2d4bf; border: 1.5px solid #2e6b4f; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
     .leg-sel { color: #2e6b4f; font-style: italic; }
     .leg-occ { color: #e53935; }
     .leg-free { color: #aaa; }
