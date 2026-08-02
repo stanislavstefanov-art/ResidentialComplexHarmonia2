@@ -239,13 +239,16 @@ export default function ReservationScreen() {
     if (cell.state === 'occupied' || cell.state === 'past') return;
     setBookError(null);
     if (startHour === null) {
+      // First tap: immediately a 1-hour selection so the "1 ч" chip lights up.
       setStartHour(cell.hour);
+      setEndHour(Math.min(cell.hour + 1, H_END));
     } else if (cell.hour === startHour) {
       setStartHour(null);
       setEndHour(null);
     } else if (cell.hour < startHour) {
+      // Tapping before the current start resets to a new 1-hour selection.
       setStartHour(cell.hour);
-      setEndHour(null);
+      setEndHour(Math.min(cell.hour + 1, H_END));
     } else {
       // Tapped hour is the last selected slot (inclusive); endHour is one past it.
       setEndHour(Math.min(cell.hour + 1, H_END));
