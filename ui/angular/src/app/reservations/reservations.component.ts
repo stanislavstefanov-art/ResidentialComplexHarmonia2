@@ -23,6 +23,7 @@ const H_END = 23;         // last bookable hour start (23:00-24:00); 16 cells to
 const EVENING_START = 17;
 const EVENING_END = 23;
 const STRIP_DAYS = 14;
+const MAX_AHEAD = 60;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type HourState = 'free' | 'occupied' | 'past' | 'sel' | 'sel-start' | 'mine';
@@ -150,7 +151,7 @@ function fmtDate(d: Date): string {
             <div class="week-nav">
               <button class="arrow-btn" (click)="prevWeek()" aria-label="Предишна седмица">&#8249;</button>
               <span class="month-label">{{ monthLabel() }}</span>
-              <button class="arrow-btn" (click)="nextWeek()" aria-label="Следваща седмица">&#8250;</button>
+              <button class="arrow-btn" [disabled]="!canGoNext()" (click)="nextWeek()" aria-label="Следваща седмица">&#8250;</button>
             </div>
 
             <!-- Day strip -->
@@ -514,6 +515,8 @@ export class ReservationsComponent implements OnInit {
   // ── Week strip state ──────────────────────────────────────────────────────
   private readonly _weekStart = signal(addDays(todayLocal(), -1));
   readonly weekStart = this._weekStart.asReadonly();
+  readonly maxDate = computed(() => addDays(todayLocal(), MAX_AHEAD));
+  readonly canGoNext = computed(() => addDays(this._weekStart(), 7) <= this.maxDate());
 
   // ── Booking selection state ───────────────────────────────────────────────
   readonly selectedDate = signal<Date | null>(null);
@@ -560,6 +563,7 @@ export class ReservationsComponent implements OnInit {
     const sel = this.selectedDate();
     const selStr = sel ? sofiaDateStr(sel) : null;
 
+    const max = this.maxDate();
     return Array.from({ length: STRIP_DAYS }, (_, i) => {
       const date = addDays(ws, i);
       const key = sofiaDateStr(date);
@@ -567,7 +571,7 @@ export class ReservationsComponent implements OnInit {
         date,
         abbr: dayMins[date.getDay()],
         num: date.getDate(),
-        isPast: date < today,
+        isPast: date < today || date > max,
         isToday: key === todayStr,
         isSelected: key === selStr,
         key,
@@ -774,6 +778,7 @@ export class ReservationsComponent implements OnInit {
   }
 
   nextWeek(): void {
+    if (!this.canGoNext()) return;
     this._weekStart.set(addDays(this._weekStart(), 7));
   }
 

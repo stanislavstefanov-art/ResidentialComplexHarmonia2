@@ -16,6 +16,7 @@ const H_END = 23;
 const EVENING_START = 17;
 const EVENING_END = 23;
 const STRIP_DAYS = 14;
+const MAX_AHEAD = 60;
 const DURATIONS = [1, 2, 3, 4] as const;
 
 // ── Timeline types ────────────────────────────────────────────────────────────
@@ -134,10 +135,14 @@ export default function ReservationScreen() {
     return slotsMap.get(dateKey(selectedDate)) ?? [];
   }, [selectedDate, slotsMap]);
 
+  const maxDate = useMemo(() => addDays(todayDate(), MAX_AHEAD), []);
+  const canGoNext = addDays(weekStart, 7) <= maxDate;
+
   const visibleDays = useMemo<DayCell[]>(() => {
     const today = todayDate();
     const todayStr = dateKey(today);
     const selStr = selectedDate ? dateKey(selectedDate) : null;
+    const max = addDays(today, MAX_AHEAD);
     return Array.from({ length: STRIP_DAYS }, (_, i) => {
       const date = addDays(weekStart, i);
       const key = dateKey(date);
@@ -145,7 +150,7 @@ export default function ReservationScreen() {
         date,
         abbr: date.toLocaleDateString('en', { weekday: 'short' }).slice(0, 2).toUpperCase(),
         num: date.getDate(),
-        isPast: date < today,
+        isPast: date < today || date > max,
         isToday: key === todayStr,
         isSelected: key === selStr,
         key,
@@ -384,6 +389,7 @@ export default function ReservationScreen() {
                 type="date"
                 value={day}
                 min={todayString()}
+                max={dateKey(maxDate)}
                 onChange={e => setDay(e.target.value)}
                 style={{
                   position: 'absolute', inset: 0, width: '100%', height: '100%',
@@ -448,7 +454,7 @@ export default function ReservationScreen() {
                 return first.getMonth() === last.getMonth() ? `${fm} ${first.getFullYear()}` : `${fm} / ${lm} ${last.getFullYear()}`;
               })()}
             </Typography>
-            <Button size="small" onClick={() => setWeekStart(prev => addDays(prev, 7))} sx={{ minWidth: 32, px: 0.5 }}>›</Button>
+            <Button size="small" disabled={!canGoNext} onClick={() => setWeekStart(prev => addDays(prev, 7))} sx={{ minWidth: 32, px: 0.5 }}>›</Button>
           </Box>
 
           {/* Day strip */}
