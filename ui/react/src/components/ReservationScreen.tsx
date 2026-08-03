@@ -368,14 +368,29 @@ export default function ReservationScreen() {
         <>
           <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{t('reservation.selectDate')}</Typography>
-            <input
-              type="date"
-              value={day}
-              min={todayString()}
-              lang={i18n.language}
-              onChange={e => setDay(e.target.value)}
-              style={{ padding: '6px 8px', borderRadius: 4, border: '1px solid #ccc', fontSize: 14 }}
-            />
+            {/* Overlay pattern: formatted DD.MM.YYYY display, transparent native input on top.
+                Chrome on Windows ignores lang attr and uses OS locale for date format, so we
+                control the visible text ourselves and let the hidden input receive clicks. */}
+            <Box sx={{
+              position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 1,
+              padding: '6px 8px', borderRadius: '4px', border: '1px solid #ccc',
+              fontSize: 14, cursor: 'pointer', userSelect: 'none',
+            }}>
+              <span style={{ pointerEvents: 'none', minWidth: 82 }}>
+                {day ? `${day.slice(8, 10)}.${day.slice(5, 7)}.${day.slice(0, 4)}` : ''}
+              </span>
+              <span style={{ pointerEvents: 'none', opacity: 0.45, fontSize: 13 }}>📅</span>
+              <input
+                type="date"
+                value={day}
+                min={todayString()}
+                onChange={e => setDay(e.target.value)}
+                style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  opacity: 0, cursor: 'pointer', fontSize: 'inherit',
+                }}
+              />
+            </Box>
           </Box>
 
           {loading && (
