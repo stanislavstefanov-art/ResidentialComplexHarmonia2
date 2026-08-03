@@ -738,7 +738,7 @@ export class ReservationsComponent implements OnInit {
     if (s === null) {
       // First tap: immediately a 1-hour selection so the "1 ч" chip lights up.
       this.startHour.set(cell.hour);
-      this.endHour.set(Math.min(cell.hour + 1, H_END));
+      this.endHour.set(Math.min(cell.hour + 1, H_END + 1));
     } else if (cell.hour === s) {
       // Tap start again → deselect
       this.startHour.set(null);
@@ -746,18 +746,18 @@ export class ReservationsComponent implements OnInit {
     } else if (cell.hour < s) {
       // Tap before start → reset to new 1-hour selection.
       this.startHour.set(cell.hour);
-      this.endHour.set(Math.min(cell.hour + 1, H_END));
+      this.endHour.set(Math.min(cell.hour + 1, H_END + 1));
     } else {
       // Tap after start → tapped hour is the last SELECTED slot (inclusive),
       // so endHour is one past it (exclusive end used by the range logic).
-      this.endHour.set(Math.min(cell.hour + 1, H_END));
+      this.endHour.set(Math.min(cell.hour + 1, H_END + 1));
     }
   }
 
   setDuration(hours: number): void {
     const s = this.startHour();
     if (s === null) return;
-    this.endHour.set(Math.min(s + hours, H_END));
+    this.endHour.set(Math.min(s + hours, H_END + 1));
     this.bookError.set(null);
   }
 
