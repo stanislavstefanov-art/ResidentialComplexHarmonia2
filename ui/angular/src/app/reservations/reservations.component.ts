@@ -627,7 +627,7 @@ export class ReservationsComponent implements OnInit {
         if (slot.state === 'taken-mine') state = 'mine';
         else if (slot.state !== 'free') state = 'occupied';
       }
-      if (isToday && hour < nowH) state = 'past';
+      if (isToday && hour <= nowH) state = 'past';
 
       // Overlay selection (only on free hours)
       if (state === 'free') {
@@ -655,7 +655,7 @@ export class ReservationsComponent implements OnInit {
         hour,
         slotKey: slot?.slotKey ?? String(hour),
         state: slot?.state ?? 'free',
-        isPast: isToday && hour < nowH,
+        isPast: isToday && hour <= nowH,
       };
     });
   });

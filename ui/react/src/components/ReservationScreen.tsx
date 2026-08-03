@@ -169,7 +169,7 @@ export default function ReservationScreen() {
         if (slot.state === 'taken-mine') state = 'mine';
         else if (slot.state !== 'free') state = 'occupied';
       }
-      if (isToday && hour < nowH) state = 'past';
+      if (isToday && hour <= nowH) state = 'past';
       if (state === 'free') {
         if (startHour !== null && endHour !== null && hour >= startHour && hour < endHour) {
           state = hour === startHour ? 'sel-start' : 'sel';
