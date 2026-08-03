@@ -440,11 +440,10 @@ export default function ReservationScreen() {
         <>
           {/* Week navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-            <Button size="small" onClick={() => setWeekStart(prev => {
-              const min = addDays(todayDate(), -1);
-              const cand = addDays(prev, -7);
-              return cand < min ? min : cand;
-            })} sx={{ minWidth: 32, px: 0.5 }}>‹</Button>
+            <Box component="button"
+              onClick={() => setWeekStart(prev => { const min = addDays(todayDate(), -1); const cand = addDays(prev, -7); return cand < min ? min : cand; })}
+              sx={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid #d9d9d9', background: 'white', fontSize: '1.2rem', cursor: 'pointer', color: '#2e6b4f', flexShrink: 0, '&:hover': { background: '#f0f7f3', borderColor: '#2e6b4f' } }}
+            >‹</Box>
             <Typography sx={{ flex: 1, textAlign: 'center', fontSize: '.9rem', color: '#555' }}>
               {visibleDays.length > 0 && (() => {
                 const first = visibleDays[0].date;
@@ -454,12 +453,15 @@ export default function ReservationScreen() {
                 return first.getMonth() === last.getMonth() ? `${fm} ${first.getFullYear()}` : `${fm} / ${lm} ${last.getFullYear()}`;
               })()}
             </Typography>
-            <Button size="small" disabled={!canGoNext} onClick={() => setWeekStart(prev => addDays(prev, 7))} sx={{ minWidth: 32, px: 0.5 }}>›</Button>
+            <Box component="button"
+              disabled={!canGoNext}
+              onClick={() => setWeekStart(prev => addDays(prev, 7))}
+              sx={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid #d9d9d9', background: 'white', fontSize: '1.2rem', cursor: 'pointer', color: '#2e6b4f', flexShrink: 0, '&:hover': { background: '#f0f7f3', borderColor: '#2e6b4f' }, '&:disabled': { opacity: 0.35, cursor: 'not-allowed' } }}
+            >›</Box>
           </Box>
 
-          {/* Day strip */}
-          <Box sx={{ display: 'flex', gap: '4px', overflowX: 'auto', pb: 1, mb: 2, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
-            role="group">
+          {/* Day strip — flex:1 on each button so they fill the row without horizontal scroll */}
+          <Box sx={{ display: 'flex', gap: '4px', mb: 2 }} role="group">
             {visibleDays.map(d => (
               <Box
                 component="button"
@@ -469,7 +471,7 @@ export default function ReservationScreen() {
                 aria-pressed={d.isSelected}
                 onClick={() => selectDayCell(d)}
                 sx={{
-                  flexShrink: 0, minWidth: 52, px: '4px', py: '6px',
+                  flex: 1, minWidth: 0, px: '2px', py: '6px',
                   background: d.isSelected ? '#e8f3ed' : 'white',
                   border: d.isSelected ? '2px solid #2e6b4f' : d.isToday ? '1px solid #2e6b4f' : '1px solid #d9d9d9',
                   borderRadius: '6px', cursor: d.isPast ? 'not-allowed' : 'pointer',
