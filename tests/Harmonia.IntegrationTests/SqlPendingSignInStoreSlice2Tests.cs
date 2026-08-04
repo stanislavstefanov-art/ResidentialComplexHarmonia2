@@ -80,6 +80,7 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
     [Fact]
     public async Task PurgeExpiredAsync_deletes_only_expired_rows()
     {
+        await TruncatePendingAsync();
         var oid1 = $"oid-{Guid.NewGuid():N}";
         var oid2 = $"oid-{Guid.NewGuid():N}";
         var oid3 = $"oid-{Guid.NewGuid():N}";
@@ -96,6 +97,15 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
     }
 
     // --- helpers ---
+
+    private async Task TruncatePendingAsync()
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM dbo.PendingSignIns;";
+        await cmd.ExecuteNonQueryAsync();
+    }
 
     private async Task SeedPendingAsync(string oid, DateTime firstSeenAt)
     {

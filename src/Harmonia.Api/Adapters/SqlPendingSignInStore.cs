@@ -82,9 +82,9 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
         var alreadyLinked = reader.GetBoolean(1);
         return (pendingExists, alreadyLinked) switch
         {
-            (false, _)    => ActivateResult.NotFound,
-            (true,  true) => ActivateResult.AlreadyActivated,
-            _             => ActivateResult.Ok
+            (_,     true)  => ActivateResult.AlreadyActivated,
+            (false, false) => ActivateResult.NotFound,
+            _              => ActivateResult.Ok
         };
     }
 
