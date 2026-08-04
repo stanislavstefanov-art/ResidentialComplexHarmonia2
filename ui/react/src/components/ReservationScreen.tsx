@@ -61,7 +61,7 @@ interface Feedback { msg: string; severity: 'success' | 'warning' | 'error'; }
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ReservationScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   // ── View mode ───────────────────────────────────────────────────────────────
   const [viewMode, setViewModeState] = useState<'timeline' | 'cards'>(() =>
