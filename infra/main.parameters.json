@@ -8,10 +8,7 @@
     "location": {
       "value": "westeurope"
     },
-    "containerImageTag": {
-      "value": "latest"
-    },
-    "githubOrg": {
+"githubOrg": {
       "value": "stanislavstefanov-art"
     },
     "githubRepo": {

@@ -9,11 +9,10 @@ $ErrorActionPreference = 'Stop'
 # ── Constants ────────────────────────────────────────────────────────────────
 $ResourceGroup  = 'rg-residence-harmonia-prod'
 $Location       = 'westeurope'
-$AngularSwaName = 'residenceharmonia-angular-swa'
-$ReactSwaName   = 'residenceharmonia-react-swa'
-$KeyVaultName   = 'residenceharmoniakv'
-$AcrName        = 'residenceharmoniaacr'
-$AcrImageName   = 'residenceharmonia-api'
+$NamePrefix     = 'residenceharmonia'
+$AngularSwaName = "${NamePrefix}-angular-swa"
+$ReactSwaName   = "${NamePrefix}-react-swa"
+$KeyVaultName   = "${NamePrefix}kv"
 $DeploymentName = 'harmonia-main'
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,8 +81,7 @@ try {
 # ── Phase 2: Bicep deployment ─────────────────────────────────────────────────
 Write-Phase 'Phase 2: Deploying infrastructure (this may take several minutes)'
 
-# VAPID keys must exist in Key Vault before the Container App revision is created,
-# so we generate (or re-read) them here and pass as Bicep secure parameters.
+# Read existing VAPID keys from Key Vault (generated on first deploy) or generate new ones.
 az keyvault secret show --vault-name $KeyVaultName --name 'Vapid--PublicKey' --subscription $SubscriptionId --output none 2>&1 | Out-Null
 $vapidExists = ($LASTEXITCODE -eq 0)
 
@@ -122,15 +120,6 @@ if ($vapidExists -and (-not $Force)) {
     }
 }
 
-# Container App requires an image in ACR at revision-creation time.
-# On first deploy ACR is empty, so we use a public placeholder and let CI/CD replace it.
-az acr repository show --name $AcrName --repository $AcrImageName --subscription $SubscriptionId --output none 2>&1 | Out-Null
-$useBootstrapImage = ($LASTEXITCODE -ne 0)
-if ($useBootstrapImage) {
-    Write-Host '  ACR image not found — deploying with placeholder image.' -ForegroundColor Yellow
-    Write-Host '  Push a commit to master after this script completes to trigger CI/CD and deploy the real image.' -ForegroundColor Yellow
-}
-
 $tmpParam = $null
 try {
     $sqlPass  = ConvertFrom-SecureString $SqlAdminPasswordSecure -AsPlainText
@@ -138,14 +127,13 @@ try {
         '$schema'      = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#'
         contentVersion = '1.0.0.0'
         parameters     = @{
-            sqlAdminPassword         = @{ value = $sqlPass }
-            vapidSubject             = @{ value = $VapidSubject }
-            vapidPublicKey           = @{ value = $vapidPublicKey }
-            vapidPrivateKey          = @{ value = $vapidPrivateKey }
-            entraInstance            = @{ value = $EntraInstance }
-            entraClientId            = @{ value = $EntraClientId }
-            entraTenantId            = @{ value = $EntraTenantId }
-            useBootstrapImage        = @{ value = $useBootstrapImage }
+            sqlAdminPassword = @{ value = $sqlPass }
+            vapidSubject     = @{ value = $VapidSubject }
+            vapidPublicKey   = @{ value = $vapidPublicKey }
+            vapidPrivateKey  = @{ value = $vapidPrivateKey }
+            entraInstance    = @{ value = $EntraInstance }
+            entraClientId    = @{ value = $EntraClientId }
+            entraTenantId    = @{ value = $EntraTenantId }
         }
     }
     Remove-Variable sqlPass, vapidPrivateKey, EntraInstance, EntraClientId, EntraTenantId -ErrorAction SilentlyContinue
