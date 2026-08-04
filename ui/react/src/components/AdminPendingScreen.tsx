@@ -52,7 +52,7 @@ export default function AdminPendingScreen({ role }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [role, t]);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
