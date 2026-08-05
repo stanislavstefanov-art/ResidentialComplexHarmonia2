@@ -23,6 +23,7 @@ import { getMyStatus } from './api/me';
 import ResidentPendingScreen from './components/ResidentPendingScreen';
 import ErrorBoundary from './components/ErrorBoundary';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import IosSafariInstallBanner from './components/IosSafariInstallBanner';
 import { Role } from './types';
 
 type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending';
@@ -203,6 +204,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <IosSafariInstallBanner />
       <ErrorBoundary>
         <AuthenticatedTemplate><AppStatusGate /></AuthenticatedTemplate>
         <UnauthenticatedTemplate><SignInPage /></UnauthenticatedTemplate>

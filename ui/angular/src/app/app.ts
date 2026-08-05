@@ -10,12 +10,13 @@ import { ProgressSpinner } from 'primeng/progressspinner';
 import { MeService } from './me.service';
 import { ResidentPendingComponent } from './resident-pending/resident-pending.component';
 import { LanguageService } from './language.service';
+import { IosSafariInstallBannerComponent } from './ios-safari-install-banner/ios-safari-install-banner.component';
 
 registerLocaleData(localeBg);
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ProgressSpinner, ResidentPendingComponent],
+  imports: [RouterOutlet, ProgressSpinner, ResidentPendingComponent, IosSafariInstallBannerComponent],
   template: `
     @if (meStatus() === 'loading') {
       <div style="display:flex;justify-content:center;margin-top:4rem">
@@ -26,6 +27,7 @@ registerLocaleData(localeBg);
     } @else {
       <router-outlet />
     }
+    <app-ios-safari-install-banner />
   `,
 })
 export class App implements OnInit, OnDestroy {
