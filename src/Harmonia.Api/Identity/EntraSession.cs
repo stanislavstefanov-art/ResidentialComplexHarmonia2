@@ -31,8 +31,7 @@ public sealed class EntraSession(
                ?? user.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier");
         if (oid is null) return null;
 
-        var role = user.FindFirstValue("extension_role");
-        if (role == "admin")
+        if (user.IsInRole("admin"))
             return new SessionContext(IsResident: false, IsAdmin: true,
                 HouseholdRef: null, EntraObjectId: oid, IsPending: false);
 

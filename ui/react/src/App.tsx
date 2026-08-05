@@ -57,8 +57,8 @@ function MainApp() {
   const { instance, accounts } = useMsal();
   const { t } = useTranslation();
   const claims = accounts[0]?.idTokenClaims as Record<string, unknown> | undefined;
-  const entraRole = claims?.['extension_role'];
-  const initialRole: Role = entraRole === 'admin' ? 'admin' : 'resident';
+  const roles = claims?.['roles'] as string[] | undefined;
+  const initialRole: Role = roles?.includes('admin') ? 'admin' : 'resident';
   const [role, setRole] = useState<Role>(initialRole);
   const [screen, setScreen] = useState<Screen>('directory');
 
