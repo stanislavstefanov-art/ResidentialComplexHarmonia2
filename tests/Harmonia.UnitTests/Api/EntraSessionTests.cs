@@ -40,7 +40,7 @@ public class EntraSessionTests
     public void Admin_role_returns_IsAdmin_without_DB_lookup()
     {
         var store = new FakePendingSignInStore();
-        var user = Authenticated(("oid", "admin-oid-1"), ("extension_role", "admin"));
+        var user = Authenticated(("oid", "admin-oid-1"), (ClaimTypes.Role, "admin"));
         var session = MakeSession(user: user, householdRef: null, store: store);
 
         var ctx = session.Resolve();
