@@ -275,5 +275,9 @@
     "body": "Your account registration is complete, but a building administrator needs to approve it before you can access the portal. This usually takes up to 24 hours.",
     "checkAgain": "Check again",
     "signOut": "Sign out"
+  },
+  "pwa": {
+    "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",
+    "dismiss": "Dismiss"
   }
 }
