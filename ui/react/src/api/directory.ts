@@ -25,8 +25,8 @@ export async function getDirectory(): Promise<DirectoryEntry[]> {
 }
 
 export async function getAdminDirectory(): Promise<DirectoryEntryAdmin[]> {
-  const res = await apiFetch(`${API}/directory/admin`);
-  if (!res.ok) throw new Error(`GET /directory/admin failed: ${res.status}`);
+  const res = await apiFetch(`${API}/directory`);
+  if (!res.ok) throw new Error(`GET /directory failed: ${res.status}`);
   return unwrapEntries<DirectoryEntryAdmin>(await res.json());
 }
 
