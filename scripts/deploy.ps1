@@ -7,13 +7,15 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # ── Constants ────────────────────────────────────────────────────────────────
-$ResourceGroup  = 'rg-residence-harmonia-prod'
-$Location       = 'westeurope'
-$NamePrefix     = 'residenceharmonia'
-$AngularSwaName = "${NamePrefix}-angular-swa"
-$ReactSwaName   = "${NamePrefix}-react-swa"
-$KeyVaultName   = "${NamePrefix}kv"
-$DeploymentName = 'harmonia-main'
+$ResourceGroup   = 'rg-residence-harmonia-prod'
+$Location        = 'westeurope'
+$NamePrefix      = 'residenceharmonia'
+$AngularSwaName  = "${NamePrefix}-angular-swa"
+$ReactSwaName    = "${NamePrefix}-react-swa"
+$KeyVaultName    = "${NamePrefix}kv"
+$DeploymentName  = 'harmonia-main'
+# Hardcoded to avoid az account show returning the CIAM tenant when logged in cross-tenant
+$SubscriptionId  = '592c2975-9876-4ef5-a889-50b18b6f7137'
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 function Write-Phase([string]$title) {
@@ -36,8 +38,7 @@ function Assert-NativeSuccess([string]$context) {
 Write-Phase 'Phase 0: Pre-flight checks'
 
 try {
-    $account        = az account show --output json | ConvertFrom-Json
-    $SubscriptionId = $account.id
+    $account = az account show --subscription $SubscriptionId --output json | ConvertFrom-Json
     Write-Ok "Azure CLI authenticated (subscription: $($account.name) / $SubscriptionId)"
 } catch {
     Write-Error "Run 'az login' first. ($_)"
