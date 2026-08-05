@@ -16,13 +16,13 @@ describe('RoleService', () => {
     return TestBed.inject(RoleService);
   };
 
-  it('returns true when extension_role is admin', () => {
-    const svc = setup({ extension_role: 'admin' });
+  it('returns true when roles contains admin', () => {
+    const svc = setup({ roles: ['admin'] });
     expect(svc.isAdmin).toBe(true);
   });
 
-  it('returns false when extension_role is resident', () => {
-    const svc = setup({ extension_role: 'resident' });
+  it('returns false when roles does not contain admin', () => {
+    const svc = setup({ roles: ['resident'] });
     expect(svc.isAdmin).toBe(false);
   });
 

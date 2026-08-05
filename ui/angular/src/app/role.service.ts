@@ -11,6 +11,7 @@ export class RoleService {
       this.authService.instance.getActiveAccount() ??
       this.authService.instance.getAllAccounts()[0];
     const claims = account?.idTokenClaims as Record<string, unknown> | undefined;
-    return claims?.['extension_role'] === 'admin';
+    const roles = claims?.['roles'] as string[] | undefined;
+    return roles?.includes('admin') ?? false;
   }
 }
