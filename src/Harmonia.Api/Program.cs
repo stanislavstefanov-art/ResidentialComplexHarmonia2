@@ -165,14 +165,14 @@ builder.Services.AddScoped<PurgeExpiredPendingSignIns>();
 
 var app = builder.Build();
 
-// MUST precede all app.MapGet / app.MapPost calls — middleware pipeline is order-sensitive.
+// CORS must precede auth so OPTIONS preflight requests are not blocked by the auth middleware.
+app.UseCors();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseAuthentication();
     app.UseAuthorization();
 }
-
-app.UseCors();
 
 // Pending caller gate: authenticated-but-unlinked callers may only reach GET /me.
 app.Use(async (context, next) =>
