@@ -89,7 +89,7 @@ function MainApp() {
             }}
           >
             <Tab label={t('nav.directory')} value="directory" />
-            <Tab label={t('nav.reservations')} value="reservations" />
+            {initialRole !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
             <Tab label={t('nav.finance')} value="financial" />
             <Tab label={t('nav.expenses')} value="expenses" />
             <Tab label={t('nav.fees')} value="fees" />
