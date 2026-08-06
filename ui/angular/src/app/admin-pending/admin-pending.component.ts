@@ -103,7 +103,6 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
                 <tr>
                   <th pSortableColumn="displayName">{{ 'common.displayName' | translate }} <p-sort-icon field="displayName" /></th>
                   <th pSortableColumn="email" style="width:16rem">{{ 'common.email' | translate }} <p-sort-icon field="email" /></th>
-                  <th style="width:14rem">{{ 'adminPending.oid' | translate }}</th>
                   <th pSortableColumn="firstSeenAt" style="width:10rem">{{ 'adminPending.firstSeen' | translate }} <p-sort-icon field="firstSeenAt" /></th>
                   <th style="width:7rem"></th>
                 </tr>
@@ -112,7 +111,6 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
                 <tr [attr.data-testid]="'pending-row-' + entry.entraObjectId">
                   <td>{{ entry.displayName }}</td>
                   <td>{{ entry.email }}</td>
-                  <td><p-tag [value]="entry.entraObjectId" severity="secondary" styleClass="oid-tag" /></td>
                   <td>{{ entry.firstSeenAt | date:'mediumDate' }}</td>
                   <td>
                     <button class="link-btn" (click)="openActivate(entry)">
@@ -122,7 +120,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
                 </tr>
               </ng-template>
               <ng-template #emptymessage>
-                <tr><td colspan="5" class="empty-message">{{ 'adminPending.none' | translate }}</td></tr>
+                <tr><td colspan="4" class="empty-message">{{ 'adminPending.none' | translate }}</td></tr>
               </ng-template>
             </p-table>
           }
@@ -140,7 +138,6 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
       [resizable]="false"
     >
       <div class="dialog-body">
-        <p class="oid-display">{{ activateOid }}</p>
         @if (activateError) {
           <p class="activate-error">{{ activateError }}</p>
         }
@@ -209,9 +206,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
     .link-btn { background: transparent; border: 1px solid var(--p-primary-color); color: var(--p-primary-color); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: .8125rem; }
     .link-btn:hover { background: rgba(var(--p-primary-color-rgb, 46,107,79),.1); }
     .retry-btn { background: transparent; border: 1px solid currentColor; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
-    ::ng-deep .oid-tag .p-tag { font-family: monospace; font-size: .75rem; }
     .dialog-body { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.5rem; }
-    .oid-display { font-family: monospace; font-size: .8125rem; color: var(--p-text-muted-color); margin: 0; word-break: break-all; }
     .activate-error { color: var(--p-red-500, #ef4444); margin: 0; font-size: .875rem; }
     .field { display: flex; flex-direction: column; gap: 0.375rem; }
     .field label { font-size: .875rem; font-weight: 500; }
