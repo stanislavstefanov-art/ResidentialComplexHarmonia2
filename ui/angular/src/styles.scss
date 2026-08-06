@@ -14,3 +14,44 @@ body {
 }
 
 .w-full { width: 100%; }
+
+/* ── Mobile responsiveness ─────────────────────────────────────────── */
+@media (max-width: 599px) {
+  /* Nav header: scrollable row, hide subtitle */
+  .harmonia-header {
+    padding: 0.5rem 0.75rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+    scrollbar-width: none;
+  }
+  .harmonia-header::-webkit-scrollbar { display: none; }
+
+  .harmonia-subtitle { display: none !important; }
+
+  .harmonia-logo {
+    font-size: 0.9rem !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-link {
+    font-size: 0.8rem !important;
+    padding: 5px 8px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .harmonia-content {
+    margin: 0.75rem auto !important;
+    padding: 0 0.5rem !important;
+  }
+
+  /* Role toggle: shrink to fit */
+  .role-toggle { flex-shrink: 0; }
+  .role-btn { padding: 0.3rem 0.6rem !important; font-size: 0.75rem !important; }
+
+  /* Tables: scroll horizontally */
+  .p-datatable-table-container { overflow-x: auto !important; }
+}
