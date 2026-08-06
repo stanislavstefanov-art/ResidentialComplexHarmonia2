@@ -7,6 +7,8 @@ import {
 import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getPeriodSummary, getMyCharges, getMyPayments } from '../api/financial';
+import { getAllCharges } from '../api/maintenanceFees';
+import { getAllPayments } from '../api/payments';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from '../types';
 
 function currentMonth(): string {
@@ -18,7 +20,11 @@ function formatEur(n: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 }
 
-export default function FinancialScreen() {
+interface Props {
+  role: 'resident' | 'admin';
+}
+
+export default function FinancialScreen({ role }: Props) {
   const { t } = useTranslation();
   const [period, setPeriod]               = useState(currentMonth());
   const [summary, setSummary]             = useState<PeriodSummaryDto | null>(null);
@@ -34,8 +40,8 @@ export default function FinancialScreen() {
     try {
       const [summaryData, chargesData, paymentsData] = await Promise.all([
         getPeriodSummary(period),
-        getMyCharges(),
-        getMyPayments(),
+        role === 'admin' ? getAllCharges() : getMyCharges(),
+        role === 'admin' ? getAllPayments() : getMyPayments(),
       ]);
       setSummary(summaryData);
       setCharges(chargesData);
@@ -105,7 +111,7 @@ export default function FinancialScreen() {
         </Card>
       )}
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('finance.myCharges')}</Typography>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{role === 'admin' ? t('fees.allCharges') : t('finance.myCharges')}</Typography>
       <Table size="small" sx={{ mb: 3 }}>
         <TableHead>
           <TableRow>
@@ -135,7 +141,7 @@ export default function FinancialScreen() {
         </TableBody>
       </Table>
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('finance.myPayments')}</Typography>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{role === 'admin' ? t('payments.allPayments') : t('finance.myPayments')}</Typography>
       <Table size="small" sx={{ mb: 3 }}>
         <TableHead>
           <TableRow>
@@ -163,24 +169,28 @@ export default function FinancialScreen() {
         </TableBody>
       </Table>
 
-      <Button data-testid="pay-btn" variant="contained" onClick={() => setShowPayDialog(true)}>
-        {t('finance.requestPayment')}
-      </Button>
+      {role !== 'admin' && (
+        <>
+          <Button data-testid="pay-btn" variant="contained" onClick={() => setShowPayDialog(true)}>
+            {t('finance.requestPayment')}
+          </Button>
 
-      <Dialog open={showPayDialog} onClose={() => setShowPayDialog(false)}>
-        <DialogTitle>{t('finance.requestPayment')}</DialogTitle>
-        <DialogContent>
-          <Box data-testid="pay-dialog">
-            <Typography>{t('finance.requestInfo')}</Typography>
-            <Typography sx={{ mt: 1 }}>
-              {t('finance.contactOffice')}
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowPayDialog(false)}>{t('common.close')}</Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={showPayDialog} onClose={() => setShowPayDialog(false)}>
+            <DialogTitle>{t('finance.requestPayment')}</DialogTitle>
+            <DialogContent>
+              <Box data-testid="pay-dialog">
+                <Typography>{t('finance.requestInfo')}</Typography>
+                <Typography sx={{ mt: 1 }}>
+                  {t('finance.contactOffice')}
+                </Typography>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowPayDialog(false)}>{t('common.close')}</Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      )}
     </Box>
   );
 }

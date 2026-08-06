@@ -5,6 +5,8 @@ import FinancialScreen from './FinancialScreen';
 import * as api from '../api/financial';
 
 jest.mock('../api/financial');
+jest.mock('../api/maintenanceFees');
+jest.mock('../api/payments');
 const mockGetPeriodSummary = api.getPeriodSummary as jest.Mock;
 const mockGetMyCharges     = api.getMyCharges as jest.Mock;
 const mockGetMyPayments    = api.getMyPayments as jest.Mock;
@@ -13,7 +15,8 @@ const theme = createTheme();
 const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ThemeProvider theme={theme}>{children}</ThemeProvider>
 );
-const renderScreen = () => render(<FinancialScreen />, { wrapper: Wrapper });
+const renderScreen = (role: 'resident' | 'admin' = 'resident') =>
+  render(<FinancialScreen role={role} />, { wrapper: Wrapper });
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -64,7 +64,7 @@ function MainApp() {
 
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
 
-  const roleScreens: Screen[] = ['directory', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
+  const roleScreens: Screen[] = ['directory', 'financial', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
   return (
     <>
@@ -158,7 +158,7 @@ function MainApp() {
       >
         {screen === 'directory' && <DirectoryList role={role} />}
         {screen === 'reservations' && <ReservationScreen />}
-        {screen === 'financial' && <FinancialScreen />}
+        {screen === 'financial' && <FinancialScreen role={role} />}
         {screen === 'expenses' && <ExpensesScreen role={role} />}
         {screen === 'fees' && <MaintenanceFeesScreen role={role} />}
         {screen === 'payments' && <PaymentsScreen role={role} />}
