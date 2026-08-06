@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
+  Alert, Box, Button, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogContentText, DialogTitle, IconButton, Table,
   TableBody, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
@@ -129,7 +129,6 @@ export default function AdminPendingScreen({ role }: Props) {
             <TableRow>
               <TableCell>{t('common.displayName')}</TableCell>
               <TableCell sx={{ width: 260 }}>{t('common.email')}</TableCell>
-              <TableCell sx={{ width: 220 }}>{t('adminPending.oid')}</TableCell>
               <TableCell sx={{ width: 160 }}>{t('adminPending.firstSeen')}</TableCell>
               <TableCell sx={{ width: 60 }} />
             </TableRow>
@@ -137,7 +136,7 @@ export default function AdminPendingScreen({ role }: Props) {
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 4 }}>
                   {t('adminPending.none')}
                 </TableCell>
               </TableRow>
@@ -145,13 +144,6 @@ export default function AdminPendingScreen({ role }: Props) {
               <TableRow key={row.entraObjectId}>
                 <TableCell>{row.displayName}</TableCell>
                 <TableCell>{row.email}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={row.entraObjectId}
-                    size="small"
-                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                  />
-                </TableCell>
                 <TableCell>{new Date(row.firstSeenAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <IconButton size="small" onClick={() => openActivate(row)}>
@@ -167,9 +159,6 @@ export default function AdminPendingScreen({ role }: Props) {
       <Dialog open={activateOpen} onClose={() => setActivateOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{t('adminPending.linkTitle')}</DialogTitle>
         <DialogContent>
-          <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block', mb: 2 }}>
-            {activateOid}
-          </Typography>
           {activateError && <Alert severity="error" sx={{ mb: 2 }}>{activateError}</Alert>}
           <TextField
             label={t('adminPending.householdRefLabel')}
