@@ -2,5 +2,30 @@
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": ["/api/*", "/*.{css,js,png,svg,ico,woff,woff2,map}"]
-  }
+  },
+  "mimeTypes": {},
+  "responseOverrides": {},
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff"
+  },
+  "routes": [
+    {
+      "route": "/index.html",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/static/js/*.js",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/static/css/*.css",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    }
+  ]
 }
