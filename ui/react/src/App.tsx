@@ -69,21 +69,27 @@ function MainApp() {
   return (
     <>
       <AppBar position="static" elevation={2}>
-        <Toolbar>
-          <HomeIcon sx={{ mr: 1 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, mr: 2 }}>
+        <Toolbar sx={{ minWidth: 0 }}>
+          <HomeIcon sx={{ mr: { xs: 0.5, sm: 1 }, flexShrink: 0 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, mr: 2, display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}>
             {t('app.brand')}
           </Typography>
           <Tabs
             value={screen}
             onChange={(_, v) => setScreen(v)}
             textColor="inherit"
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             slotProps={{ indicator: { style: { backgroundColor: 'white' } } }}
             sx={{
               flexGrow: 1,
+              minWidth: 0,
               '& .MuiTab-root': {
                 color: 'rgba(255,255,255,0.75)',
                 textTransform: 'none',
+                minWidth: { xs: 72, sm: 90 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
                 '&.Mui-selected': { color: 'white' },
               },
             }}
@@ -134,15 +140,16 @@ function MainApp() {
               </ToggleButtonGroup>
             </>
           )}
-          <Box sx={{ ml: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>{displayName}</Typography>
+          <Box sx={{ ml: 1, display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+            <Typography variant="caption" sx={{ opacity: 0.8, display: { xs: 'none', md: 'block' } }}>{displayName}</Typography>
             <LanguageSwitcher />
             <Button
               size="small"
-              sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}
+              sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none', minWidth: 0, px: { xs: 1, sm: 1.5 } }}
               onClick={() => instance.logoutRedirect()}
             >
-              {t('app.signOut')}
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('app.signOut')}</Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>✕</Box>
             </Button>
           </Box>
         </Toolbar>

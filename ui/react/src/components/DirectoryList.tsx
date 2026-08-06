@@ -292,16 +292,17 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <Typography variant="body2" color="text.secondary">{t('directory.loading')}</Typography>
           </Box>
         ) : isAdmin ? (
-          <Table size="small">
+          <Box sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 700 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 140 }}>{t('directory.apartment')}</TableCell>
-                <TableCell sx={{ width: 180 }}>{t('directory.name')}</TableCell>
-                <TableCell sx={{ width: 150 }}>{t('common.phone')}</TableCell>
-                <TableCell sx={{ width: 220 }}>{t('common.email')}</TableCell>
-                <TableCell sx={{ width: 110 }}>{t('directory.optOut')}</TableCell>
-                <TableCell sx={{ width: 140 }}>{t('directory.departed')}</TableCell>
-                <TableCell sx={{ width: 120 }} />
+                <TableCell>{t('directory.apartment')}</TableCell>
+                <TableCell>{t('directory.name')}</TableCell>
+                <TableCell>{t('common.phone')}</TableCell>
+                <TableCell>{t('common.email')}</TableCell>
+                <TableCell>{t('directory.optOut')}</TableCell>
+                <TableCell>{t('directory.departed')}</TableCell>
+                <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -345,6 +346,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
               ))}
             </TableBody>
           </Table>
+          </Box>
         ) : (
           <Table size="small">
             <TableHead>
