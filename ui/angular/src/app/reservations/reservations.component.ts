@@ -120,11 +120,11 @@ function fmtDate(d: Date): string {
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
-        <a routerLink="/reservations" class="nav-link nav-active">{{ 'nav.reservations' | translate }}</a>
-        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
+        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
+        <a routerLink="/reservations" class="nav-link nav-active">{{ 'nav.reservations' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
+        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
         <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
         <app-language-switcher />
       </header>

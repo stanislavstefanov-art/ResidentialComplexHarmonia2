@@ -153,11 +153,11 @@ function MainApp() {
             }}
           >
             <Tab label={t('nav.notifications')} value="notifications" />
-            <Tab label={t('nav.directory')} value="directory" />
-            {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
-            <Tab label={t('nav.finance')} value="financial" />
             <Tab label={t('nav.contactEdit')} value="contact-edit" />
+            <Tab label={t('nav.finance')} value="financial" />
+            {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
             {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
+            <Tab label={t('nav.directory')} value="directory" />
             <Tab label={t('nav.privacy')} value="privacy" />
           </Tabs>
         </Box>
