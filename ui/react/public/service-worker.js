@@ -1,8 +1,6 @@
-const CACHE = 'harmonia-v1';
+const CACHE = 'harmonia-v2';
 
 const APP_SHELL = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -38,7 +36,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first for static assets; fall back to network then index.html (SPA)
+  // Network-first for index.html so app shell updates are never stale
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE).then(cache => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Cache-first for static assets (JS/CSS have content-hashed filenames)
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
