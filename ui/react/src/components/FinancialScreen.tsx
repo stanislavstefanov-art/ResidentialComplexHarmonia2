@@ -51,7 +51,7 @@ export default function FinancialScreen({ role }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [period, t]);
+  }, [period, role, t]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
