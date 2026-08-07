@@ -7,14 +7,22 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
-import { forkJoin } from 'rxjs';
 import { FinancialService } from './financial.service';
+import { MaintenanceFeeService } from '../maintenance-fees/maintenance-fee.service';
+import { ExpenseService } from '../expenses/expense.service';
+import { PaymentService } from '../payments/payment.service';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from './models';
+import { ExpenseDto, EXPENSE_CATEGORIES } from '../expenses/models';
+import { BalanceDto } from '../payments/models';
 import { RoleService } from '../role.service';
 
 function currentMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function formatEur(n: number): string {
@@ -25,14 +33,9 @@ function formatEur(n: number): string {
   selector: 'app-financial',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    CardModule,
-    ButtonModule,
-    ProgressSpinnerModule,
-    TranslatePipe,
-    LanguageSwitcherComponent,
+    CommonModule, RouterModule, FormsModule,
+    CardModule, ButtonModule, ProgressSpinnerModule,
+    TranslatePipe, LanguageSwitcherComponent,
   ],
   template: `
     <div class="harmonia-shell">
@@ -44,104 +47,258 @@ function formatEur(n: number): string {
         <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         <a routerLink="/financial" class="nav-link nav-active">{{ 'nav.finance' | translate }}</a>
-        <a routerLink="/expenses" class="nav-link">{{ 'nav.expenses' | translate }}</a>
-        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
-        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
         <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
+        @if (isAdmin) {
+          <span class="role-toggle">
+            <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reloadSections()" class="role-btn">{{ 'app.roleResident' | translate }}</button>
+            <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reloadSections()" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
+          </span>
+        }
         <app-language-switcher />
       </header>
 
       <main class="harmonia-content">
         <p-card>
-          <ng-template #title>{{ 'finance.cardTitle' | translate }}</ng-template>
           <ng-template #content>
 
-            @if (loading()) {
-              <div class="center-state">
-                <p-progressspinner strokeWidth="4" [style]="{width:'48px',height:'48px'}" />
+            <!-- Period summary -->
+            <div class="period-row">
+              <label class="period-label">{{ 'finance.periodLabel' | translate }}</label>
+              <input type="month" [(ngModel)]="period" (ngModelChange)="loadSummary()" class="period-input" />
+              @if (sumLoading()) {
+                <p-progressspinner strokeWidth="4" [style]="{width:'24px',height:'24px'}" />
+              }
+            </div>
+
+            @if (sumError()) {
+              <p class="error-msg">{{ sumError() }}</p>
+            }
+
+            @if (summary()) {
+              <div class="summary-card">
+                <div class="summary-item">
+                  <span class="summary-label">{{ 'finance.totalCharges' | translate }}</span>
+                  <span data-testid="summary-charges" class="summary-value">{{ formatEur(summary()!.totalChargesEur) }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">{{ 'finance.totalExpenses' | translate }}</span>
+                  <span data-testid="summary-expenses" class="summary-value">{{ formatEur(summary()!.totalExpensesEur) }}</span>
+                </div>
               </div>
             }
 
-            @if (error()) {
-              <div data-testid="error-state" class="error-state">
-                <p>{{ error() }}</p>
-                <button data-testid="retry-btn" (click)="loadAll()">{{ 'common.retry' | translate }}</button>
-              </div>
-            }
+            <!-- ── Maintenance fees ── -->
+            <div class="section-divider"><span class="section-label">{{ 'nav.fees' | translate }}</span></div>
 
-            @if (!loading() && !error()) {
-              <div class="period-row">
-                <label class="period-label">{{ 'finance.periodLabel' | translate }}</label>
-                <input
-                  type="month"
-                  [(ngModel)]="period"
-                  (ngModelChange)="loadAll()"
-                  class="period-input"
-                />
-              </div>
-
-              @if (summary()) {
-                <div class="summary-card">
-                  <div class="summary-item">
-                    <span class="summary-label">{{ 'finance.totalCharges' | translate }}</span>
-                    <span data-testid="summary-charges" class="summary-value">
-                      {{ formatEur(summary()!.totalChargesEur) }}
-                    </span>
+            @if (role === 'admin') {
+              <form data-testid="fee-form" class="record-form" (ngSubmit)="onFeeSubmit()">
+                <h3 class="form-title">{{ 'fees.record' | translate }}</h3>
+                <div class="form-grid">
+                  <div class="form-row">
+                    <label>{{ 'common.householdRef' | translate }}</label>
+                    <input type="text" [(ngModel)]="feeForm.householdRef" name="feeRef" required class="form-input" placeholder="e.g. H001" />
                   </div>
-                  <div class="summary-item">
-                    <span class="summary-label">{{ 'finance.totalExpenses' | translate }}</span>
-                    <span data-testid="summary-expenses" class="summary-value">
-                      {{ formatEur(summary()!.totalExpensesEur) }}
-                    </span>
+                  <div class="form-row">
+                    <label>{{ 'fees.amountEuro' | translate }}</label>
+                    <input type="number" step="0.01" min="0.01" [(ngModel)]="feeForm.amountEurStr" name="feeAmt" required class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'common.description' | translate }}</label>
+                    <input type="text" [(ngModel)]="feeForm.description" name="feeDesc" class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'fees.periodYm' | translate }}</label>
+                    <input type="month" [(ngModel)]="feeForm.period" name="feePer" required class="form-input" />
                   </div>
                 </div>
-              }
+                <button type="submit" data-testid="fee-submit-btn" class="submit-btn" [disabled]="feeSaving()">{{ 'fees.record' | translate }}</button>
+                @if (feeOk()) { <p data-testid="fee-submit-success" class="success-msg">{{ 'fees.recorded' | translate }}</p> }
+                @if (feeErr()) { <p data-testid="fee-submit-error" class="error-msg">{{ feeErr() }}</p> }
+              </form>
+            }
 
-              <h3 class="section-title">{{ 'finance.myCharges' | translate }}</h3>
-              <table class="fin-table">
-                <thead>
-                  <tr><th>{{ 'common.date' | translate }}</th><th>{{ 'common.description' | translate }}</th><th>{{ 'common.period' | translate }}</th><th>{{ 'common.amount' | translate }}</th></tr>
-                </thead>
-                <tbody>
-                  @for (c of charges(); track c.id) {
-                    <tr [attr.data-testid]="'charge-row-' + c.id">
-                      <td>{{ c.chargedAt | date:'yyyy-MM-dd' }}</td>
-                      <td>{{ c.description }}</td>
-                      <td>{{ c.period }}</td>
-                      <td>{{ formatEur(c.amountEur) }}</td>
-                    </tr>
-                  }
-                  @if (charges().length === 0) {
-                    <tr><td colspan="4" class="empty-cell">{{ 'finance.noCharges' | translate }}</td></tr>
-                  }
-                </tbody>
-              </table>
+            @if (feesLoading()) {
+              <div class="center-state"><p-progressspinner strokeWidth="4" [style]="{width:'36px',height:'36px'}" /></div>
+            } @else if (feesError()) {
+              <div class="error-state"><p>{{ feesError() }}</p><button (click)="loadFees()">{{ 'common.retry' | translate }}</button></div>
+            } @else {
+              <div class="table-scroll">
+                <table class="fin-table">
+                  <thead><tr>
+                    <th>{{ 'common.period' | translate }}</th>
+                    @if (role === 'admin') { <th>{{ 'common.household' | translate }}</th> }
+                    <th>{{ 'common.description' | translate }}</th>
+                    <th>{{ 'common.amount' | translate }}</th>
+                    <th>{{ 'fees.chargedAt' | translate }}</th>
+                  </tr></thead>
+                  <tbody>
+                    @for (c of charges(); track c.id) {
+                      <tr [attr.data-testid]="'charge-row-' + c.id">
+                        <td>{{ c.period }}</td>
+                        @if (role === 'admin') { <td>{{ c.householdRef }}</td> }
+                        <td>{{ c.description }}</td>
+                        <td>{{ formatEur(c.amountEur) }}</td>
+                        <td>{{ c.chargedAt | date:'yyyy-MM-dd' }}</td>
+                      </tr>
+                    }
+                    @if (charges().length === 0) {
+                      <tr><td [attr.colspan]="role === 'admin' ? 5 : 4" class="empty-cell">{{ 'fees.none' | translate }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
 
-              <h3 class="section-title">{{ 'finance.myPayments' | translate }}</h3>
-              <table class="fin-table">
-                <thead>
-                  <tr><th>{{ 'finance.dateReceived' | translate }}</th><th>{{ 'common.period' | translate }}</th><th>{{ 'common.amount' | translate }}</th></tr>
-                </thead>
-                <tbody>
-                  @for (p of payments(); track p.id) {
-                    <tr [attr.data-testid]="'payment-row-' + p.id">
-                      <td>{{ p.dateReceived }}</td>
-                      <td>{{ p.period }}</td>
-                      <td>{{ formatEur(p.amountEur) }}</td>
-                    </tr>
-                  }
-                  @if (payments().length === 0) {
-                    <tr><td colspan="3" class="empty-cell">{{ 'finance.noPayments' | translate }}</td></tr>
-                  }
-                </tbody>
-              </table>
+            <!-- ── Building expenses ── -->
+            <div class="section-divider"><span class="section-label">{{ 'nav.expenses' | translate }}</span></div>
 
+            @if (role === 'admin') {
+              <form data-testid="expense-form" class="record-form" (ngSubmit)="onExpenseSubmit()">
+                <h3 class="form-title">{{ 'expenses.record' | translate }}</h3>
+                <div class="form-grid">
+                  <div class="form-row">
+                    <label>{{ 'expenses.amountEuro' | translate }}</label>
+                    <input type="number" step="0.01" min="0.01" [(ngModel)]="expForm.amountEurStr" name="expAmt" required class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'common.description' | translate }}</label>
+                    <input type="text" [(ngModel)]="expForm.description" name="expDesc" required class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'expenses.category' | translate }}</label>
+                    <select [(ngModel)]="expForm.category" name="expCat" class="form-input">
+                      @for (cat of expCategories; track cat) { <option [value]="cat">{{ cat }}</option> }
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'expenses.expenseDate' | translate }}</label>
+                    <input type="date" [(ngModel)]="expForm.expenseDate" name="expDate" required class="form-input" />
+                  </div>
+                </div>
+                <button type="submit" data-testid="expense-submit-btn" class="submit-btn" [disabled]="expSaving()">{{ 'expenses.record' | translate }}</button>
+                @if (expOk()) { <p data-testid="expense-submit-success" class="success-msg">{{ 'expenses.recorded' | translate }}</p> }
+                @if (expErr()) { <p data-testid="expense-submit-error" class="error-msg">{{ expErr() }}</p> }
+              </form>
+            }
+
+            @if (expLoading()) {
+              <div class="center-state"><p-progressspinner strokeWidth="4" [style]="{width:'36px',height:'36px'}" /></div>
+            } @else if (expError()) {
+              <div class="error-state"><p>{{ expError() }}</p><button (click)="loadExpenses()">{{ 'common.retry' | translate }}</button></div>
+            } @else {
+              <div class="table-scroll">
+                <table class="fin-table">
+                  <thead><tr>
+                    <th>{{ 'common.date' | translate }}</th>
+                    <th>{{ 'expenses.category' | translate }}</th>
+                    <th>{{ 'common.description' | translate }}</th>
+                    <th>{{ 'common.amount' | translate }}</th>
+                  </tr></thead>
+                  <tbody>
+                    @for (e of expenses(); track e.id) {
+                      <tr [attr.data-testid]="'expense-row-' + e.id">
+                        <td>{{ e.expenseDate }}</td>
+                        <td>{{ e.category }}</td>
+                        <td>{{ e.description }}</td>
+                        <td>{{ formatEur(e.amountEur) }}</td>
+                      </tr>
+                    }
+                    @if (expenses().length === 0) {
+                      <tr><td colspan="4" class="empty-cell">{{ 'expenses.none' | translate }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <!-- ── Payments ── -->
+            <div class="section-divider"><span class="section-label">{{ 'nav.payments' | translate }}</span></div>
+
+            @if (balance()) {
+              <div class="summary-card" style="margin-bottom:16px">
+                <table class="fin-table" style="width:100%">
+                  <thead><tr>
+                    @if (role === 'admin') { <th>{{ 'common.household' | translate }}</th> }
+                    <th>{{ 'payments.charged' | translate }}</th>
+                    <th>{{ 'payments.paid' | translate }}</th>
+                    <th>{{ 'payments.balance' | translate }}</th>
+                  </tr></thead>
+                  <tbody>
+                    @for (l of balance()!.lines; track l.householdRef) {
+                      <tr [attr.data-testid]="'balance-row-' + l.householdRef">
+                        @if (role === 'admin') { <td>{{ l.householdRef }}</td> }
+                        <td>{{ formatEur(l.totalCharged) }}</td>
+                        <td>{{ formatEur(l.totalPaid) }}</td>
+                        <td [class.overdue]="l.balance > 0">{{ formatEur(l.balance) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            @if (role === 'admin') {
+              <form data-testid="payment-form" class="record-form" (ngSubmit)="onPaymentSubmit()">
+                <h3 class="form-title">{{ 'payments.record' | translate }}</h3>
+                <div class="form-grid">
+                  <div class="form-row">
+                    <label>{{ 'common.householdRef' | translate }}</label>
+                    <input type="text" [(ngModel)]="payForm.householdRef" name="payRef" required class="form-input" placeholder="e.g. H001" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'payments.amountEuro' | translate }}</label>
+                    <input type="number" step="0.01" min="0.01" [(ngModel)]="payForm.amountEurStr" name="payAmt" required class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'payments.periodYm' | translate }}</label>
+                    <input type="month" [(ngModel)]="payForm.period" name="payPer" required class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'payments.dateReceived' | translate }}</label>
+                    <input type="date" [(ngModel)]="payForm.dateReceived" name="payDate" required class="form-input" />
+                  </div>
+                </div>
+                <button type="submit" data-testid="payment-submit-btn" class="submit-btn" [disabled]="paySaving()">{{ 'payments.record' | translate }}</button>
+                @if (payOk()) { <p data-testid="payment-submit-success" class="success-msg">{{ 'payments.recorded' | translate }}</p> }
+                @if (payErr()) { <p data-testid="payment-submit-error" class="error-msg">{{ payErr() }}</p> }
+              </form>
+            }
+
+            @if (payLoading()) {
+              <div class="center-state"><p-progressspinner strokeWidth="4" [style]="{width:'36px',height:'36px'}" /></div>
+            } @else if (payError()) {
+              <div class="error-state"><p>{{ payError() }}</p><button (click)="loadPayments()">{{ 'common.retry' | translate }}</button></div>
+            } @else {
+              <div class="table-scroll">
+                <table class="fin-table">
+                  <thead><tr>
+                    <th>{{ 'common.period' | translate }}</th>
+                    @if (role === 'admin') { <th>{{ 'common.household' | translate }}</th> }
+                    <th>{{ 'common.amount' | translate }}</th>
+                    <th>{{ 'payments.dateReceived' | translate }}</th>
+                  </tr></thead>
+                  <tbody>
+                    @for (p of payments(); track p.id) {
+                      <tr [attr.data-testid]="'payment-row-' + p.id">
+                        <td>{{ p.period }}</td>
+                        @if (role === 'admin') { <td>{{ p.householdRef }}</td> }
+                        <td>{{ formatEur(p.amountEur) }}</td>
+                        <td>{{ p.dateReceived }}</td>
+                      </tr>
+                    }
+                    @if (payments().length === 0) {
+                      <tr><td [attr.colspan]="role === 'admin' ? 4 : 3" class="empty-cell">{{ 'payments.none' | translate }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            @if (role !== 'admin') {
               <div class="pay-row">
-                <button data-testid="pay-btn" class="pay-btn" (click)="showPayDialog = true">
-                  {{ 'finance.requestPayment' | translate }}
-                </button>
+                <button data-testid="pay-btn" class="pay-btn" (click)="showPayDialog = true">{{ 'finance.requestPayment' | translate }}</button>
               </div>
             }
 
@@ -151,7 +308,7 @@ function formatEur(n: number): string {
                   <h4 class="dialog-title">{{ 'finance.requestPayment' | translate }}</h4>
                   <p>{{ 'finance.requestInfo' | translate }}</p>
                   <p>{{ 'finance.contactOffice' | translate }}</p>
-                  <button class="dialog-close-btn" (click)="showPayDialog = false">Close</button>
+                  <button class="dialog-close-btn" (click)="showPayDialog = false">{{ 'common.close' | translate }}</button>
                 </div>
               </div>
             }
@@ -166,29 +323,50 @@ function formatEur(n: number): string {
     .harmonia-header {
       display: flex; align-items: center; gap: 12px; padding: 12px 24px;
       background: #2e6b4f; color: white;
+      overflow-x: auto; scrollbar-width: none;
     }
-    .harmonia-logo { font-size: 1.25rem; font-weight: 700; }
-    .harmonia-subtitle { opacity: .7; font-size: .875rem; }
+    .harmonia-header::-webkit-scrollbar { display: none; }
+    .harmonia-logo { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+    .harmonia-subtitle { opacity: .7; font-size: .875rem; white-space: nowrap; }
     .flex-spacer { flex: 1; }
-    .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; }
+    .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; white-space: nowrap; }
     .nav-link:hover { background: rgba(255,255,255,.1); }
     .nav-active { background: rgba(255,255,255,.18); color: white; font-weight: 600; }
-    .harmonia-content { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
-    .period-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .role-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); margin-left: 8px; flex-shrink: 0; }
+    .role-btn { background: transparent; color: rgba(255,255,255,.75); border: none; padding: 4px 12px; cursor: pointer; font-size: .8125rem; white-space: nowrap; }
+    .role-btn.role-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
+    .harmonia-content { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+    .period-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     .period-label { font-weight: 500; }
     .period-input { padding: 6px 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
-    .summary-card { display: flex; gap: 32px; margin-bottom: 24px; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .summary-card { display: flex; gap: 32px; margin-bottom: 16px; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e0e0e0; flex-wrap: wrap; }
     .summary-item { display: flex; flex-direction: column; gap: 4px; }
     .summary-label { font-size: .8125rem; color: #666; }
     .summary-value { font-size: 1.25rem; font-weight: 700; color: #2e6b4f; }
-    .section-title { margin: 20px 0 8px; font-size: 1rem; font-weight: 600; color: #333; }
-    .fin-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-    .fin-table th, .fin-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: .875rem; }
+    .section-divider { display: flex; align-items: center; margin: 24px 0 16px; gap: 12px; }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: #e0e0e0; }
+    .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #888; white-space: nowrap; }
+    .record-form { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+    .form-title { margin: 0 0 12px; font-size: .9375rem; font-weight: 600; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-row { display: flex; flex-direction: column; gap: 4px; }
+    .form-row label { font-size: .8125rem; font-weight: 500; color: #555; }
+    .form-input { padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: .875rem; }
+    .submit-btn { background: #2e6b4f; color: white; border: none; padding: 7px 18px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
+    .submit-btn:hover { background: #245a40; }
+    .submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .success-msg { color: #2e6b4f; font-weight: 500; margin: 8px 0 0; font-size: .875rem; }
+    .error-msg { color: #c00; margin: 8px 0 0; font-size: .875rem; }
+    .table-scroll { overflow-x: auto; }
+    .fin-table { width: 100%; border-collapse: collapse; }
+    .fin-table th, .fin-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: .875rem; white-space: nowrap; }
     .fin-table th { background: #f9f9f7; font-weight: 600; color: #555; }
-    .empty-cell { text-align: center; color: #999; padding: 16px; }
-    .center-state { display: flex; justify-content: center; padding: 48px; }
-    .error-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px; color: #c00; }
-    .pay-row { margin-top: 8px; }
+    .empty-cell { text-align: center; color: #999; padding: 16px; white-space: normal; }
+    .overdue { color: #c00; font-weight: 600; }
+    .center-state { display: flex; justify-content: center; padding: 32px; }
+    .error-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px; color: #c00; }
+    .pay-row { margin-top: 16px; }
     .pay-btn { background: #2e6b4f; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: .9rem; cursor: pointer; }
     .pay-btn:hover { background: #245a40; }
     .dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
@@ -198,41 +376,171 @@ function formatEur(n: number): string {
   `],
 })
 export class FinancialComponent implements OnInit {
-  private readonly svc = inject(FinancialService);
-  private readonly t = inject(TranslateService);
+  private readonly finSvc  = inject(FinancialService);
+  private readonly feeSvc  = inject(MaintenanceFeeService);
+  private readonly expSvc  = inject(ExpenseService);
+  private readonly paySvc  = inject(PaymentService);
+  private readonly t       = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
-  readonly summary   = signal<PeriodSummaryDto | null>(null);
-  readonly charges   = signal<ChargeDto[]>([]);
-  readonly payments  = signal<PaymentDto[]>([]);
-  readonly loading   = signal(true);
-  readonly error     = signal<string | null>(null);
-  period = currentMonth();
-  showPayDialog = false;
+  role: 'resident' | 'admin' = inject(RoleService).isAdmin ? 'admin' : 'resident';
 
+  // ── Period summary ──────────────────────────────────────────────────────────
+  period = currentMonth();
+  readonly summary    = signal<PeriodSummaryDto | null>(null);
+  readonly sumLoading = signal(true);
+  readonly sumError   = signal<string | null>(null);
+
+  // ── Maintenance fees ────────────────────────────────────────────────────────
+  readonly charges     = signal<ChargeDto[]>([]);
+  readonly feesLoading = signal(true);
+  readonly feesError   = signal<string | null>(null);
+  readonly feeSaving   = signal(false);
+  readonly feeOk       = signal(false);
+  readonly feeErr      = signal<string | null>(null);
+  feeForm = { householdRef: '', amountEurStr: '', description: '', period: currentMonth() };
+
+  // ── Building expenses ───────────────────────────────────────────────────────
+  readonly expenses    = signal<ExpenseDto[]>([]);
+  readonly expLoading  = signal(true);
+  readonly expError    = signal<string | null>(null);
+  readonly expSaving   = signal(false);
+  readonly expOk       = signal(false);
+  readonly expErr      = signal<string | null>(null);
+  readonly expCategories = EXPENSE_CATEGORIES;
+  expForm = { amountEurStr: '', description: '', category: EXPENSE_CATEGORIES[0], expenseDate: today() };
+
+  // ── Payments ────────────────────────────────────────────────────────────────
+  readonly payments    = signal<PaymentDto[]>([]);
+  readonly balance     = signal<BalanceDto | null>(null);
+  readonly payLoading  = signal(true);
+  readonly payError    = signal<string | null>(null);
+  readonly paySaving   = signal(false);
+  readonly payOk       = signal(false);
+  readonly payErr      = signal<string | null>(null);
+  payForm = { householdRef: '', amountEurStr: '', period: currentMonth(), dateReceived: today() };
+
+  showPayDialog = false;
   readonly formatEur = formatEur;
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void {
+    this.loadSummary();
+    this.loadFees();
+    this.loadExpenses();
+    this.loadPayments();
+    this.loadBalance();
+  }
 
-  loadAll(): void {
-    this.loading.set(true);
-    this.error.set(null);
-    forkJoin({
-      summary:  this.svc.getPeriodSummary(this.period),
-      charges:  this.svc.getMyCharges(),
-      payments: this.svc.getMyPayments(),
-    }).subscribe({
-      next: ({ summary, charges, payments }) => {
-        this.summary.set(summary);
-        this.charges.set(charges);
-        this.payments.set(payments);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(this.t.instant('finance.errLoad'));
-        this.loading.set(false);
-      },
+  reloadSections(): void {
+    this.loadFees();
+    this.loadPayments();
+    this.loadBalance();
+  }
+
+  loadSummary(): void {
+    this.sumLoading.set(true); this.sumError.set(null);
+    this.finSvc.getPeriodSummary(this.period).subscribe({
+      next: s => { this.summary.set(s); this.sumLoading.set(false); },
+      error: () => { this.sumError.set(this.t.instant('finance.errLoad')); this.sumLoading.set(false); },
     });
   }
 
+  loadFees(): void {
+    this.feesLoading.set(true); this.feesError.set(null);
+    const obs = this.role === 'admin' ? this.feeSvc.getAllCharges() : this.feeSvc.getMyCharges();
+    obs.subscribe({
+      next: list => { this.charges.set(list); this.feesLoading.set(false); },
+      error: () => { this.feesError.set(this.t.instant('fees.errLoad')); this.feesLoading.set(false); },
+    });
+  }
+
+  loadExpenses(): void {
+    this.expLoading.set(true); this.expError.set(null);
+    this.expSvc.getExpenses().subscribe({
+      next: list => { this.expenses.set(list); this.expLoading.set(false); },
+      error: () => { this.expError.set(this.t.instant('expenses.errLoad')); this.expLoading.set(false); },
+    });
+  }
+
+  loadPayments(): void {
+    this.payLoading.set(true); this.payError.set(null);
+    const obs = this.role === 'admin' ? this.paySvc.getAllPayments() : this.paySvc.getMyPayments();
+    obs.subscribe({
+      next: list => { this.payments.set(list); this.payLoading.set(false); },
+      error: () => { this.payError.set(this.t.instant('payments.errLoad')); this.payLoading.set(false); },
+    });
+  }
+
+  loadBalance(): void {
+    this.paySvc.getBalance().subscribe({
+      next: b => this.balance.set(b),
+      error: () => { /* non-blocking */ },
+    });
+  }
+
+  onFeeSubmit(): void {
+    this.feeOk.set(false); this.feeErr.set(null);
+    const parsed = parseFloat(this.feeForm.amountEurStr);
+    if (!this.feeForm.householdRef || !this.feeForm.amountEurStr || isNaN(parsed) || parsed <= 0) {
+      this.feeErr.set(this.t.instant('fees.errInput')); return;
+    }
+    this.feeSaving.set(true);
+    this.feeSvc.recordCharge(this.feeForm.householdRef, {
+      amountEur: parsed, description: this.feeForm.description,
+      period: this.feeForm.period, idempotencyKey: crypto.randomUUID(),
+    }).subscribe({
+      next: () => {
+        this.feeOk.set(true);
+        this.feeForm = { householdRef: '', amountEurStr: '', description: '', period: currentMonth() };
+        this.feeSaving.set(false);
+        this.loadFees();
+      },
+      error: () => { this.feeErr.set(this.t.instant('fees.errRecord')); this.feeSaving.set(false); },
+    });
+  }
+
+  onExpenseSubmit(): void {
+    this.expOk.set(false); this.expErr.set(null);
+    const parsed = parseFloat(this.expForm.amountEurStr);
+    if (!this.expForm.amountEurStr || isNaN(parsed) || parsed <= 0) {
+      this.expErr.set(this.t.instant('expenses.errAmount')); return;
+    }
+    this.expSaving.set(true);
+    this.expSvc.recordExpense({
+      amountEur: parsed, description: this.expForm.description,
+      category: this.expForm.category, expenseDate: this.expForm.expenseDate,
+      idempotencyKey: crypto.randomUUID(),
+    }).subscribe({
+      next: () => {
+        this.expOk.set(true);
+        this.expForm = { amountEurStr: '', description: '', category: EXPENSE_CATEGORIES[0], expenseDate: today() };
+        this.expSaving.set(false);
+        this.loadExpenses();
+      },
+      error: () => { this.expErr.set(this.t.instant('expenses.errRecord')); this.expSaving.set(false); },
+    });
+  }
+
+  onPaymentSubmit(): void {
+    this.payOk.set(false); this.payErr.set(null);
+    const parsed = parseFloat(this.payForm.amountEurStr);
+    if (!this.payForm.householdRef || !this.payForm.amountEurStr || isNaN(parsed) || parsed <= 0) {
+      this.payErr.set(this.t.instant('payments.errInput')); return;
+    }
+    this.paySaving.set(true);
+    this.paySvc.recordPayment({
+      householdRef: this.payForm.householdRef, amountEur: parsed,
+      period: this.payForm.period, dateReceived: this.payForm.dateReceived,
+      idempotencyKey: crypto.randomUUID(),
+    }).subscribe({
+      next: () => {
+        this.payOk.set(true);
+        this.payForm = { householdRef: '', amountEurStr: '', period: currentMonth(), dateReceived: today() };
+        this.paySaving.set(false);
+        this.loadPayments();
+        this.loadBalance();
+      },
+      error: () => { this.payErr.set(this.t.instant('payments.errRecord')); this.paySaving.set(false); },
+    });
+  }
 }

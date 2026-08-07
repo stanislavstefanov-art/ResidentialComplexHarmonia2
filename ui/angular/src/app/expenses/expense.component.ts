@@ -29,9 +29,6 @@ function formatEur(n: number): string {
         <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
-        <a routerLink="/expenses" class="nav-link nav-active">{{ 'nav.expenses' | translate }}</a>
-        <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
-        <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
         <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
         <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>

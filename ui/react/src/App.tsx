@@ -10,11 +10,8 @@ import { makeTheme } from './theme';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
 import DirectoryList from './components/DirectoryList';
-import ExpensesScreen from './components/ExpensesScreen';
 import FinancialScreen from './components/FinancialScreen';
-import MaintenanceFeesScreen from './components/MaintenanceFeesScreen';
 import NotificationsScreen from './components/NotificationsScreen';
-import PaymentsScreen from './components/PaymentsScreen';
 import PrivacyScreen from './components/PrivacyScreen';
 import AdminPendingScreen from './components/AdminPendingScreen';
 import ContactEditScreen from './components/ContactEditScreen';
@@ -26,7 +23,7 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 import IosSafariInstallBanner from './components/IosSafariInstallBanner';
 import { Role } from './types';
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'expenses' | 'fees' | 'payments' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending';
+type Screen = 'directory' | 'reservations' | 'financial' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending';
 
 function SignInPage() {
   const { instance, inProgress } = useMsal();
@@ -73,7 +70,7 @@ function MainApp() {
 
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
 
-  const roleScreens: Screen[] = ['directory', 'financial', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
+  const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
   useEffect(() => {
     if (role === 'admin' && screen === 'reservations') setScreen('directory');
@@ -159,9 +156,6 @@ function MainApp() {
             <Tab label={t('nav.directory')} value="directory" />
             {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
             <Tab label={t('nav.finance')} value="financial" />
-            <Tab label={t('nav.expenses')} value="expenses" />
-            <Tab label={t('nav.fees')} value="fees" />
-            <Tab label={t('nav.payments')} value="payments" />
             <Tab label={t('nav.contactEdit')} value="contact-edit" />
             {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
             <Tab label={t('nav.privacy')} value="privacy" />
@@ -180,9 +174,6 @@ function MainApp() {
         {screen === 'directory' && <DirectoryList role={role} />}
         {screen === 'reservations' && <ReservationScreen />}
         {screen === 'financial' && <FinancialScreen role={role} />}
-        {screen === 'expenses' && <ExpensesScreen role={role} />}
-        {screen === 'fees' && <MaintenanceFeesScreen role={role} />}
-        {screen === 'payments' && <PaymentsScreen role={role} />}
         {screen === 'notifications' && <NotificationsScreen role={role} />}
         {screen === 'privacy' && <PrivacyScreen role={role} />}
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
