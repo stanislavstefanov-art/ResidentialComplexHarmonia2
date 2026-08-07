@@ -293,15 +293,15 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
           </Box>
         ) : isAdmin ? (
           <Box sx={{ overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 700 }}>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>{t('directory.apartment')}</TableCell>
                 <TableCell>{t('directory.name')}</TableCell>
-                <TableCell>{t('common.phone')}</TableCell>
-                <TableCell>{t('common.email')}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('common.phone')}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{t('common.email')}</TableCell>
                 <TableCell>{t('directory.optOut')}</TableCell>
-                <TableCell>{t('directory.departed')}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('directory.departed')}</TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
@@ -318,14 +318,14 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
                     <Chip label={r.householdRef} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
                   </TableCell>
                   <TableCell>{r.displayName ?? '—'}</TableCell>
-                  <TableCell>{r.phone ?? '—'}</TableCell>
-                  <TableCell>{r.email ?? '—'}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{r.phone ?? '—'}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{r.email ?? '—'}</TableCell>
                   <TableCell>
                     {r.isOptedOut
                       ? <Chip label={t('directory.optedOut')} size="small" color="warning" />
                       : <Chip label={t('directory.active')} size="small" color="success" variant="outlined" />}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                     {r.deactivatedAt ? new Date(r.deactivatedAt).toLocaleDateString() : '—'}
                   </TableCell>
                   <TableCell>
