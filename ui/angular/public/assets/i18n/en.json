@@ -15,7 +15,8 @@
     "phone": "Phone",
     "email": "Email",
     "notes": "Notes",
-    "errRefRequired": "Household ref is required."
+    "errRefRequired": "Household ref is required.",
+    "edit": "Edit"
   },
   "nav": {
     "directory": "Directory",

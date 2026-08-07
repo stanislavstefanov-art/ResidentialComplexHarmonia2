@@ -282,6 +282,12 @@ app.MapGet("/notifications",
             useCase, loggers.CreateLogger("Notifications"), ct));
 
 app.MapGet(
+    "/directory/contact",
+    (GetMyContact uc, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.GetMyContactEndpoint(
+            uc, loggers.CreateLogger("Directory"), ct));
+
+app.MapGet(
     "/directory",
     (GetDirectory uc, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.GetDirectoryEndpoint(

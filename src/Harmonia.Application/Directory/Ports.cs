@@ -3,6 +3,20 @@ using Harmonia.Domain.Directory;
 
 namespace Harmonia.Application.Directory;
 
+/// <summary>Outcome of fetching the current resident's own contact record.</summary>
+public abstract record GetMyContactResult
+{
+    private GetMyContactResult() { }
+    /// <summary>No valid resident session.</summary>
+    public sealed record Refused  : GetMyContactResult;
+    /// <summary>Row found — contact details returned.</summary>
+    public sealed record Ok(HouseholdContact Contact) : GetMyContactResult;
+    /// <summary>No contact row exists yet for this household.</summary>
+    public sealed record NotFound : GetMyContactResult;
+    /// <summary>Store error; details are in the server log.</summary>
+    public sealed record Failed   : GetMyContactResult;
+}
+
 /// <summary>Role-differentiated outcome of <see cref="GetDirectory"/>.</summary>
 public abstract record GetDirectoryResult
 {
@@ -87,6 +101,12 @@ public abstract record PurgeExpiredContactsResult
 public interface IDirectoryStore
 {
     Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the contact record for a single household, or <see langword="null"/> if no row exists.
+    /// R3: never log <paramref name="householdRef"/> value.
+    /// </summary>
+    Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, CancellationToken ct = default);
 
     /// <summary>
     /// Upserts display name, phone, email, and opt-out flag for <paramref name="householdRef"/>.

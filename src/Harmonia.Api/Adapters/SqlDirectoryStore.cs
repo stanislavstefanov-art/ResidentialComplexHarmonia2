@@ -25,6 +25,21 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         return results;
     }
 
+    public async Task<HouseholdContact?> GetContactAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt, DepartedAt " +
+            "FROM dbo.HouseholdContacts " +
+            "WHERE HouseholdRef = @HouseholdRef;";
+        cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+        await using var reader = (SqlDataReader)await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) ? ReadRow(reader) : null;
+    }
+
     public async Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef, string? displayName, string? phone, string? email,
         bool? isOptedOut, CancellationToken ct = default)

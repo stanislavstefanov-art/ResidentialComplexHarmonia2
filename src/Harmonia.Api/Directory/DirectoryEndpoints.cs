@@ -19,6 +19,9 @@ public sealed record DirectoryEntryFullDto(
     DateTimeOffset  UpdatedAt,
     DateTimeOffset? DepartedAt);
 
+/// <summary>Resident's own contact details returned by GET /directory/contact — phone/email are PII (R3), never logged.</summary>
+public sealed record MyContactDto(string? DisplayName, string? Phone, string? Email, bool IsOptedOut);
+
 /// <summary>Request body for contact-detail updates (phone/email are PII — R3).</summary>
 public sealed record UpdateContactRequest(
     string? DisplayName,
@@ -35,6 +38,22 @@ public sealed record UpdateNotesRequest(string? Notes);
 /// </summary>
 public static class DirectoryEndpoints
 {
+    public static async Task<IResult> GetMyContactEndpoint(
+        GetMyContact useCase, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(ct);
+        return result switch
+        {
+            GetMyContactResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            GetMyContactResult.NotFound => TypedResults.NotFound(),
+            GetMyContactResult.Ok ok    => TypedResults.Json(
+                new MyContactDto(ok.Contact.DisplayName, ok.Contact.Phone, ok.Contact.Email, ok.Contact.IsOptedOut),
+                statusCode: StatusCodes.Status200OK),
+            GetMyContactResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
     public static async Task<IResult> GetDirectoryEndpoint(
         GetDirectory useCase, ILogger logger, CancellationToken ct)
     {

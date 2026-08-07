@@ -2,6 +2,20 @@ import { API_BASE, apiFetch } from './config';
 
 const BASE = API_BASE;
 
+export interface MyContactDto {
+  displayName: string | null;
+  phone: string | null;
+  email: string | null;
+  isOptedOut: boolean;
+}
+
+export async function getMyContact(): Promise<MyContactDto | null> {
+  const res = await apiFetch(`${BASE}/directory/contact`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`getMyContact failed: ${res.status}`);
+  return res.json();
+}
+
 export interface UpdateContactRequest {
   displayName?: string | null;
   phone?: string | null;

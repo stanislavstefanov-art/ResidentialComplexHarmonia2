@@ -14,7 +14,8 @@
     "displayName": "Display Name",
     "phone": "Phone",
     "email": "Email",
-    "notes": "Notes"
+    "notes": "Notes",
+    "edit": "Edit"
   },
   "nav": {
     "directory": "Directory",

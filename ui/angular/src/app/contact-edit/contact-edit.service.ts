@@ -1,13 +1,23 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
-import { UpdateContactRequest } from './models';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, map, catchError, of } from 'rxjs';
+import { MyContactDto, UpdateContactRequest } from './models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ContactEditService {
   private http = inject(HttpClient);
   private readonly base = environment.apiUrl;
+
+  /** Returns the current resident's own contact, or null if no row exists or access is denied. */
+  getMyContact(): Observable<MyContactDto | null> {
+    return this.http.get<MyContactDto>(`${this.base}/directory/contact`).pipe(
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 404 || err.status === 403) return of(null);
+        throw err;
+      })
+    );
+  }
 
   /** Resident updates their own contact — householdRef is session-derived (R2). */
   updateMyContact(body: UpdateContactRequest): Observable<void> {
