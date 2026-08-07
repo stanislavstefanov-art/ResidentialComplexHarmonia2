@@ -69,27 +69,75 @@ function MainApp() {
   return (
     <>
       <AppBar position="static" elevation={2}>
-        <Toolbar sx={{ minWidth: 0 }}>
-          <HomeIcon sx={{ mr: { xs: 0.5, sm: 1 }, flexShrink: 0 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, mr: 2, display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}>
+        {/* Top row: brand + actions */}
+        <Toolbar variant="dense" sx={{ gap: 1 }}>
+          <HomeIcon sx={{ flexShrink: 0 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1, display: { xs: 'none', sm: 'block' } }}>
             {t('app.brand')}
           </Typography>
+          <Box sx={{ flexGrow: { xs: 1, sm: 0 } }} />
+          {initialRole === 'admin' && roleScreens.includes(screen) && (
+            <ToggleButtonGroup
+              value={role}
+              exclusive
+              onChange={(_, v) => v && setRole(v)}
+              size="small"
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.12)',
+                borderRadius: 2,
+                '& .MuiToggleButton-root': {
+                  color: 'rgba(255,255,255,0.75)',
+                  border: 'none',
+                  px: { xs: 1, sm: 2 },
+                  py: 0.5,
+                  textTransform: 'none',
+                  fontSize: '0.8125rem',
+                  '&.Mui-selected': {
+                    bgcolor: 'rgba(255,255,255,0.22)',
+                    color: 'white',
+                    fontWeight: 600,
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
+                  },
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                },
+              }}
+            >
+              <ToggleButton value="resident">{t('app.roleResident')}</ToggleButton>
+              <ToggleButton value="admin">{t('app.roleAdmin')}</ToggleButton>
+            </ToggleButtonGroup>
+          )}
+          <Typography variant="caption" sx={{ opacity: 0.8, display: { xs: 'none', md: 'block' } }}>{displayName}</Typography>
+          <LanguageSwitcher />
+          <Button
+            size="small"
+            sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none', minWidth: 0, px: { xs: 1, sm: 1.5 } }}
+            onClick={() => instance.logoutRedirect()}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('app.signOut')}</Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>✕</Box>
+          </Button>
+        </Toolbar>
+        {/* Nav row: swipe-scrollable tabs */}
+        <Box sx={{
+          overflowX: 'auto',
+          '&::-webkit-scrollbar': { display: 'none' },
+          scrollbarWidth: 'none',
+        }}>
           <Tabs
             value={screen}
             onChange={(_, v) => setScreen(v)}
             textColor="inherit"
             variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
+            scrollButtons={false}
             slotProps={{ indicator: { style: { backgroundColor: 'white' } } }}
             sx={{
-              flexGrow: 1,
-              minWidth: 0,
+              minWidth: 'max-content',
               '& .MuiTab-root': {
                 color: 'rgba(255,255,255,0.75)',
                 textTransform: 'none',
                 minWidth: { xs: 72, sm: 90 },
                 fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                py: { xs: 1, sm: 1.5 },
                 '&.Mui-selected': { color: 'white' },
               },
             }}
@@ -105,54 +153,7 @@ function MainApp() {
             <Tab label={t('nav.contactEdit')} value="contact-edit" />
             {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
           </Tabs>
-          {initialRole === 'admin' && roleScreens.includes(screen) && (
-            <>
-              <Typography variant="caption" sx={{ opacity: 0.7, mr: 1.5 }}>
-                {t('app.viewAs')}
-              </Typography>
-              <ToggleButtonGroup
-                value={role}
-                exclusive
-                onChange={(_, v) => v && setRole(v)}
-                size="small"
-                sx={{
-                  bgcolor: 'rgba(255,255,255,0.12)',
-                  borderRadius: 2,
-                  '& .MuiToggleButton-root': {
-                    color: 'rgba(255,255,255,0.75)',
-                    border: 'none',
-                    px: 2,
-                    py: 0.5,
-                    textTransform: 'none',
-                    fontSize: '0.8125rem',
-                    '&.Mui-selected': {
-                      bgcolor: 'rgba(255,255,255,0.22)',
-                      color: 'white',
-                      fontWeight: 600,
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
-                    },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                  },
-                }}
-              >
-                <ToggleButton value="resident">{t('app.roleResident')}</ToggleButton>
-                <ToggleButton value="admin">{t('app.roleAdmin')}</ToggleButton>
-              </ToggleButtonGroup>
-            </>
-          )}
-          <Box sx={{ ml: 1, display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-            <Typography variant="caption" sx={{ opacity: 0.8, display: { xs: 'none', md: 'block' } }}>{displayName}</Typography>
-            <LanguageSwitcher />
-            <Button
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none', minWidth: 0, px: { xs: 1, sm: 1.5 } }}
-              onClick={() => instance.logoutRedirect()}
-            >
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('app.signOut')}</Box>
-              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>✕</Box>
-            </Button>
-          </Box>
-        </Toolbar>
+        </Box>
       </AppBar>
       <Box
         sx={{
