@@ -60,7 +60,16 @@ function MainApp() {
   const roles = claims?.['roles'] as string[] | undefined;
   const initialRole: Role = roles?.includes('admin') ? 'admin' : 'resident';
   const [role, setRole] = useState<Role>(initialRole);
-  const [screen, setScreen] = useState<Screen>('directory');
+
+  const firstLogin = initialRole === 'resident' && !localStorage.getItem('harmonia-welcomed');
+  const [screen, setScreen] = useState<Screen>(
+    firstLogin ? 'contact-edit' : initialRole === 'resident' ? 'notifications' : 'directory'
+  );
+
+  useEffect(() => {
+    if (firstLogin) localStorage.setItem('harmonia-welcomed', '1');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
 
@@ -153,9 +162,9 @@ function MainApp() {
             <Tab label={t('nav.fees')} value="fees" />
             <Tab label={t('nav.payments')} value="payments" />
             <Tab label={t('nav.notifications')} value="notifications" />
-            <Tab label={t('nav.privacy')} value="privacy" />
             <Tab label={t('nav.contactEdit')} value="contact-edit" />
             {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
+            <Tab label={t('nav.privacy')} value="privacy" />
           </Tabs>
         </Box>
       </AppBar>
