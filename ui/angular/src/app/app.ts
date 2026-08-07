@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { InteractionStatus } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
@@ -8,6 +8,7 @@ import { registerLocaleData } from '@angular/common';
 import localeBg from '@angular/common/locales/bg';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { MeService } from './me.service';
+import { RoleService } from './role.service';
 import { ResidentPendingComponent } from './resident-pending/resident-pending.component';
 import { LanguageService } from './language.service';
 import { IosSafariInstallBannerComponent } from './ios-safari-install-banner/ios-safari-install-banner.component';
@@ -39,6 +40,8 @@ export class App implements OnInit, OnDestroy {
     private readonly broadcastService: MsalBroadcastService,
     private readonly meService: MeService,
     private readonly langService: LanguageService,
+    private readonly roleService: RoleService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -58,7 +61,18 @@ export class App implements OnInit, OnDestroy {
         }
         if (accounts.length > 0) {
           this.meService.getStatus().subscribe({
-            next: (res) => this.meStatus.set(res.status === 'pending' ? 'pending' : 'ok'),
+            next: (res) => {
+              if (res.status === 'pending') { this.meStatus.set('pending'); return; }
+              this.meStatus.set('ok');
+              if (this.roleService.isAdmin) {
+                this.router.navigate(['/directory']);
+              } else if (!localStorage.getItem('harmonia-welcomed')) {
+                localStorage.setItem('harmonia-welcomed', '1');
+                this.router.navigate(['/contact-edit']);
+              } else {
+                this.router.navigate(['/notifications']);
+              }
+            },
             error: () => this.meStatus.set('ok'),
           });
         }

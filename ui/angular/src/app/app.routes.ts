@@ -14,7 +14,7 @@ import { ContactEditComponent } from './contact-edit/contact-edit.component';
 const guard = [MsalGuard];
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'directory', pathMatch: 'full' },
+  { path: '', redirectTo: 'notifications', pathMatch: 'full' },
   { path: 'directory', component: DirectoryListComponent, canActivate: guard },
   { path: 'reservations', component: ReservationsComponent, canActivate: guard },
   { path: 'financial', component: FinancialComponent, canActivate: guard },

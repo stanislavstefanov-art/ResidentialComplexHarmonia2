@@ -50,9 +50,9 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
         <a routerLink="/maintenance-fees" class="nav-link">{{ 'nav.fees' | translate }}</a>
         <a routerLink="/payments" class="nav-link">{{ 'nav.payments' | translate }}</a>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
         <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link nav-active">{{ 'nav.adminPending' | translate }}</a> }
+        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
         @if (isAdmin) {
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">{{ 'app.roleResident' | translate }}</button>
