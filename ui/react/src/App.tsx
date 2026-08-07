@@ -66,6 +66,10 @@ function MainApp() {
 
   const roleScreens: Screen[] = ['directory', 'financial', 'expenses', 'fees', 'payments', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
+  useEffect(() => {
+    if (role === 'admin' && screen === 'reservations') setScreen('directory');
+  }, [role, screen]);
+
   return (
     <>
       <AppBar position="static" elevation={2}>
@@ -143,7 +147,7 @@ function MainApp() {
             }}
           >
             <Tab label={t('nav.directory')} value="directory" />
-            {initialRole !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
+            {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
             <Tab label={t('nav.finance')} value="financial" />
             <Tab label={t('nav.expenses')} value="expenses" />
             <Tab label={t('nav.fees')} value="fees" />
