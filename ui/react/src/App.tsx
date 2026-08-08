@@ -116,7 +116,13 @@ function MainApp() {
               <ToggleButton value="admin">{t('app.roleAdmin')}</ToggleButton>
             </ToggleButtonGroup>
           )}
-          <Typography variant="caption" sx={{ opacity: 0.8, display: { xs: 'none', md: 'block' } }}>{displayName}</Typography>
+          <Button
+            size="small"
+            onClick={() => setScreen('contact-edit')}
+            sx={{ color: 'rgba(255,255,255,0.8)', textTransform: 'none', display: { xs: 'none', md: 'flex' }, fontSize: '0.75rem', px: 1 }}
+          >
+            {displayName}
+          </Button>
           <LanguageSwitcher />
           <Button
             size="small"
