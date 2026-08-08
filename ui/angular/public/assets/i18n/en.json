@@ -294,7 +294,8 @@
     "incomeRecorded": "Income recorded.",
     "errLoad": "Could not load annual report. Please try again.",
     "errRecord": "Could not record income. Please try again.",
-    "errAmount": "Enter a valid amount greater than zero."
+    "errAmount": "Enter a valid amount greater than zero.",
+    "downloadExcel": "Download Excel"
   },
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",

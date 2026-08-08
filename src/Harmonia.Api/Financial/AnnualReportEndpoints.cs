@@ -19,7 +19,7 @@ public sealed record AnnualReportDto(
 public static class AnnualReportEndpoints
 {
     public static async Task<IResult> GetAnnualReportEndpoint(
-        GetAnnualReport useCase, int year, ILogger logger, CancellationToken ct)
+        GetAnnualReport useCase, int year, string? format, ILogger logger, CancellationToken ct)
     {
         if (year < 2000 || year > 2100)
             return TypedResults.BadRequest("Year must be between 2000 and 2100.");
@@ -28,10 +28,14 @@ public static class AnnualReportEndpoints
 
         return result switch
         {
-            GetAnnualReportResult.Refused        => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
-            GetAnnualReportResult.Ok ok          => TypedResults.Json(ToDto(ok.Report), statusCode: StatusCodes.Status200OK),
-            GetAnnualReportResult.Failed         => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
-            _                                    => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+            GetAnnualReportResult.Refused => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            GetAnnualReportResult.Ok ok   => format == "xlsx"
+                ? Results.File(ExcelReportBuilder.Build(ok.Report),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"annual-report-{year}.xlsx")
+                : TypedResults.Json(ToDto(ok.Report), statusCode: StatusCodes.Status200OK),
+            GetAnnualReportResult.Failed  => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                             => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
 

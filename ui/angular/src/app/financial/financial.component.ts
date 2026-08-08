@@ -339,7 +339,8 @@ function formatEur(n: number): string {
                 <label class="period-label">{{ 'annualReport.yearLabel' | translate }}</label>
                 <input type="number" [(ngModel)]="reportYear" min="2000" max="2100" class="period-input" style="width:90px" />
                 <button class="submit-btn" (click)="loadAnnualReport()" [disabled]="repLoad()">{{ 'common.load' | translate }}</button>
-                @if (repLoad()) { <p-progressspinner strokeWidth="4" [style]="{width:'24px',height:'24px'}" /> }
+                <button class="submit-btn xlsx-btn" (click)="downloadXlsx()" [disabled]="xlsxLoad()">{{ 'annualReport.downloadExcel' | translate }}</button>
+                @if (repLoad() || xlsxLoad()) { <p-progressspinner strokeWidth="4" [style]="{width:'24px',height:'24px'}" /> }
               </div>
               @if (repErr()) { <p class="error-msg">{{ repErr() }}</p> }
 
@@ -472,6 +473,8 @@ function formatEur(n: number): string {
     .submit-btn { background: #2e6b4f; color: white; border: none; padding: 7px 18px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
     .submit-btn:hover { background: #245a40; }
     .submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .xlsx-btn { background: #1d6b21; }
+    .xlsx-btn:hover { background: #155218; }
     .success-msg { color: #2e6b4f; font-weight: 500; margin: 8px 0 0; font-size: .875rem; }
     .error-msg { color: #c00; margin: 8px 0 0; font-size: .875rem; }
     .table-scroll { overflow-x: auto; }
@@ -546,6 +549,7 @@ export class FinancialComponent implements OnInit {
   readonly report    = signal<AnnualReportDto | null>(null);
   readonly repLoad   = signal(false);
   readonly repErr    = signal<string | null>(null);
+  readonly xlsxLoad  = signal(false);
   readonly incSaving = signal(false);
   readonly incOk     = signal(false);
   readonly incErr    = signal<string | null>(null);
@@ -668,6 +672,20 @@ export class FinancialComponent implements OnInit {
     this.expSvc.getAnnualReport(this.reportYear).subscribe({
       next: r => { this.report.set(r); this.repLoad.set(false); },
       error: () => { this.repErr.set(this.t.instant('annualReport.errLoad')); this.repLoad.set(false); },
+    });
+  }
+
+  downloadXlsx(): void {
+    this.xlsxLoad.set(true);
+    this.expSvc.downloadAnnualReportXlsx(this.reportYear).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `annual-report-${this.reportYear}.xlsx`;
+        a.click(); URL.revokeObjectURL(url);
+        this.xlsxLoad.set(false);
+      },
+      error: () => { this.repErr.set(this.t.instant('annualReport.errLoad')); this.xlsxLoad.set(false); },
     });
   }
 

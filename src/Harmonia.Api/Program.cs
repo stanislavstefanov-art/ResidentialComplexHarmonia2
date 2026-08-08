@@ -369,9 +369,9 @@ app.MapPost(
 
 app.MapGet(
     "/financial/annual-report",
-    (GetAnnualReport useCase, int year, ILoggerFactory loggers, CancellationToken ct)
+    (GetAnnualReport useCase, int year, string? format, ILoggerFactory loggers, CancellationToken ct)
         => AnnualReportEndpoints.GetAnnualReportEndpoint(
-            useCase, year, loggers.CreateLogger("Financial"), ct));
+            useCase, year, format, loggers.CreateLogger("Financial"), ct));
 
 app.MapGet(
     "/me",

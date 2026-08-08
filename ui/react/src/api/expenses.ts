@@ -33,3 +33,15 @@ export async function getAnnualReport(year: number): Promise<AnnualReportDto> {
   if (!res.ok) throw new Error(`getAnnualReport failed: ${res.status}`);
   return res.json();
 }
+
+export async function downloadAnnualReportXlsx(year: number): Promise<void> {
+  const res = await apiFetch(`${BASE}/financial/annual-report?year=${year}&format=xlsx`);
+  if (!res.ok) throw new Error(`downloadAnnualReport failed: ${res.status}`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `annual-report-${year}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}

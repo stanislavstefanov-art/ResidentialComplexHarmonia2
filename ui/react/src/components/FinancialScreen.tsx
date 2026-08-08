@@ -9,7 +9,7 @@ import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getPeriodSummary } from '../api/financial';
 import { getMyCharges, getAllCharges, recordCharge } from '../api/maintenanceFees';
-import { getExpenses, recordExpense, recordIncome, getAnnualReport } from '../api/expenses';
+import { getExpenses, recordExpense, recordIncome, getAnnualReport, downloadAnnualReportXlsx } from '../api/expenses';
 import { getMyPayments, getAllPayments, recordPayment, getBalance } from '../api/payments';
 import { ChargeDto, PaymentDto, BalanceDto, ExpenseDto, PeriodSummaryDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES, AnnualReportDto } from '../types';
 
@@ -92,6 +92,7 @@ export default function FinancialScreen({ role }: Props) {
   const [report, setReport]           = useState<AnnualReportDto | null>(null);
   const [repLoad, setRepLoad]         = useState(false);
   const [repErr, setRepErr]           = useState('');
+  const [xlsxLoad, setXlsxLoad]       = useState(false);
   const [incCategory, setIncCategory] = useState('');
   const [incDesc, setIncDesc]         = useState('');
   const [incAmt, setIncAmt]           = useState('');
@@ -127,6 +128,13 @@ export default function FinancialScreen({ role }: Props) {
     try { setReport(await getAnnualReport(reportYear)); }
     catch { setRepErr(t('annualReport.errLoad')); }
     finally { setRepLoad(false); }
+  }, [reportYear, t]);
+
+  const handleDownloadXlsx = useCallback(async () => {
+    setXlsxLoad(true);
+    try { await downloadAnnualReportXlsx(reportYear); }
+    catch { setRepErr(t('annualReport.errLoad')); }
+    finally { setXlsxLoad(false); }
   }, [reportYear, t]);
 
   const handleIncSubmit = async (e: React.FormEvent) => {
@@ -488,8 +496,9 @@ export default function FinancialScreen({ role }: Props) {
               size="small"
               slotProps={{ htmlInput: { min: 2000, max: 2100, style: { width: 90 } } }}
             />
-            <Button variant="outlined" size="small" onClick={loadReport} disabled={repLoad}>{t('common.retry')}</Button>
-            {repLoad && <CircularProgress size={18} />}
+            <Button variant="outlined" size="small" onClick={loadReport} disabled={repLoad}>{t('common.load')}</Button>
+            <Button variant="outlined" size="small" onClick={handleDownloadXlsx} disabled={xlsxLoad}>{t('annualReport.downloadExcel')}</Button>
+            {(repLoad || xlsxLoad) && <CircularProgress size={18} />}
           </Box>
 
           {repErr && <Alert severity="error">{repErr}</Alert>}

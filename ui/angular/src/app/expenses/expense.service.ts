@@ -25,4 +25,8 @@ export class ExpenseService {
   getAnnualReport(year: number): Observable<AnnualReportDto> {
     return this.http.get<AnnualReportDto>(`${API}/financial/annual-report?year=${year}`);
   }
+
+  downloadAnnualReportXlsx(year: number): Observable<Blob> {
+    return this.http.get(`${API}/financial/annual-report?year=${year}&format=xlsx`, { responseType: 'blob' });
+  }
 }
