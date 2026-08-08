@@ -158,6 +158,13 @@ export interface AnnualReportDto {
   periodResultTotal: number;
 }
 
+export interface ScannedInvoiceDto {
+  amount: number | null;
+  date: string | null;
+  vendor: string | null;
+  confidence: number;
+}
+
 export interface RecordChargeRequest {
   amountEur: number;
   description: string;

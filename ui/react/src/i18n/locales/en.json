@@ -289,6 +289,24 @@
     "errAmount": "Enter a valid amount greater than zero.",
     "downloadExcel": "Download Excel"
   },
+  "invoiceScan": {
+    "title": "Scan Invoice",
+    "uploadLabel": "Upload invoice (PDF/image)",
+    "uploadBtn": "Choose file",
+    "scanning": "Scanning…",
+    "resultTitle": "Scanned Result",
+    "fieldAmount": "Amount (€)",
+    "fieldDate": "Date",
+    "fieldVendor": "Vendor",
+    "confidence": "Confidence",
+    "saveAsExpense": "Save as Expense",
+    "saving": "Saving…",
+    "saved": "Expense recorded from invoice.",
+    "reset": "Scan another",
+    "errScan": "Could not scan invoice. Please try again.",
+    "errSave": "Could not save expense. Please try again.",
+    "errEmpty": "Please select a file."
+  },
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",
     "dismiss": "Dismiss"

@@ -9,7 +9,7 @@ import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getPeriodSummary } from '../api/financial';
 import { getMyCharges, getAllCharges, recordCharge } from '../api/maintenanceFees';
-import { getExpenses, recordExpense, recordIncome, getAnnualReport, downloadAnnualReportXlsx } from '../api/expenses';
+import { getExpenses, recordExpense, recordIncome, getAnnualReport, downloadAnnualReportXlsx, scanInvoice } from '../api/expenses';
 import { getMyPayments, getAllPayments, recordPayment, getBalance } from '../api/payments';
 import { ChargeDto, PaymentDto, BalanceDto, ExpenseDto, PeriodSummaryDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES, AnnualReportDto } from '../types';
 
@@ -188,6 +188,55 @@ export default function FinancialScreen({ role }: Props) {
       await loadPayments(); await loadBalance();
     } catch { setPayFormErr(t('payments.errRecord')); }
     finally { setPaySaving(false); }
+  };
+
+  // ── Invoice scan ────────────────────────────────────────────────────────────
+  const [scanStep, setScanStep]       = useState<'idle' | 'scanning' | 'done'>('idle');
+  const [scanErr, setScanErr]         = useState('');
+  const [scanAmt, setScanAmt]         = useState('');
+  const [scanDate, setScanDate]       = useState(today());
+  const [scanDesc, setScanDesc]       = useState('');
+  const [scanCat, setScanCat]         = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [scanParent, setScanParent]   = useState<string>(PARENT_CATEGORIES[3]);
+  const [scanConf, setScanConf]       = useState(0);
+  const [scanSaving, setScanSaving]   = useState(false);
+  const [scanOk, setScanOk]           = useState(false);
+  const [scanSaveErr, setScanSaveErr] = useState('');
+
+  const handleInvoiceSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) { setScanErr(t('invoiceScan.errEmpty')); return; }
+    setScanErr(''); setScanStep('scanning');
+    try {
+      const dto = await scanInvoice(file);
+      setScanAmt(dto.amount != null ? String(dto.amount) : '');
+      setScanDate(dto.date ?? today());
+      setScanDesc(dto.vendor ?? '');
+      setScanCat(EXPENSE_CATEGORIES[0]);
+      setScanParent(PARENT_CATEGORIES[3]);
+      setScanConf(dto.confidence);
+      setScanStep('done');
+    } catch {
+      setScanErr(t('invoiceScan.errScan')); setScanStep('idle');
+    }
+  };
+
+  const resetScan = () => {
+    setScanStep('idle'); setScanErr(''); setScanOk(false); setScanSaveErr('');
+    setScanAmt(''); setScanDate(today()); setScanDesc('');
+    setScanCat(EXPENSE_CATEGORIES[0]); setScanParent(PARENT_CATEGORIES[3]);
+  };
+
+  const handleScanSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); setScanOk(false); setScanSaveErr('');
+    const parsed = parseFloat(scanAmt);
+    if (isNaN(parsed) || parsed <= 0) { setScanSaveErr(t('expenses.errAmount')); return; }
+    setScanSaving(true);
+    try {
+      await recordExpense({ amountEur: parsed, description: scanDesc, category: scanCat, parentCategory: scanParent, expenseDate: scanDate, idempotencyKey: crypto.randomUUID() });
+      setScanOk(true); await loadExpenses();
+    } catch { setScanSaveErr(t('invoiceScan.errSave')); }
+    finally { setScanSaving(false); }
   };
 
   // ── Section divider helper ──────────────────────────────────────────────────
@@ -575,6 +624,57 @@ export default function FinancialScreen({ role }: Props) {
                 </TableBody>
               </Table>
             </Box>
+          )}
+
+          {/* ── Invoice Scanner ── */}
+          <SectionDivider label={t('invoiceScan.title')} />
+
+          {scanStep === 'idle' && (
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>{t('invoiceScan.uploadLabel')}</Typography>
+                <Button variant="contained" component="label" size="small">
+                  {t('invoiceScan.uploadBtn')}
+                  <input type="file" hidden accept="application/pdf,image/*" onChange={handleInvoiceSelected} />
+                </Button>
+                {scanErr && <Alert severity="error" sx={{ mt: 1, py: 0 }}>{scanErr}</Alert>}
+              </CardContent>
+            </Card>
+          )}
+
+          {scanStep === 'scanning' && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2 }}>
+              <CircularProgress size={24} />
+              <Typography>{t('invoiceScan.scanning')}</Typography>
+            </Box>
+          )}
+
+          {scanStep === 'done' && (
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>{t('invoiceScan.resultTitle')}</Typography>
+                <Box component="form" onSubmit={handleScanSubmit} sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                  <TextField label={t('invoiceScan.fieldAmount')} type="number" slotProps={{ htmlInput: { step: '0.01' } }} value={scanAmt} onChange={e => setScanAmt(e.target.value)} size="small" />
+                  <TextField label={t('invoiceScan.fieldDate')} type="date" value={scanDate} onChange={e => setScanDate(e.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} />
+                  <TextField label={t('invoiceScan.fieldVendor')} value={scanDesc} onChange={e => setScanDesc(e.target.value)} size="small" />
+                  <TextField label={t('invoiceScan.confidence')} value={`${(scanConf * 100).toFixed(0)}%`} size="small" slotProps={{ input: { readOnly: true } }} />
+                  <TextField label={t('expenses.category')} select value={scanCat} onChange={e => setScanCat(e.target.value)} size="small">
+                    {EXPENSE_CATEGORIES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                  </TextField>
+                  <TextField label={t('expenses.parentCategory')} select value={scanParent} onChange={e => setScanParent(e.target.value)} size="small">
+                    {PARENT_CATEGORIES.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                  </TextField>
+                  <Box sx={{ gridColumn: '1 / -1', display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                    <Button type="submit" variant="contained" size="small" disabled={scanSaving}>
+                      {scanSaving ? t('invoiceScan.saving') : t('invoiceScan.saveAsExpense')}
+                    </Button>
+                    <Button variant="outlined" size="small" onClick={resetScan}>{t('invoiceScan.reset')}</Button>
+                  </Box>
+                  {scanOk && <Alert severity="success" sx={{ gridColumn: '1 / -1', py: 0 }}>{t('invoiceScan.saved')}</Alert>}
+                  {scanSaveErr && <Alert severity="error" sx={{ gridColumn: '1 / -1', py: 0 }}>{scanSaveErr}</Alert>}
+                </Box>
+              </CardContent>
+            </Card>
           )}
         </>
       )}

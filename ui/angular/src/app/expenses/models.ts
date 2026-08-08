@@ -56,6 +56,13 @@ export interface ParentCategoryLineDto {
   subCategories: SubCategoryLineDto[];
 }
 
+export interface ScannedInvoiceDto {
+  amount: number | null;
+  date: string | null;
+  vendor: string | null;
+  confidence: number;
+}
+
 export interface AnnualReportDto {
   year: number;
   months: string[];

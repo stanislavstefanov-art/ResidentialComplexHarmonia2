@@ -12,7 +12,7 @@ import { MaintenanceFeeService } from '../maintenance-fees/maintenance-fee.servi
 import { ExpenseService } from '../expenses/expense.service';
 import { PaymentService } from '../payments/payment.service';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from './models';
-import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES, AnnualReportDto, RecordIncomeRequest } from '../expenses/models';
+import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES, AnnualReportDto, RecordIncomeRequest, ScannedInvoiceDto } from '../expenses/models';
 import { BalanceDto } from '../payments/models';
 import { RoleService } from '../role.service';
 
@@ -413,6 +413,75 @@ function formatEur(n: number): string {
               }
             }
 
+            <!-- ── Invoice Scanner (admin only) ── -->
+            @if (role === 'admin') {
+              <div class="section-divider"><span class="section-label">{{ 'invoiceScan.title' | translate }}</span></div>
+
+              @if (scanStep() === 'idle') {
+                <div class="record-form">
+                  <label class="upload-label">{{ 'invoiceScan.uploadLabel' | translate }}</label>
+                  <div class="upload-row">
+                    <label class="upload-btn">
+                      {{ 'invoiceScan.uploadBtn' | translate }}
+                      <input type="file" accept="application/pdf,image/*" (change)="onInvoiceSelected($event)" style="display:none" />
+                    </label>
+                  </div>
+                  @if (scanErr()) { <p class="error-msg">{{ scanErr() }}</p> }
+                </div>
+              }
+
+              @if (scanStep() === 'scanning') {
+                <div class="center-state">
+                  <p-progressspinner strokeWidth="4" [style]="{width:'36px',height:'36px'}" />
+                  <span style="margin-left:12px">{{ 'invoiceScan.scanning' | translate }}</span>
+                </div>
+              }
+
+              @if (scanStep() === 'done') {
+                <div class="record-form">
+                  <h3 class="form-title">{{ 'invoiceScan.resultTitle' | translate }}</h3>
+                  <div class="form-grid">
+                    <div class="form-row">
+                      <label>{{ 'invoiceScan.fieldAmount' | translate }}</label>
+                      <input type="number" step="0.01" [(ngModel)]="scanForm.amountEurStr" name="scanAmt" class="form-input" />
+                    </div>
+                    <div class="form-row">
+                      <label>{{ 'invoiceScan.fieldDate' | translate }}</label>
+                      <input type="date" [(ngModel)]="scanForm.expenseDate" name="scanDate" class="form-input" />
+                    </div>
+                    <div class="form-row">
+                      <label>{{ 'invoiceScan.fieldVendor' | translate }}</label>
+                      <input type="text" [(ngModel)]="scanForm.description" name="scanDesc" class="form-input" />
+                    </div>
+                    <div class="form-row">
+                      <label>{{ 'expenses.category' | translate }}</label>
+                      <select [(ngModel)]="scanForm.category" name="scanCat" class="form-input">
+                        @for (cat of expCategories; track cat) { <option [value]="cat">{{ cat }}</option> }
+                      </select>
+                    </div>
+                    <div class="form-row">
+                      <label>{{ 'expenses.parentCategory' | translate }}</label>
+                      <select [(ngModel)]="scanForm.parentCategory" name="scanParent" class="form-input">
+                        @for (p of parentCategories; track p) { <option [value]="p">{{ p }}</option> }
+                      </select>
+                    </div>
+                    <div class="form-row">
+                      <label>{{ 'invoiceScan.confidence' | translate }}</label>
+                      <span class="form-input confidence-val">{{ (scanConfidence() * 100).toFixed(0) }}%</span>
+                    </div>
+                  </div>
+                  <div class="scan-actions">
+                    <button class="submit-btn" (click)="onScanSubmit()" [disabled]="scanExpSaving()">
+                      {{ scanExpSaving() ? ('invoiceScan.saving' | translate) : ('invoiceScan.saveAsExpense' | translate) }}
+                    </button>
+                    <button class="reset-btn" (click)="resetScan()">{{ 'invoiceScan.reset' | translate }}</button>
+                  </div>
+                  @if (scanExpOk()) { <p class="success-msg">{{ 'invoiceScan.saved' | translate }}</p> }
+                  @if (scanExpErr()) { <p class="error-msg">{{ scanExpErr() }}</p> }
+                </div>
+              }
+            }
+
             @if (role !== 'admin') {
               <div class="pay-row">
                 <button data-testid="pay-btn" class="pay-btn" (click)="showPayDialog = true">{{ 'finance.requestPayment' | translate }}</button>
@@ -506,6 +575,14 @@ function formatEur(n: number): string {
     .rep-result-row td { background: #e8f0ec; font-weight: 700; border-top: 2px solid #2e6b4f; }
     .rep-positive { color: #2e6b4f; }
     .rep-negative { color: #c00; }
+    .upload-label { font-size: .875rem; font-weight: 500; color: #555; display: block; margin-bottom: 8px; }
+    .upload-row { margin-bottom: 8px; }
+    .upload-btn { display: inline-block; background: #2e6b4f; color: white; padding: 7px 18px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
+    .upload-btn:hover { background: #245a40; }
+    .confidence-val { background: none; border: none; padding-left: 0; font-size: .875rem; color: #555; }
+    .scan-actions { display: flex; gap: 12px; align-items: center; margin-top: 4px; }
+    .reset-btn { background: transparent; border: 1px solid #ccc; color: #555; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
+    .reset-btn:hover { background: #f5f5f0; }
   `],
 })
 export class FinancialComponent implements OnInit {
@@ -565,6 +642,15 @@ export class FinancialComponent implements OnInit {
   readonly payOk       = signal(false);
   readonly payErr      = signal<string | null>(null);
   payForm = { householdRef: '', amountEurStr: '', period: currentMonth(), dateReceived: today() };
+
+  // ── Invoice scan ────────────────────────────────────────────────────────────
+  readonly scanStep       = signal<'idle' | 'scanning' | 'done'>('idle');
+  readonly scanErr        = signal<string | null>(null);
+  readonly scanExpSaving  = signal(false);
+  readonly scanExpOk      = signal(false);
+  readonly scanExpErr     = signal<string | null>(null);
+  readonly scanConfidence = signal(0);
+  scanForm = { amountEurStr: '', expenseDate: today(), description: '', category: EXPENSE_CATEGORIES[0], parentCategory: PARENT_CATEGORIES[3] };
 
   showPayDialog = false;
   readonly formatEur = formatEur;
@@ -729,6 +815,54 @@ export class FinancialComponent implements OnInit {
         this.loadBalance();
       },
       error: () => { this.payErr.set(this.t.instant('payments.errRecord')); this.paySaving.set(false); },
+    });
+  }
+
+  onInvoiceSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) { this.scanErr.set(this.t.instant('invoiceScan.errEmpty')); return; }
+    this.scanErr.set(null);
+    this.scanStep.set('scanning');
+    this.expSvc.scanInvoice(file).subscribe({
+      next: (dto: ScannedInvoiceDto) => {
+        this.scanForm = {
+          amountEurStr: dto.amount != null ? String(dto.amount) : '',
+          expenseDate: dto.date ?? today(),
+          description: dto.vendor ?? '',
+          category: EXPENSE_CATEGORIES[0],
+          parentCategory: PARENT_CATEGORIES[3],
+        };
+        this.scanConfidence.set(dto.confidence);
+        this.scanStep.set('done');
+      },
+      error: () => { this.scanErr.set(this.t.instant('invoiceScan.errScan')); this.scanStep.set('idle'); },
+    });
+  }
+
+  resetScan(): void {
+    this.scanStep.set('idle');
+    this.scanErr.set(null);
+    this.scanExpOk.set(false);
+    this.scanExpErr.set(null);
+    this.scanForm = { amountEurStr: '', expenseDate: today(), description: '', category: EXPENSE_CATEGORIES[0], parentCategory: PARENT_CATEGORIES[3] };
+  }
+
+  onScanSubmit(): void {
+    this.scanExpOk.set(false); this.scanExpErr.set(null);
+    const parsed = parseFloat(this.scanForm.amountEurStr);
+    if (isNaN(parsed) || parsed <= 0) { this.scanExpErr.set(this.t.instant('expenses.errAmount')); return; }
+    this.scanExpSaving.set(true);
+    this.expSvc.recordExpense({
+      amountEur: parsed, description: this.scanForm.description,
+      category: this.scanForm.category, parentCategory: this.scanForm.parentCategory,
+      expenseDate: this.scanForm.expenseDate, idempotencyKey: crypto.randomUUID(),
+    }).subscribe({
+      next: () => {
+        this.scanExpOk.set(true);
+        this.scanExpSaving.set(false);
+        this.loadExpenses();
+      },
+      error: () => { this.scanExpErr.set(this.t.instant('invoiceScan.errSave')); this.scanExpSaving.set(false); },
     });
   }
 }

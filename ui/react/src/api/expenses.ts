@@ -1,5 +1,5 @@
 import { API_BASE, apiFetch } from './config';
-import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto } from '../types';
+import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto, ScannedInvoiceDto } from '../types';
 
 const BASE = API_BASE;
 
@@ -31,6 +31,14 @@ export async function recordIncome(body: RecordIncomeRequest): Promise<void> {
 export async function getAnnualReport(year: number): Promise<AnnualReportDto> {
   const res = await apiFetch(`${BASE}/financial/annual-report?year=${year}`);
   if (!res.ok) throw new Error(`getAnnualReport failed: ${res.status}`);
+  return res.json();
+}
+
+export async function scanInvoice(file: File): Promise<ScannedInvoiceDto> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await apiFetch(`${BASE}/financial/invoices/scan`, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error(`scanInvoice failed: ${res.status}`);
   return res.json();
 }
 

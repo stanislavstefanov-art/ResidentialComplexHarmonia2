@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Harmonia.Api.Adapters;
 using Harmonia.Api.Admin;
 using Harmonia.Api.Directory;
@@ -147,6 +148,15 @@ builder.Services.AddScoped<RecordExpense>();
 builder.Services.AddScoped<ListExpenses>();
 builder.Services.AddScoped<RecordIncome>();
 builder.Services.AddScoped<GetAnnualReport>();
+
+// Invoice scanner (Azure Document Intelligence — F0 free tier, 500 pages/month)
+var diEndpoint = builder.Configuration["DocumentIntelligence:Endpoint"];
+var diKey      = builder.Configuration["DocumentIntelligence:Key"];
+if (!string.IsNullOrWhiteSpace(diEndpoint) && !string.IsNullOrWhiteSpace(diKey))
+    builder.Services.AddSingleton<IInvoiceScanner>(new AzureInvoiceScanner(diEndpoint, diKey));
+// If not configured, the scan endpoint returns 503 (IInvoiceScanner? resolves to null)
+
+builder.Services.AddAntiforgery();
 builder.Services.AddScoped<GetFinancialSummary>();
 builder.Services.AddScoped<RecordPayment>();
 builder.Services.AddScoped<ListAllPayments>();
@@ -373,6 +383,18 @@ app.MapGet(
     (GetAnnualReport useCase, int year, string? format, ILoggerFactory loggers, CancellationToken ct)
         => AnnualReportEndpoints.GetAnnualReportEndpoint(
             useCase, year, format, loggers.CreateLogger("Financial"), ct));
+
+app.MapPost(
+    "/financial/invoices/scan",
+    async (ISession session, IFormFile file,
+           ILoggerFactory loggers, HttpContext ctx, CancellationToken ct) =>
+    {
+        var scanner = ctx.RequestServices.GetService<IInvoiceScanner>();
+        if (scanner is null)
+            return Results.Problem("Invoice scanning is not configured.", statusCode: 503);
+        return await InvoiceScanEndpoints.ScanEndpoint(
+            session, scanner, file, loggers.CreateLogger("Financial"), ct);
+    }).DisableAntiforgery();
 
 app.MapGet(
     "/me",

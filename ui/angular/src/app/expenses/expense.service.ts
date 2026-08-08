@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto } from './models';
+import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto, ScannedInvoiceDto } from './models';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiUrl;
@@ -28,5 +28,11 @@ export class ExpenseService {
 
   downloadAnnualReportXlsx(year: number): Observable<Blob> {
     return this.http.get(`${API}/financial/annual-report?year=${year}&format=xlsx`, { responseType: 'blob' });
+  }
+
+  scanInvoice(file: File): Observable<ScannedInvoiceDto> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<ScannedInvoiceDto>(`${API}/financial/invoices/scan`, fd);
   }
 }
