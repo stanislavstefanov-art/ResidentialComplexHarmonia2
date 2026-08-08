@@ -157,6 +157,7 @@ builder.Services.AddScoped<RemoveSubscription>();
 builder.Services.AddScoped<SendAnnouncement>();
 builder.Services.AddScoped<GetNotificationHistory>();
 builder.Services.AddScoped<GetDirectory>();
+builder.Services.AddScoped<GetMyContact>();
 builder.Services.AddScoped<UpdateMyContact>();
 builder.Services.AddScoped<UpdateContact>();
 builder.Services.AddScoped<UpdateNotes>();
