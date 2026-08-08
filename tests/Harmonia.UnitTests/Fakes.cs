@@ -103,6 +103,9 @@ public sealed class FakeExpenseStore : IExpenseStore
         var list = _byKey.Values.OrderByDescending(e => e.RecordedAt).ToList();
         return Task.FromResult<IReadOnlyList<AssociationExpense>>(list);
     }
+
+    public Task<AnnualExpenseData> GetAnnualExpensesAsync(int year, CancellationToken ct = default)
+        => Task.FromResult(new AnnualExpenseData([]));
 }
 
 public sealed class FailingExpenseStore : IExpenseStore
@@ -112,6 +115,9 @@ public sealed class FailingExpenseStore : IExpenseStore
         => Task.FromResult<RecordExpenseResult>(new RecordExpenseResult.Failed());
 
     public Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<AnnualExpenseData> GetAnnualExpensesAsync(int year, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
@@ -386,6 +392,12 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         var removed = _contacts.RemoveAll(c => c.DepartedAt.HasValue && c.DepartedAt.Value < cutoff);
         return Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Ok(removed));
     }
+
+    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        var contact = _contacts.FirstOrDefault(c => c.HouseholdRef == householdRef);
+        return Task.FromResult<HouseholdContact?>(contact);
+    }
 }
 
 public sealed class FailingDirectoryStore : IDirectoryStore
@@ -412,6 +424,9 @@ public sealed class FailingDirectoryStore : IDirectoryStore
 
     public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(CancellationToken ct = default)
         => Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Failed());
+
+    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
 }
 
 // Slice 1 fake — only UpsertAsync is exercised; the 3 new methods throw so they're never called from Slice 1 tests.

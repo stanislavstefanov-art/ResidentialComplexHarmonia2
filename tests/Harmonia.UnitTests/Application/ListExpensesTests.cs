@@ -57,5 +57,5 @@ public class ListExpensesTests
     }
 
     private static AssociationExpense MakeExpense(string key) =>
-        new(Guid.NewGuid(), 100m, "Test", "Maintenance", TestDate, DateTimeOffset.UtcNow, key);
+        new(Guid.NewGuid(), 100m, "Test", "Maintenance", null, TestDate, DateTimeOffset.UtcNow, key);
 }

@@ -18,10 +18,10 @@ public class SqlExpenseStoreTests(SqlServerFixture db)
         var key2 = $"rel-exp-{Guid.NewGuid():N}";
 
         var r1 = await store.RecordExpenseAsync(
-            new AssociationExpense(Guid.NewGuid(), 100m, "Gardening", "Maintenance", TestDate,
+            new AssociationExpense(Guid.NewGuid(), 100m, "Gardening", "Maintenance", null, TestDate,
                 DateTimeOffset.UtcNow.AddMinutes(-1), key1));
         var r2 = await store.RecordExpenseAsync(
-            new AssociationExpense(Guid.NewGuid(), 200m, "Cleaning", "Cleaning", TestDate,
+            new AssociationExpense(Guid.NewGuid(), 200m, "Cleaning", "Cleaning", null, TestDate,
                 DateTimeOffset.UtcNow, key2));
 
         Assert.IsType<RecordExpenseResult.Created>(r1);
@@ -41,11 +41,11 @@ public class SqlExpenseStoreTests(SqlServerFixture db)
         var key = $"rel-dup-{Guid.NewGuid():N}";
 
         await store.RecordExpenseAsync(
-            new AssociationExpense(Guid.NewGuid(), 300m, "Elevator", "Maintenance", TestDate,
+            new AssociationExpense(Guid.NewGuid(), 300m, "Elevator", "Maintenance", null, TestDate,
                 DateTimeOffset.UtcNow, key));
 
         var result = await store.RecordExpenseAsync(
-            new AssociationExpense(Guid.NewGuid(), 999m, "Different", "Other", TestDate,
+            new AssociationExpense(Guid.NewGuid(), 999m, "Different", "Other", null, TestDate,
                 DateTimeOffset.UtcNow, key));
 
         var dup = Assert.IsType<RecordExpenseResult.Duplicate>(result);

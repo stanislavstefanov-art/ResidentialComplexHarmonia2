@@ -15,7 +15,7 @@ public class RecordExpenseTests
         var store = new FakeExpenseStore();
         var useCase = new RecordExpense(new FakeSession(ctx), store);
 
-        var result = await useCase.ExecuteAsync(250m, "Gardening", "Maintenance", TestDate, "key-1");
+        var result = await useCase.ExecuteAsync(250m, "Gardening", "Maintenance", null, TestDate, "key-1");
 
         var created = Assert.IsType<RecordExpenseResult.Created>(result);
         Assert.Equal(250m, created.Expense.AmountEur);
@@ -30,9 +30,9 @@ public class RecordExpenseTests
         var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
         var store = new FakeExpenseStore();
         var useCase = new RecordExpense(new FakeSession(ctx), store);
-        await useCase.ExecuteAsync(100m, "Cleaning", "Cleaning", TestDate, "dup-key");
+        await useCase.ExecuteAsync(100m, "Cleaning", "Cleaning", null, TestDate, "dup-key");
 
-        var result = await useCase.ExecuteAsync(999m, "Different", "Other", TestDate, "dup-key");
+        var result = await useCase.ExecuteAsync(999m, "Different", "Other", null, TestDate, "dup-key");
 
         var dup = Assert.IsType<RecordExpenseResult.Duplicate>(result);
         Assert.Equal(100m, dup.Expense.AmountEur);
@@ -44,7 +44,7 @@ public class RecordExpenseTests
         var ctx = new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: null);
         var useCase = new RecordExpense(new FakeSession(ctx), new FakeExpenseStore());
 
-        var result = await useCase.ExecuteAsync(100m, "X", "Y", TestDate, "k");
+        var result = await useCase.ExecuteAsync(100m, "X", "Y", null, TestDate, "k");
 
         Assert.IsType<RecordExpenseResult.Refused>(result);
     }
@@ -54,7 +54,7 @@ public class RecordExpenseTests
     {
         var useCase = new RecordExpense(new FakeSession(null), new FakeExpenseStore());
 
-        var result = await useCase.ExecuteAsync(100m, "X", "Y", TestDate, "k");
+        var result = await useCase.ExecuteAsync(100m, "X", "Y", null, TestDate, "k");
 
         Assert.IsType<RecordExpenseResult.Refused>(result);
     }
@@ -65,7 +65,7 @@ public class RecordExpenseTests
         var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
         var useCase = new RecordExpense(new FakeSession(ctx), new FailingExpenseStore());
 
-        var result = await useCase.ExecuteAsync(100m, "X", "Y", TestDate, "k");
+        var result = await useCase.ExecuteAsync(100m, "X", "Y", null, TestDate, "k");
 
         Assert.IsType<RecordExpenseResult.Failed>(result);
     }
