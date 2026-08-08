@@ -26,7 +26,7 @@ test('recordExpense posts to POST /expenses', async () => {
   mockFetch(dto, 201);
   const body = {
     amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
-    expenseDate: '2026-07-10', idempotencyKey: 'ik1',
+    parentCategory: null, expenseDate: '2026-07-10', idempotencyKey: 'ik1',
   };
   const result = await recordExpense(body);
   expect(fetch).toHaveBeenCalledWith(`${BASE}/expenses`, expect.objectContaining({
@@ -43,7 +43,7 @@ test('recordExpense handles 200 duplicate response', async () => {
   mockFetch(dto, 200);
   const result = await recordExpense({
     amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
-    expenseDate: '2026-07-10', idempotencyKey: 'ik1',
+    parentCategory: null, expenseDate: '2026-07-10', idempotencyKey: 'ik1',
   });
   expect(result).toEqual(dto);
 });
