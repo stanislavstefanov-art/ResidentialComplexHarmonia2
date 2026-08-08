@@ -26,4 +26,11 @@ public interface IExpenseStore
 
     Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(
         CancellationToken ct = default);
+
+    Task<AnnualExpenseData> GetAnnualExpensesAsync(
+        int year, CancellationToken ct = default);
 }
+
+public sealed record ExpenseMonthRow(string ParentCategory, string SubCategory, int MonthNum, decimal Total);
+
+public sealed record AnnualExpenseData(IReadOnlyList<ExpenseMonthRow> Rows);

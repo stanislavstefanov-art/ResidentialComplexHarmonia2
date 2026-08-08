@@ -7,7 +7,7 @@ import {
 import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getExpenses, recordExpense } from '../api/expenses';
-import { ExpenseDto, EXPENSE_CATEGORIES } from '../types';
+import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES } from '../types';
 
 function formatEur(n: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
@@ -30,10 +30,11 @@ export default function ExpensesScreen({ role }: Props) {
   const [submitError, setSubmitError]   = useState<string>('');
   const [submitting, setSubmitting]     = useState(false);
 
-  const [amount, setAmount]         = useState('');
-  const [description, setDesc]      = useState('');
-  const [category, setCategory]     = useState<string>(EXPENSE_CATEGORIES[0]);
-  const [expenseDate, setExpDate]   = useState(today());
+  const [amount, setAmount]           = useState('');
+  const [description, setDesc]        = useState('');
+  const [category, setCategory]       = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [parentCategory, setParentCat] = useState<string>(PARENT_CATEGORIES[3]);
+  const [expenseDate, setExpDate]     = useState(today());
 
   const loadExpenses = useCallback(async () => {
     setLoading(true);
@@ -64,6 +65,7 @@ export default function ExpensesScreen({ role }: Props) {
         amountEur:      parsed,
         description,
         category,
+        parentCategory,
         expenseDate,
         idempotencyKey: crypto.randomUUID(),
       });
@@ -71,6 +73,7 @@ export default function ExpensesScreen({ role }: Props) {
       setAmount('');
       setDesc('');
       setCategory(EXPENSE_CATEGORIES[0]);
+      setParentCat(PARENT_CATEGORIES[3]);
       setExpDate(today());
       await loadExpenses();
     } catch {
@@ -115,6 +118,16 @@ export default function ExpensesScreen({ role }: Props) {
               >
                 {EXPENSE_CATEGORIES.map(cat => (
                   <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                ))}
+              </Select>
+              <Select
+                value={parentCategory}
+                onChange={e => setParentCat(e.target.value)}
+                size="small"
+                displayEmpty
+              >
+                {PARENT_CATEGORIES.map(p => (
+                  <MenuItem key={p} value={p}>{p}</MenuItem>
                 ))}
               </Select>
               <TextField

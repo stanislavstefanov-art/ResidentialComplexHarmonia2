@@ -20,13 +20,15 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =
                 "INSERT INTO dbo.AssociationExpenses " +
-                "(Id, AmountEur, Description, Category, ExpenseDate, RecordedAt, IdempotencyKey) " +
-                "VALUES (@Id, @AmountEur, @Description, @Category, @ExpenseDate, @RecordedAt, @IdempotencyKey);";
+                "(Id, AmountEur, Description, Category, ParentCategory, ExpenseDate, RecordedAt, IdempotencyKey) " +
+                "VALUES (@Id, @AmountEur, @Description, @Category, @ParentCategory, @ExpenseDate, @RecordedAt, @IdempotencyKey);";
             cmd.Parameters.AddWithValue("@Id", expense.Id);
             cmd.Parameters.Add(new SqlParameter("@AmountEur", SqlDbType.Decimal)
                 { Value = expense.AmountEur, Precision = 18, Scale = 2 });
             cmd.Parameters.AddWithValue("@Description", expense.Description);
             cmd.Parameters.AddWithValue("@Category", expense.Category);
+            cmd.Parameters.Add(new SqlParameter("@ParentCategory", SqlDbType.NVarChar, 100)
+                { Value = (object?)expense.ParentCategory ?? DBNull.Value });
             cmd.Parameters.Add(new SqlParameter("@ExpenseDate", SqlDbType.Date)
                 { Value = expense.ExpenseDate.ToDateTime(TimeOnly.MinValue) });
             cmd.Parameters.Add(new SqlParameter("@RecordedAt", SqlDbType.DateTimeOffset)
@@ -52,24 +54,43 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT Id, AmountEur, Description, Category, ExpenseDate, RecordedAt, IdempotencyKey " +
+            "SELECT Id, AmountEur, Description, Category, ParentCategory, ExpenseDate, RecordedAt, IdempotencyKey " +
             "FROM dbo.AssociationExpenses " +
             "ORDER BY RecordedAt DESC;";
 
         var results = new List<AssociationExpense>();
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
-        {
-            results.Add(new AssociationExpense(
-                Id:             reader.GetGuid(0),
-                AmountEur:      reader.GetDecimal(1),
-                Description:    reader.GetString(2),
-                Category:       reader.GetString(3),
-                ExpenseDate:    DateOnly.FromDateTime(reader.GetDateTime(4)),
-                RecordedAt:     reader.GetDateTimeOffset(5),
-                IdempotencyKey: reader.GetString(6)));
-        }
+            results.Add(ReadRow(reader));
         return results;
+    }
+
+    public async Task<AnnualExpenseData> GetAnnualExpensesAsync(int year, CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT ISNULL(ParentCategory, 'Other') AS ParentCategory, " +
+            "       Category, " +
+            "       MONTH(ExpenseDate) AS MonthNum, " +
+            "       SUM(AmountEur) AS Total " +
+            "FROM dbo.AssociationExpenses " +
+            "WHERE YEAR(ExpenseDate) = @Year " +
+            "GROUP BY ISNULL(ParentCategory, 'Other'), Category, MONTH(ExpenseDate);";
+        cmd.Parameters.AddWithValue("@Year", year);
+
+        var rows = new List<ExpenseMonthRow>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            rows.Add(new ExpenseMonthRow(
+                ParentCategory: reader.GetString(0),
+                SubCategory:    reader.GetString(1),
+                MonthNum:       reader.GetInt32(2),
+                Total:          reader.GetDecimal(3)));
+        }
+        return new AnnualExpenseData(rows);
     }
 
     private async Task<AssociationExpense> LoadExistingAsync(string idempotencyKey, CancellationToken ct)
@@ -78,18 +99,22 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT Id, AmountEur, Description, Category, ExpenseDate, RecordedAt, IdempotencyKey " +
+            "SELECT Id, AmountEur, Description, Category, ParentCategory, ExpenseDate, RecordedAt, IdempotencyKey " +
             "FROM dbo.AssociationExpenses WHERE IdempotencyKey = @IdempotencyKey;";
         cmd.Parameters.AddWithValue("@IdempotencyKey", idempotencyKey);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         await reader.ReadAsync(ct);
-        return new AssociationExpense(
-            Id:             reader.GetGuid(0),
-            AmountEur:      reader.GetDecimal(1),
-            Description:    reader.GetString(2),
-            Category:       reader.GetString(3),
-            ExpenseDate:    DateOnly.FromDateTime(reader.GetDateTime(4)),
-            RecordedAt:     reader.GetDateTimeOffset(5),
-            IdempotencyKey: reader.GetString(6));
+        return ReadRow(reader);
     }
+
+    private static AssociationExpense ReadRow(SqlDataReader r) =>
+        new(
+            Id:             r.GetGuid(0),
+            AmountEur:      r.GetDecimal(1),
+            Description:    r.GetString(2),
+            Category:       r.GetString(3),
+            ParentCategory: r.IsDBNull(4) ? null : r.GetString(4),
+            ExpenseDate:    DateOnly.FromDateTime(r.GetDateTime(5)),
+            RecordedAt:     r.GetDateTimeOffset(6),
+            IdempotencyKey: r.GetString(7));
 }

@@ -8,6 +8,7 @@ public sealed class RecordExpense(ISession session, IExpenseStore store)
         decimal amountEur,
         string description,
         string category,
+        string? parentCategory,
         DateOnly expenseDate,
         string idempotencyKey,
         CancellationToken ct = default)
@@ -21,6 +22,7 @@ public sealed class RecordExpense(ISession session, IExpenseStore store)
             AmountEur:      amountEur,
             Description:    description,
             Category:       category,
+            ParentCategory: parentCategory,
             ExpenseDate:    expenseDate,
             RecordedAt:     DateTimeOffset.UtcNow,
             IdempotencyKey: idempotencyKey);

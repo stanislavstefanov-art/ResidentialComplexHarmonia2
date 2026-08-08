@@ -12,7 +12,7 @@ import { MaintenanceFeeService } from '../maintenance-fees/maintenance-fee.servi
 import { ExpenseService } from '../expenses/expense.service';
 import { PaymentService } from '../payments/payment.service';
 import { ChargeDto, PaymentDto, PeriodSummaryDto } from './models';
-import { ExpenseDto, EXPENSE_CATEGORIES } from '../expenses/models';
+import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES, AnnualReportDto, RecordIncomeRequest } from '../expenses/models';
 import { BalanceDto } from '../payments/models';
 import { RoleService } from '../role.service';
 
@@ -173,6 +173,12 @@ function formatEur(n: number): string {
                     </select>
                   </div>
                   <div class="form-row">
+                    <label>{{ 'expenses.parentCategory' | translate }}</label>
+                    <select [(ngModel)]="expForm.parentCategory" name="expParent" class="form-input">
+                      @for (p of parentCategories; track p) { <option [value]="p">{{ p }}</option> }
+                    </select>
+                  </div>
+                  <div class="form-row">
                     <label>{{ 'expenses.expenseDate' | translate }}</label>
                     <input type="date" [(ngModel)]="expForm.expenseDate" name="expDate" required class="form-input" />
                   </div>
@@ -296,6 +302,116 @@ function formatEur(n: number): string {
               </div>
             }
 
+            <!-- ── Annual Report (admin only) ── -->
+            @if (role === 'admin') {
+              <div class="section-divider"><span class="section-label">{{ 'annualReport.title' | translate }}</span></div>
+
+              <!-- Record income form -->
+              <form data-testid="income-form" class="record-form" (ngSubmit)="onIncomeSubmit()">
+                <h3 class="form-title">{{ 'annualReport.recordIncome' | translate }}</h3>
+                <div class="form-grid">
+                  <div class="form-row">
+                    <label>{{ 'annualReport.incomeCategory' | translate }}</label>
+                    <select [(ngModel)]="incForm.category" name="incCat" class="form-input">
+                      @for (cat of incCategories; track cat) { <option [value]="cat">{{ cat }}</option> }
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'common.description' | translate }}</label>
+                    <input type="text" [(ngModel)]="incForm.description" name="incDesc" class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'expenses.amountEuro' | translate }}</label>
+                    <input type="number" step="0.01" min="0.01" [(ngModel)]="incForm.amountEurStr" name="incAmt" required class="form-input" />
+                  </div>
+                  <div class="form-row">
+                    <label>{{ 'annualReport.incomeDate' | translate }}</label>
+                    <input type="date" [(ngModel)]="incForm.incomeDate" name="incDate" required class="form-input" />
+                  </div>
+                </div>
+                <button type="submit" data-testid="income-submit-btn" class="submit-btn" [disabled]="incSaving()">{{ 'annualReport.recordIncome' | translate }}</button>
+                @if (incOk()) { <p data-testid="income-submit-success" class="success-msg">{{ 'annualReport.incomeRecorded' | translate }}</p> }
+                @if (incErr()) { <p data-testid="income-submit-error" class="error-msg">{{ incErr() }}</p> }
+              </form>
+
+              <!-- Year picker + load -->
+              <div class="period-row" style="margin-bottom:12px">
+                <label class="period-label">{{ 'annualReport.yearLabel' | translate }}</label>
+                <input type="number" [(ngModel)]="reportYear" min="2000" max="2100" class="period-input" style="width:90px" />
+                <button class="submit-btn" (click)="loadAnnualReport()" [disabled]="repLoad()">{{ 'common.load' | translate }}</button>
+                @if (repLoad()) { <p-progressspinner strokeWidth="4" [style]="{width:'24px',height:'24px'}" /> }
+              </div>
+              @if (repErr()) { <p class="error-msg">{{ repErr() }}</p> }
+
+              @if (report()) {
+                <div class="table-scroll">
+                  <table class="fin-table rep-table">
+                    <thead>
+                      <tr>
+                        <th class="rep-label-col">{{ 'annualReport.title' | translate }}</th>
+                        @for (m of report()!.months; track m) { <th class="rep-month-col">{{ m }}</th> }
+                        <th class="rep-total-col">{{ 'annualReport.total' | translate }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Income section -->
+                      <tr class="rep-section-row">
+                        <td [attr.colspan]="report()!.months.length + 2" class="rep-section-label">{{ 'annualReport.income' | translate }}</td>
+                      </tr>
+                      <!-- Maintenance fees -->
+                      <tr>
+                        <td class="rep-label-cell">{{ 'annualReport.maintenanceFees' | translate }}</td>
+                        @for (v of report()!.maintenanceFees.byMonth; track $index) {
+                          <td class="rep-num-cell">{{ v !== 0 ? formatEur(v) : '' }}</td>
+                        }
+                        <td class="rep-num-cell rep-total-cell">{{ formatEur(report()!.maintenanceFees.total) }}</td>
+                      </tr>
+                      <!-- Other income rows -->
+                      @for (line of report()!.otherIncome; track line.category) {
+                        <tr>
+                          <td class="rep-label-cell rep-indent">{{ line.category }}</td>
+                          @for (v of line.byMonth; track $index) {
+                            <td class="rep-num-cell">{{ v !== 0 ? formatEur(v) : '' }}</td>
+                          }
+                          <td class="rep-num-cell rep-total-cell">{{ formatEur(line.total) }}</td>
+                        </tr>
+                      }
+
+                      <!-- Expenses section -->
+                      <tr class="rep-section-row">
+                        <td [attr.colspan]="report()!.months.length + 2" class="rep-section-label">{{ 'annualReport.expenses' | translate }}</td>
+                      </tr>
+                      @for (parent of report()!.expenses; track parent.parentCategory) {
+                        @for (sub of parent.subCategories; track sub.name; let fi = $first) {
+                          <tr>
+                            <td class="rep-label-cell">
+                              @if (fi) { <span class="rep-parent-label">{{ parent.parentCategory }} /</span> }
+                              <span class="rep-indent">{{ sub.name }}</span>
+                            </td>
+                            @for (v of sub.byMonth; track $index) {
+                              <td class="rep-num-cell">{{ v !== 0 ? formatEur(v) : '' }}</td>
+                            }
+                            <td class="rep-num-cell rep-total-cell">{{ formatEur(sub.total) }}</td>
+                          </tr>
+                        }
+                      }
+
+                      <!-- Period result -->
+                      <tr class="rep-result-row">
+                        <td class="rep-label-cell">{{ 'annualReport.periodResult' | translate }}</td>
+                        @for (v of report()!.periodResultByMonth; track $index) {
+                          <td class="rep-num-cell" [class.rep-positive]="v > 0" [class.rep-negative]="v < 0">{{ formatEur(v) }}</td>
+                        }
+                        <td class="rep-num-cell rep-total-cell" [class.rep-positive]="report()!.periodResultTotal > 0" [class.rep-negative]="report()!.periodResultTotal < 0">
+                          {{ formatEur(report()!.periodResultTotal) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              }
+            }
+
             @if (role !== 'admin') {
               <div class="pay-row">
                 <button data-testid="pay-btn" class="pay-btn" (click)="showPayDialog = true">{{ 'finance.requestPayment' | translate }}</button>
@@ -373,6 +489,20 @@ function formatEur(n: number): string {
     .dialog-box { background: white; border-radius: 8px; padding: 24px; max-width: 360px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
     .dialog-title { margin: 0 0 12px; font-size: 1.1rem; font-weight: 600; }
     .dialog-close-btn { margin-top: 16px; background: #2e6b4f; color: white; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; }
+    .rep-table { font-size: .8125rem; }
+    .rep-label-col { min-width: 180px; }
+    .rep-month-col { min-width: 72px; text-align: right; }
+    .rep-total-col { min-width: 80px; text-align: right; }
+    .rep-label-cell { font-size: .8125rem; }
+    .rep-num-cell { text-align: right; font-variant-numeric: tabular-nums; }
+    .rep-total-cell { font-weight: 600; }
+    .rep-section-row td { background: #f0f4f1; font-weight: 700; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: #555; padding: 6px 12px; }
+    .rep-section-label { }
+    .rep-indent { padding-left: 12px; }
+    .rep-parent-label { color: #888; font-size: .75rem; margin-right: 4px; }
+    .rep-result-row td { background: #e8f0ec; font-weight: 700; border-top: 2px solid #2e6b4f; }
+    .rep-positive { color: #2e6b4f; }
+    .rep-negative { color: #c00; }
   `],
 })
 export class FinancialComponent implements OnInit {
@@ -408,7 +538,19 @@ export class FinancialComponent implements OnInit {
   readonly expOk       = signal(false);
   readonly expErr      = signal<string | null>(null);
   readonly expCategories = EXPENSE_CATEGORIES;
-  expForm = { amountEurStr: '', description: '', category: EXPENSE_CATEGORIES[0], expenseDate: today() };
+  readonly parentCategories = PARENT_CATEGORIES;
+  expForm = { amountEurStr: '', description: '', category: EXPENSE_CATEGORIES[0], parentCategory: PARENT_CATEGORIES[3], expenseDate: today() };
+
+  // ── Annual report ───────────────────────────────────────────────────────────
+  reportYear = new Date().getFullYear();
+  readonly report    = signal<AnnualReportDto | null>(null);
+  readonly repLoad   = signal(false);
+  readonly repErr    = signal<string | null>(null);
+  readonly incSaving = signal(false);
+  readonly incOk     = signal(false);
+  readonly incErr    = signal<string | null>(null);
+  readonly incCategories = EXPENSE_CATEGORIES;
+  incForm = { category: EXPENSE_CATEGORIES[0], description: '', amountEurStr: '', incomeDate: today() };
 
   // ── Payments ────────────────────────────────────────────────────────────────
   readonly payments    = signal<PaymentDto[]>([]);
@@ -508,16 +650,44 @@ export class FinancialComponent implements OnInit {
     this.expSaving.set(true);
     this.expSvc.recordExpense({
       amountEur: parsed, description: this.expForm.description,
-      category: this.expForm.category, expenseDate: this.expForm.expenseDate,
-      idempotencyKey: crypto.randomUUID(),
+      category: this.expForm.category, parentCategory: this.expForm.parentCategory,
+      expenseDate: this.expForm.expenseDate, idempotencyKey: crypto.randomUUID(),
     }).subscribe({
       next: () => {
         this.expOk.set(true);
-        this.expForm = { amountEurStr: '', description: '', category: EXPENSE_CATEGORIES[0], expenseDate: today() };
+        this.expForm = { amountEurStr: '', description: '', category: EXPENSE_CATEGORIES[0], parentCategory: PARENT_CATEGORIES[3], expenseDate: today() };
         this.expSaving.set(false);
         this.loadExpenses();
       },
       error: () => { this.expErr.set(this.t.instant('expenses.errRecord')); this.expSaving.set(false); },
+    });
+  }
+
+  loadAnnualReport(): void {
+    this.repLoad.set(true); this.repErr.set(null);
+    this.expSvc.getAnnualReport(this.reportYear).subscribe({
+      next: r => { this.report.set(r); this.repLoad.set(false); },
+      error: () => { this.repErr.set(this.t.instant('annualReport.errLoad')); this.repLoad.set(false); },
+    });
+  }
+
+  onIncomeSubmit(): void {
+    this.incOk.set(false); this.incErr.set(null);
+    const parsed = parseFloat(this.incForm.amountEurStr);
+    if (!this.incForm.amountEurStr || isNaN(parsed) || parsed <= 0) {
+      this.incErr.set(this.t.instant('annualReport.errAmount')); return;
+    }
+    this.incSaving.set(true);
+    this.expSvc.recordIncome({
+      category: this.incForm.category, description: this.incForm.description,
+      amountEur: parsed, incomeDate: this.incForm.incomeDate, idempotencyKey: crypto.randomUUID(),
+    }).subscribe({
+      next: () => {
+        this.incOk.set(true);
+        this.incForm = { category: EXPENSE_CATEGORIES[0], description: '', amountEurStr: '', incomeDate: today() };
+        this.incSaving.set(false);
+      },
+      error: () => { this.incErr.set(this.t.instant('annualReport.errRecord')); this.incSaving.set(false); },
     });
   }
 

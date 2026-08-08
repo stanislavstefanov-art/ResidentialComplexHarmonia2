@@ -5,6 +5,7 @@ public sealed record AssociationExpense(
     decimal        AmountEur,
     string         Description,
     string         Category,
+    string?        ParentCategory,
     DateOnly       ExpenseDate,
     DateTimeOffset RecordedAt,
     string         IdempotencyKey);

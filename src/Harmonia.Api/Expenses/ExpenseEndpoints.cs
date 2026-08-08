@@ -8,6 +8,7 @@ public sealed record RecordExpenseRequest(
     decimal  AmountEur,
     string   Description,
     string   Category,
+    string?  ParentCategory,
     DateOnly ExpenseDate,
     string   IdempotencyKey);
 
@@ -16,6 +17,7 @@ public sealed record ExpenseDto(
     decimal        AmountEur,
     string         Description,
     string         Category,
+    string?        ParentCategory,
     DateOnly       ExpenseDate,
     DateTimeOffset RecordedAt,
     string         IdempotencyKey);
@@ -26,7 +28,7 @@ public static class ExpenseEndpoints
         RecordExpense useCase, RecordExpenseRequest body, ILogger logger, CancellationToken ct)
     {
         var result = await useCase.ExecuteAsync(
-            body.AmountEur, body.Description, body.Category, body.ExpenseDate, body.IdempotencyKey, ct);
+            body.AmountEur, body.Description, body.Category, body.ParentCategory, body.ExpenseDate, body.IdempotencyKey, ct);
 
         switch (result)
         {
@@ -67,5 +69,5 @@ public static class ExpenseEndpoints
     }
 
     private static ExpenseDto ToDto(AssociationExpense e) =>
-        new(e.Id, e.AmountEur, e.Description, e.Category, e.ExpenseDate, e.RecordedAt, e.IdempotencyKey);
+        new(e.Id, e.AmountEur, e.Description, e.Category, e.ParentCategory, e.ExpenseDate, e.RecordedAt, e.IdempotencyKey);
 }

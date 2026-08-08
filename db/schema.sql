@@ -32,6 +32,26 @@ CREATE TABLE dbo.AssociationExpenses
     CONSTRAINT UQ_AssociationExpenses_Id UNIQUE (Id)
 );
 
+-- Add ParentCategory to existing expense rows (idempotent).
+IF COL_LENGTH('dbo.AssociationExpenses', 'ParentCategory') IS NULL
+    ALTER TABLE dbo.AssociationExpenses ADD ParentCategory nvarchar(100) NULL;
+
+-- Non-maintenance income ledger (parking, recovered costs, etc.).
+-- PK on IdempotencyKey guarantees idempotent POST semantics at the DB layer.
+IF OBJECT_ID(N'dbo.AssociationIncomes', N'U') IS NULL
+CREATE TABLE dbo.AssociationIncomes
+(
+    Id             uniqueidentifier  NOT NULL,
+    Category       nvarchar(100)     NOT NULL,
+    Description    nvarchar(512)     NOT NULL,
+    AmountEur      decimal(18, 2)    NOT NULL,
+    IncomeDate     date              NOT NULL,
+    RecordedAt     datetimeoffset(3) NOT NULL,
+    IdempotencyKey nvarchar(128)     NOT NULL,
+    CONSTRAINT PK_AssociationIncomes    PRIMARY KEY (IdempotencyKey),
+    CONSTRAINT UQ_AssociationIncomes_Id UNIQUE (Id)
+);
+
 -- Reservation store schema (ADR-0002, 700-data-design).
 -- The PRIMARY KEY on (DayDate, SlotKey) IS the concurrency mechanism (R1):
 -- a claim is a plain INSERT and the engine's unique enforcement decides the race.

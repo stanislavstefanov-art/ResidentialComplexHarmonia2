@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExpenseDto, RecordExpenseRequest } from './models';
+import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto } from './models';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiUrl;
@@ -16,5 +16,13 @@ export class ExpenseService {
 
   recordExpense(body: RecordExpenseRequest): Observable<ExpenseDto> {
     return this.http.post<ExpenseDto>(`${API}/expenses`, body);
+  }
+
+  recordIncome(body: RecordIncomeRequest): Observable<void> {
+    return this.http.post<void>(`${API}/financial/income`, body);
+  }
+
+  getAnnualReport(year: number): Observable<AnnualReportDto> {
+    return this.http.get<AnnualReportDto>(`${API}/financial/annual-report?year=${year}`);
   }
 }

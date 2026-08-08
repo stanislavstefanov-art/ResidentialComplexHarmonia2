@@ -8,7 +8,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { ExpenseService } from './expense.service';
-import { ExpenseDto, EXPENSE_CATEGORIES } from './models';
+import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES } from './models';
 import { RoleService } from '../role.service';
 
 function formatEur(n: number): string {
@@ -76,6 +76,12 @@ function formatEur(n: number): string {
                     @for (cat of categories; track cat) {
                       <option [value]="cat">{{ cat }}</option>
                     }
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>{{ 'expenses.parentCategory' | translate }}</label>
+                  <select [(ngModel)]="form.parentCategory" name="parentCategory" class="form-input">
+                    @for (p of parentCategories; track p) { <option [value]="p">{{ p }}</option> }
                   </select>
                 </div>
                 <div class="form-row">
@@ -173,13 +179,15 @@ export class ExpenseComponent implements OnInit {
   readonly submitSuccess = signal(false);
   readonly submitError   = signal<string | null>(null);
 
-  readonly categories = EXPENSE_CATEGORIES;
-  readonly formatEur  = formatEur;
+  readonly categories      = EXPENSE_CATEGORIES;
+  readonly parentCategories = PARENT_CATEGORIES;
+  readonly formatEur       = formatEur;
 
   form = {
     amountEur: 0,
     description: '',
     category: EXPENSE_CATEGORIES[0],
+    parentCategory: PARENT_CATEGORIES[3],
     expenseDate: new Date().toISOString().slice(0, 10),
   };
 
@@ -207,6 +215,7 @@ export class ExpenseComponent implements OnInit {
       amountEur:      this.form.amountEur,
       description:    this.form.description,
       category:       this.form.category,
+      parentCategory: this.form.parentCategory,
       expenseDate:    this.form.expenseDate,
       idempotencyKey: crypto.randomUUID(),
     };
@@ -215,7 +224,7 @@ export class ExpenseComponent implements OnInit {
         this.submitSuccess.set(true);
         this.form = {
           amountEur: 0, description: '', category: EXPENSE_CATEGORIES[0],
-          expenseDate: new Date().toISOString().slice(0, 10),
+          parentCategory: PARENT_CATEGORIES[3], expenseDate: new Date().toISOString().slice(0, 10),
         };
         this.loadExpenses();
       },

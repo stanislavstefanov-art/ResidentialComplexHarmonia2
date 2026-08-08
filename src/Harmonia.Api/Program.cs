@@ -2,6 +2,7 @@ using Harmonia.Api.Adapters;
 using Harmonia.Api.Admin;
 using Harmonia.Api.Directory;
 using Harmonia.Api.Expenses;
+using Harmonia.Api.Financial;
 using Harmonia.Api.FinancialSummary;
 using Harmonia.Api.Me;
 using Harmonia.Api.Notifications;
@@ -16,6 +17,7 @@ using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application;
 using Harmonia.Application.Directory;
 using Harmonia.Application.Expenses;
+using Harmonia.Application.Financial;
 using Harmonia.Application.FinancialSummary;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Reservations;
@@ -40,6 +42,7 @@ builder.Services.AddSingleton<ISlotGrid>(new ConfigSlotGrid(
     builder.Configuration.GetSection("SlotGrid:SlotKeys").Get<string[]>() ?? ["DAY"]));
 builder.Services.AddSingleton<IMaintenanceFeeStore>(new SqlMaintenanceFeeStore(defaultConn));
 builder.Services.AddSingleton<IExpenseStore>(new SqlExpenseStore(defaultConn));
+builder.Services.AddSingleton<IIncomeStore>(new SqlIncomeStore(defaultConn));
 builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(defaultConn));
 builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(defaultConn));
 builder.Services.AddSingleton<IDirectoryStore>(new SqlDirectoryStore(defaultConn));
@@ -142,6 +145,8 @@ builder.Services.AddScoped<ListCharges>();
 builder.Services.AddScoped<ListAllCharges>();
 builder.Services.AddScoped<RecordExpense>();
 builder.Services.AddScoped<ListExpenses>();
+builder.Services.AddScoped<RecordIncome>();
+builder.Services.AddScoped<GetAnnualReport>();
 builder.Services.AddScoped<GetFinancialSummary>();
 builder.Services.AddScoped<RecordPayment>();
 builder.Services.AddScoped<ListAllPayments>();
@@ -355,6 +360,18 @@ app.MapDelete(
     (PurgeExpiredPendingSignIns useCase, ILoggerFactory loggers, CancellationToken ct)
         => AdminPendingEndpoints.PurgeExpiredPendingEndpoint(
             useCase, loggers.CreateLogger("AdminPending"), ct));
+
+app.MapPost(
+    "/financial/income",
+    (RecordIncome useCase, RecordIncomeRequest body, ILoggerFactory loggers, CancellationToken ct)
+        => IncomeEndpoints.RecordIncomeEndpoint(
+            useCase, body, loggers.CreateLogger("Financial"), ct));
+
+app.MapGet(
+    "/financial/annual-report",
+    (GetAnnualReport useCase, int year, ILoggerFactory loggers, CancellationToken ct)
+        => AnnualReportEndpoints.GetAnnualReportEndpoint(
+            useCase, year, loggers.CreateLogger("Financial"), ct));
 
 app.MapGet(
     "/me",
