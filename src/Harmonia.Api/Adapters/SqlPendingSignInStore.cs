@@ -69,6 +69,16 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
                 BEGIN
                     INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
                     VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
+
+                    INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt)
+                    SELECT @HouseholdRef, @Role, ps.DisplayName, ps.Email, 0, SYSUTCDATETIME()
+                    FROM dbo.PendingSignIns ps
+                    WHERE ps.EntraObjectId = @Oid
+                      AND NOT EXISTS (
+                          SELECT 1 FROM dbo.HouseholdContacts hc
+                          WHERE hc.HouseholdRef = @HouseholdRef AND hc.Role = @Role
+                      );
+
                     DELETE FROM dbo.PendingSignIns WHERE EntraObjectId = @Oid;
                 END
             COMMIT;

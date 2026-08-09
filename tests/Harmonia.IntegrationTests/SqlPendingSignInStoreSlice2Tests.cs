@@ -90,6 +90,35 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task ActivateAsync_seeds_HouseholdContacts_with_name_and_email_from_pending()
+    {
+        var oid   = $"oid-{Guid.NewGuid():N}";
+        var hh    = $"HH-{Guid.NewGuid():N}";
+        await Store.UpsertAsync(oid, "vipera@example.com", "Vipera Berus");
+
+        await Store.ActivateAsync(oid, hh, "Owner");
+
+        var (name, email) = await GetContactAsync(hh, "Owner");
+        Assert.Equal("Vipera Berus", name);
+        Assert.Equal("vipera@example.com", email);
+    }
+
+    [Fact]
+    public async Task ActivateAsync_does_not_overwrite_existing_HouseholdContacts_row()
+    {
+        var oid = $"oid-{Guid.NewGuid():N}";
+        var hh  = $"HH-{Guid.NewGuid():N}";
+        await SeedContactAsync(hh, "Owner", "Existing Owner", "existing@example.com");
+        await Store.UpsertAsync(oid, "newcomer@example.com", "New Comer");
+
+        await Store.ActivateAsync(oid, hh, "Owner");
+
+        var (name, email) = await GetContactAsync(hh, "Owner");
+        Assert.Equal("Existing Owner", name);
+        Assert.Equal("existing@example.com", email);
+    }
+
+    [Fact]
     public async Task PurgeExpiredAsync_deletes_only_expired_rows()
     {
         await TruncatePendingAsync();
@@ -186,5 +215,36 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         cmd.CommandText = "SELECT Role FROM dbo.HouseholdLinks WHERE EntraObjectId = @Oid;";
         cmd.Parameters.AddWithValue("@Oid", oid);
         return (string?)(await cmd.ExecuteScalarAsync());
+    }
+
+    private async Task<(string? Name, string? Email)> GetContactAsync(string householdRef, string role)
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT DisplayName, Email FROM dbo.HouseholdContacts " +
+            "WHERE HouseholdRef = @HH AND Role = @Role;";
+        cmd.Parameters.AddWithValue("@HH",   householdRef);
+        cmd.Parameters.AddWithValue("@Role", role);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return (null, null);
+        return (reader.IsDBNull(0) ? null : reader.GetString(0),
+                reader.IsDBNull(1) ? null : reader.GetString(1));
+    }
+
+    private async Task SeedContactAsync(string householdRef, string role, string name, string email)
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt) " +
+            "VALUES (@HH, @Role, @Name, @Email, 0, SYSUTCDATETIME());";
+        cmd.Parameters.AddWithValue("@HH",    householdRef);
+        cmd.Parameters.AddWithValue("@Role",  role);
+        cmd.Parameters.AddWithValue("@Name",  name);
+        cmd.Parameters.AddWithValue("@Email", email);
+        await cmd.ExecuteNonQueryAsync();
     }
 }
