@@ -398,6 +398,14 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         var contact = _contacts.FirstOrDefault(c => c.HouseholdRef == householdRef && c.Role == role);
         return Task.FromResult<HouseholdContact?>(contact);
     }
+
+    public Task<RemoveResidentResult> RemoveResidentAsync(
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
+    {
+        var removed = _contacts.RemoveAll(c => c.HouseholdRef == householdRef && c.Role == role);
+        return Task.FromResult<RemoveResidentResult>(
+            removed > 0 ? new RemoveResidentResult.Ok() : new RemoveResidentResult.NotFound());
+    }
 }
 
 public sealed class FailingDirectoryStore : IDirectoryStore
@@ -427,6 +435,10 @@ public sealed class FailingDirectoryStore : IDirectoryStore
 
     public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<RemoveResidentResult> RemoveResidentAsync(
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
+        => Task.FromResult<RemoveResidentResult>(new RemoveResidentResult.Failed());
 }
 
 // Slice 1 fake — only UpsertAsync is exercised; the 3 new methods throw so they're never called from Slice 1 tests.
