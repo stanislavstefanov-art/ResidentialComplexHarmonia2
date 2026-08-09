@@ -34,7 +34,7 @@ test('listPending throws on 500', async () => {
 // ── activatePending ──
 test('activatePending POSTs to /admin/pending/{oid}/activate', async () => {
   mockFetch(null, 200);
-  await activatePending('oid-1', 'AP-101');
+  await activatePending('oid-1', 'AP-101', 'Owner');
   expect(fetch).toHaveBeenCalledWith(
     `${BASE}/admin/pending/oid-1/activate`,
     expect.objectContaining({ method: 'POST' }),
@@ -43,17 +43,17 @@ test('activatePending POSTs to /admin/pending/{oid}/activate', async () => {
 
 test('activatePending throws with status 403 on forbidden', async () => {
   mockFetch(null, 403);
-  await expect(activatePending('oid-1', 'AP-101')).rejects.toMatchObject({ status: 403 });
+  await expect(activatePending('oid-1', 'AP-101', 'Owner')).rejects.toMatchObject({ status: 403 });
 });
 
 test('activatePending throws with status 404 on not found', async () => {
   mockFetch(null, 404);
-  await expect(activatePending('oid-1', 'AP-101')).rejects.toMatchObject({ status: 404 });
+  await expect(activatePending('oid-1', 'AP-101', 'Owner')).rejects.toMatchObject({ status: 404 });
 });
 
 test('activatePending throws with status 409 on conflict', async () => {
   mockFetch(null, 409);
-  await expect(activatePending('oid-1', 'AP-101')).rejects.toMatchObject({ status: 409 });
+  await expect(activatePending('oid-1', 'AP-101', 'Owner')).rejects.toMatchObject({ status: 409 });
 });
 
 // ── purgeExpired ──
