@@ -15,7 +15,7 @@ export interface DirectoryEntryAdmin {
   email: string | null;
   notes: string | null;
   isOptedOut: boolean;
-  deactivatedAt: string | null;
+  departedAt: string | null;
   role?: string;
 }
 

@@ -175,9 +175,9 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
     setDeparting(true);
     try {
       await markDeparted(departRef);
-      setAdminRows(prev => prev.filter(r => r.householdRef !== departRef));
       setDepartOpen(false);
       showToast(t('directory.toastDeparted', { ref: departRef }));
+      await load();
     } catch {
       setError(t('directory.errDepart'));
     } finally {
@@ -357,7 +357,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
                       : <Chip label={t('directory.active')} size="small" color="success" variant="outlined" />}
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                    {r.deactivatedAt ? new Date(r.deactivatedAt).toLocaleDateString() : '—'}
+                    {r.departedAt ? new Date(r.departedAt).toLocaleDateString() : '—'}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.25 }}>
