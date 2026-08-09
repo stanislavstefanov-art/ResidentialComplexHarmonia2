@@ -45,7 +45,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match('/index.html').then(r => r ?? fetch(request)))
     );
     return;
   }
@@ -60,7 +60,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(request, clone));
         }
         return response;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => caches.match('/index.html').then(r => r ?? fetch(request)));
     })
   );
 });
