@@ -101,7 +101,7 @@
     "marking": "Marking…",
     "markDeparted": "Mark Departed",
     "removeResidentTitle": "Remove Resident?",
-    "removeResidentBody": "Apartment <b>{{ref}}</b> will be fully removed — both their contact data and login link will be deleted. They will re-enter the pending queue on next sign-in.",
+    "removeResidentBody": "Resident <b>{{name}}</b> will be fully removed — both their contact data and login link will be deleted. They will re-enter the pending queue on next sign-in.",
     "removing": "Removing…",
     "removeResident": "Remove Resident"
   },

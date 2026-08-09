@@ -7,14 +7,14 @@ import { Trans, useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
-  householdRef: string;
+  displayName: string;
   removing: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }
 
 const RemoveResidentDialog: React.FC<Props> = ({
-  open, householdRef, removing, onConfirm, onClose,
+  open, displayName, removing, onConfirm, onClose,
 }) => {
   const { t } = useTranslation();
   return (
@@ -24,7 +24,7 @@ const RemoveResidentDialog: React.FC<Props> = ({
         <DialogContentText>
           <Trans
             i18nKey="dialog.removeResidentBody"
-            values={{ ref: householdRef }}
+            values={{ name: displayName }}
             components={{ b: <strong /> }}
           />
         </DialogContentText>

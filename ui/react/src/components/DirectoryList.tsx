@@ -84,6 +84,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
   const [removeResidentOpen, setRemoveResidentOpen] = useState(false);
   const [removeResidentRef, setRemoveResidentRef]   = useState('');
   const [removeResidentRole, setRemoveResidentRole] = useState('');
+  const [removeResidentName, setRemoveResidentName] = useState('');
   const [removingResident, setRemovingResident]     = useState(false);
 
   // shared
@@ -367,7 +368,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
                         <PersonOffIcon fontSize="small" />
                       </IconButton>
                       <IconButton size="small" color="error" title={t('directory.tipRemove')}
-                        onClick={() => { setRemoveResidentRef(r.householdRef); setRemoveResidentRole(r.role ?? 'Owner'); setRemoveResidentOpen(true); }}>
+                        onClick={() => { setRemoveResidentRef(r.householdRef); setRemoveResidentRole(r.role ?? 'Owner'); setRemoveResidentName(r.displayName ?? r.householdRef); setRemoveResidentOpen(true); }}>
                         <PersonRemoveIcon fontSize="small" />
                       </IconButton>
                       <IconButton size="small" color="error" title={t('directory.tipErase')}
@@ -457,7 +458,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
 
       <RemoveResidentDialog
         open={removeResidentOpen}
-        householdRef={removeResidentRef}
+        displayName={removeResidentName}
         removing={removingResident}
         onConfirm={handleRemoveResident}
         onClose={() => setRemoveResidentOpen(false)}
