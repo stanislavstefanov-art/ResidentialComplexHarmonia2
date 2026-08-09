@@ -111,12 +111,14 @@ CREATE TABLE dbo.NotificationHistory
     INDEX IX_NotificationHistory_HouseholdRef_SentAt (HouseholdRef, SentAt DESC)
 );
 
--- Member directory contacts (one row per household; UPSERT semantics).
+-- Member directory contacts (one or two rows per household: Owner and/or Renter).
 -- Phone and Email are personal data (R3) — never logged.
 IF OBJECT_ID(N'dbo.HouseholdContacts', N'U') IS NULL
 CREATE TABLE dbo.HouseholdContacts
 (
     HouseholdRef  nvarchar(128)     NOT NULL,
+    Role          nvarchar(10)      NOT NULL
+        CONSTRAINT DF_HouseholdContacts_Role DEFAULT 'Owner',
     DisplayName   nvarchar(256)     NULL,
     Phone         nvarchar(32)      NULL,
     Email         nvarchar(320)     NULL,
@@ -124,13 +126,36 @@ CREATE TABLE dbo.HouseholdContacts
     IsOptedOut    bit               NOT NULL
         CONSTRAINT DF_HouseholdContacts_IsOptedOut DEFAULT 0,
     UpdatedAt     datetimeoffset(3) NOT NULL,
-    CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef)
+    CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef, Role)
 );
 
 -- GDPR Art. 6(1)(f) departure marker — retention clock start (ADR-0004).
 -- Idempotent: SqlServerFixture applies schema.sql on every integration test run.
 IF COL_LENGTH('dbo.HouseholdContacts', 'DepartedAt') IS NULL
     ALTER TABLE dbo.HouseholdContacts ADD DepartedAt datetimeoffset NULL;
+
+-- Owner/renter support: add Role column to existing tables (idempotent).
+IF COL_LENGTH('dbo.HouseholdContacts', 'Role') IS NULL
+    ALTER TABLE dbo.HouseholdContacts ADD Role nvarchar(10) NOT NULL
+        CONSTRAINT DF_HouseholdContacts_Role DEFAULT 'Owner';
+
+-- Migrate PK from single-column (HouseholdRef) to composite (HouseholdRef, Role).
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes i
+    INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+    WHERE i.object_id = OBJECT_ID('dbo.HouseholdContacts')
+      AND i.is_primary_key = 1
+      AND c.name = 'Role'
+)
+BEGIN
+    ALTER TABLE dbo.HouseholdContacts DROP CONSTRAINT PK_HouseholdContacts;
+    ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef, Role);
+END
+
+IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL
+    ALTER TABLE dbo.HouseholdLinks ADD Role nvarchar(10) NOT NULL
+        CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner';
 
 -- Pending activation queue: authenticated residents not yet linked to a household.
 -- EntraObjectId is the JWT 'oid' claim. FirstSeenAt is set once on INSERT, never updated.

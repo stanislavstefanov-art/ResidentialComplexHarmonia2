@@ -42,8 +42,8 @@ public class EraseMyContactTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-ERASE-1"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-ERASE-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         var result = await uc.ExecuteAsync();
         Assert.IsType<EraseContactResult.Ok>(result);
@@ -73,9 +73,9 @@ public class EraseMyContactTests
         var residentRef = new HouseholdRef("HH-ERASE-1");
         var otherRef    = new HouseholdRef("HH-OTHER-99");
         store.Contacts.Add(new HouseholdContact(
-            residentRef, "Alice", null, null, null, IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            residentRef, "Owner", "Alice", null, null, null, false, DateTimeOffset.UtcNow, null));
         store.Contacts.Add(new HouseholdContact(
-            otherRef, "Bob", null, null, null, IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            otherRef, "Owner", "Bob", null, null, null, false, DateTimeOffset.UtcNow, null));
 
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         await uc.ExecuteAsync();

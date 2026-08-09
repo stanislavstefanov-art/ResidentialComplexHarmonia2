@@ -14,9 +14,9 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt, DepartedAt " +
+            "SELECT HouseholdRef, Role, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt, DepartedAt " +
             "FROM dbo.HouseholdContacts " +
-            "ORDER BY HouseholdRef ASC;";
+            "ORDER BY HouseholdRef ASC, Role ASC;";
 
         var results = new List<HouseholdContact>();
         await using var reader = (SqlDataReader)await cmd.ExecuteReaderAsync(ct);
@@ -26,22 +26,23 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
     }
 
     public async Task<HouseholdContact?> GetContactAsync(
-        HouseholdRef householdRef, CancellationToken ct = default)
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
     {
         await using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt, DepartedAt " +
+            "SELECT HouseholdRef, Role, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt, DepartedAt " +
             "FROM dbo.HouseholdContacts " +
-            "WHERE HouseholdRef = @HouseholdRef;";
+            "WHERE HouseholdRef = @HouseholdRef AND Role = @Role;";
         cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+        cmd.Parameters.Add(new SqlParameter("@Role", SqlDbType.NVarChar, 10) { Value = role });
         await using var reader = (SqlDataReader)await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? ReadRow(reader) : null;
     }
 
     public async Task<UpdateContactResult> UpsertContactAsync(
-        HouseholdRef householdRef, string? displayName, string? phone, string? email,
+        HouseholdRef householdRef, string role, string? displayName, string? phone, string? email,
         bool? isOptedOut, CancellationToken ct = default)
     {
         try
@@ -51,8 +52,8 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = """
                 MERGE dbo.HouseholdContacts WITH (HOLDLOCK) AS target
-                USING (VALUES (@HouseholdRef)) AS source (HouseholdRef)
-                ON target.HouseholdRef = source.HouseholdRef
+                USING (VALUES (@HouseholdRef, @Role)) AS source (HouseholdRef, Role)
+                ON target.HouseholdRef = source.HouseholdRef AND target.Role = source.Role
                 WHEN MATCHED THEN
                     UPDATE SET
                         DisplayName = COALESCE(@DisplayName, target.DisplayName),
@@ -61,10 +62,11 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                         IsOptedOut  = COALESCE(@IsOptedOut,  target.IsOptedOut),
                         UpdatedAt   = SYSUTCDATETIME()
                 WHEN NOT MATCHED THEN
-                    INSERT (HouseholdRef, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt)
-                    VALUES (@HouseholdRef, @DisplayName, @Phone, @Email, NULL, COALESCE(@IsOptedOut, 0), SYSUTCDATETIME());
+                    INSERT (HouseholdRef, Role, DisplayName, Phone, Email, Notes, IsOptedOut, UpdatedAt)
+                    VALUES (@HouseholdRef, @Role, @DisplayName, @Phone, @Email, NULL, COALESCE(@IsOptedOut, 0), SYSUTCDATETIME());
                 """;
             cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            cmd.Parameters.Add(new SqlParameter("@Role", SqlDbType.NVarChar, 10) { Value = role });
             cmd.Parameters.Add(new SqlParameter("@DisplayName", SqlDbType.NVarChar, 256)
                 { Value = (object?)displayName ?? DBNull.Value });
             cmd.Parameters.Add(new SqlParameter("@Phone", SqlDbType.NVarChar, 32)
@@ -200,11 +202,12 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
 
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
-            DisplayName:  r.IsDBNull(1) ? null : r.GetString(1),
-            Phone:        r.IsDBNull(2) ? null : r.GetString(2),
-            Email:        r.IsDBNull(3) ? null : r.GetString(3),
-            Notes:        r.IsDBNull(4) ? null : r.GetString(4),
-            IsOptedOut:   r.GetBoolean(5),
-            UpdatedAt:    r.GetDateTimeOffset(6),
-            DepartedAt:   r.IsDBNull(7) ? null : r.GetDateTimeOffset(7));
+            Role:         r.IsDBNull(1) ? "Owner" : r.GetString(1),
+            DisplayName:  r.IsDBNull(2) ? null : r.GetString(2),
+            Phone:        r.IsDBNull(3) ? null : r.GetString(3),
+            Email:        r.IsDBNull(4) ? null : r.GetString(4),
+            Notes:        r.IsDBNull(5) ? null : r.GetString(5),
+            IsOptedOut:   r.GetBoolean(6),
+            UpdatedAt:    r.GetDateTimeOffset(7),
+            DepartedAt:   r.IsDBNull(8) ? null : r.GetDateTimeOffset(8));
 }

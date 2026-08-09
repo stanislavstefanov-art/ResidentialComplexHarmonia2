@@ -6,6 +6,7 @@ namespace Harmonia.Domain.Directory;
 /// </summary>
 public sealed record HouseholdContact(
     HouseholdRef    HouseholdRef,
+    string          Role,
     string?         DisplayName,
     string?         Phone,
     string?         Email,

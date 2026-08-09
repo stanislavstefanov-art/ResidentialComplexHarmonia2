@@ -34,11 +34,11 @@ public class PurgeExpiredContactsTests
         var store = new FakeDirectoryStore();
         var expiredDate = DateTimeOffset.UtcNow.AddYears(-1).AddDays(-1);
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-EXP-A"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: expiredDate));
+            new HouseholdRef("HH-EXP-A"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, expiredDate));
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-EXP-B"), "Bob", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: expiredDate));
+            new HouseholdRef("HH-EXP-B"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, expiredDate));
 
         var uc = new PurgeExpiredContacts(new FakeSession(AdminCtx), store);
         var result = await uc.ExecuteAsync();
@@ -54,8 +54,8 @@ public class PurgeExpiredContactsTests
         var store = new FakeDirectoryStore();
         // Active resident — DepartedAt is null; must NOT be purged
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-ACTIVE"), "Carol", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-ACTIVE"), "Owner", "Carol", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
 
         var uc = new PurgeExpiredContacts(new FakeSession(AdminCtx), store);
         var result = await uc.ExecuteAsync();

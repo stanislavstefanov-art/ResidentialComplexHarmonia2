@@ -23,7 +23,7 @@ public interface IPendingSignInStore
     /// in a single SQL transaction. Returns the outcome discriminant.
     /// R3: oid and householdRef are personal data — never log their values.
     /// </summary>
-    Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default);
+    Task<ActivateResult> ActivateAsync(string oid, string householdRef, string role, CancellationToken ct = default);
 
     /// <summary>Deletes rows where FirstSeenAt is older than <paramref name="olderThan"/>. Returns row count.</summary>
     Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default);
@@ -31,12 +31,15 @@ public interface IPendingSignInStore
 
 public enum ActivateResult { Ok, NotFound, AlreadyActivated }
 
+/// <summary>Household link resolved from an Entra OID.</summary>
+public sealed record HouseholdLink(string HouseholdRef, string Role);
+
 /// <summary>
-/// Looks up the HouseholdRef for an activated member by their Entra OID.
+/// Looks up the HouseholdRef and Role for an activated member by their Entra OID.
 /// Returns null when no linked row exists (caller is pending).
 /// R3: oid is personal data — never log its value.
 /// </summary>
 public interface IHouseholdByOidLookup
 {
-    Task<string?> FindHouseholdRefAsync(string oid, CancellationToken ct = default);
+    Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default);
 }

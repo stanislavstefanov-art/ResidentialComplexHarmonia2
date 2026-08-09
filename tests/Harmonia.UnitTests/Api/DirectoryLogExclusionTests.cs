@@ -33,8 +33,8 @@ public class DirectoryLogExclusionTests
         if (scenario == "ok")
         {
             store.Contacts.Add(new HouseholdContact(
-                new HouseholdRef(SecretResidentRef), "Alice", null, null, null,
-                IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+                new HouseholdRef(SecretResidentRef), "Owner", "Alice", null, null, null,
+                false, DateTimeOffset.UtcNow, null));
         }
 
         var session = scenario == "refused"
@@ -63,8 +63,8 @@ public class DirectoryLogExclusionTests
         if (scenario == "ok")
         {
             store.Contacts.Add(new HouseholdContact(
-                new HouseholdRef(SecretBoardRef), "Bob", null, null, null,
-                IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+                new HouseholdRef(SecretBoardRef), "Owner", "Bob", null, null, null,
+                false, DateTimeOffset.UtcNow, null));
         }
 
         var session = scenario == "refused"
@@ -93,8 +93,8 @@ public class DirectoryLogExclusionTests
         if (scenario == "ok")
         {
             store.Contacts.Add(new HouseholdContact(
-                new HouseholdRef(SecretBoardRef), "Dave", null, null, null,
-                IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+                new HouseholdRef(SecretBoardRef), "Owner", "Dave", null, null, null,
+                false, DateTimeOffset.UtcNow, null));
         }
 
         var session = scenario == "refused"

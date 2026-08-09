@@ -15,7 +15,7 @@ public sealed class GetMyContact(ISession session, IDirectoryStore store)
 
         try
         {
-            var contact = await store.GetContactAsync(ctx.HouseholdRef.Value, ct);
+            var contact = await store.GetContactAsync(ctx.HouseholdRef.Value, ctx.Role ?? "Owner", ct);
             return contact is null
                 ? new GetMyContactResult.NotFound()
                 : new GetMyContactResult.Ok(contact);

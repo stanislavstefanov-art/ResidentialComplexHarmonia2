@@ -5,12 +5,13 @@ using Harmonia.Domain.Directory;
 
 namespace Harmonia.Api.Directory;
 
-/// <summary>Resident-facing view — name only, no PII (R3).</summary>
-public sealed record DirectoryEntryPublicDto(string HouseholdRef, string? DisplayName);
+/// <summary>Resident-facing view — name and role only, no PII (R3).</summary>
+public sealed record DirectoryEntryPublicDto(string HouseholdRef, string Role, string? DisplayName);
 
-/// <summary>Board-facing view — full contact details including phone, email, notes, opt-out status, and departure date.</summary>
+/// <summary>Board-facing view — full contact details including role, phone, email, notes, opt-out status, and departure date.</summary>
 public sealed record DirectoryEntryFullDto(
     string          HouseholdRef,
+    string          Role,
     string?         DisplayName,
     string?         Phone,
     string?         Email,
@@ -27,7 +28,8 @@ public sealed record UpdateContactRequest(
     string? DisplayName,
     string? Phone,
     string? Email,
-    bool?   OptedOut = null);
+    bool?   OptedOut = null,
+    string? Role = null);
 
 public sealed record UpdateNotesRequest(string? Notes);
 
@@ -63,7 +65,7 @@ public static class DirectoryEndpoints
             GetDirectoryResult.Refused         => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
             GetDirectoryResult.ResidentView rv => TypedResults.Json(
                 rv.Entries.Select(e =>
-                    new DirectoryEntryPublicDto(e.HouseholdRef.Value, e.DisplayName)).ToList(),
+                    new DirectoryEntryPublicDto(e.HouseholdRef.Value, e.Role, e.DisplayName)).ToList(),
                 statusCode: StatusCodes.Status200OK),
             GetDirectoryResult.BoardView bv    => TypedResults.Json(
                 bv.Entries.Select(ToFullDto).ToList(),
@@ -91,7 +93,7 @@ public static class DirectoryEndpoints
         ILogger logger, CancellationToken ct)
     {
         var result = await useCase.ExecuteAsync(
-            householdRef, body.DisplayName, body.Phone, body.Email, body.OptedOut, ct);
+            householdRef, body.Role ?? "Owner", body.DisplayName, body.Phone, body.Email, body.OptedOut, ct);
         return result switch
         {
             UpdateContactResult.Refused => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
@@ -188,5 +190,5 @@ public static class DirectoryEndpoints
     }
 
     private static DirectoryEntryFullDto ToFullDto(HouseholdContact c) =>
-        new(c.HouseholdRef.Value, c.DisplayName, c.Phone, c.Email, c.Notes, c.IsOptedOut, c.UpdatedAt, c.DepartedAt);
+        new(c.HouseholdRef.Value, c.Role, c.DisplayName, c.Phone, c.Email, c.Notes, c.IsOptedOut, c.UpdatedAt, c.DepartedAt);
 }

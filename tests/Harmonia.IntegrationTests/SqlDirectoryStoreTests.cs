@@ -16,7 +16,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         var hh = new HouseholdRef($"HH-DIR-{Guid.NewGuid():N}");
 
-        var result = await Store.UpsertContactAsync(hh, "Alice Smith", "555-0100", "alice@example.com", isOptedOut: null);
+        var result = await Store.UpsertContactAsync(hh, "Owner", "Alice Smith", "555-0100", "alice@example.com", isOptedOut: null);
         Assert.IsType<UpdateContactResult.Ok>(result);
 
         var all = await Store.ListAllAsync();
@@ -29,12 +29,27 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task UpsertContact_owner_and_renter_both_visible_in_ListAll()
+    {
+        var hh = new HouseholdRef($"HH-DIR-ROLES-{Guid.NewGuid():N}");
+
+        await Store.UpsertContactAsync(hh, "Owner",  "Owner Name",  null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Renter", "Renter Name", null, null, isOptedOut: null);
+
+        var all = await Store.ListAllAsync();
+        var entries = all.Where(e => e.HouseholdRef == hh).ToList();
+        Assert.Equal(2, entries.Count);
+        Assert.Contains(entries, e => e.Role == "Owner"  && e.DisplayName == "Owner Name");
+        Assert.Contains(entries, e => e.Role == "Renter" && e.DisplayName == "Renter Name");
+    }
+
+    [Fact]
     public async Task UpsertContact_partial_update_preserves_existing_phone()
     {
         var hh = new HouseholdRef($"HH-DIR-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Bob", "555-0200", null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Bob", "555-0200", null, isOptedOut: null);
 
-        await Store.UpsertContactAsync(hh, "Robert", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Robert", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var entry = all.First(e => e.HouseholdRef == hh);
@@ -59,7 +74,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         var hh = new HouseholdRef($"HH-DIR-OPT-{Guid.NewGuid():N}");
 
-        await Store.UpsertContactAsync(hh, "Dave", null, null, isOptedOut: true);
+        await Store.UpsertContactAsync(hh, "Owner", "Dave", null, null, isOptedOut: true);
 
         var all = await Store.ListAllAsync();
         var entry = all.First(e => e.HouseholdRef == hh);
@@ -70,9 +85,9 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task UpsertContact_null_isOptedOut_preserves_existing_value()
     {
         var hh = new HouseholdRef($"HH-DIR-OPT-PRES-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Eve", null, null, isOptedOut: true);
+        await Store.UpsertContactAsync(hh, "Owner", "Eve", null, null, isOptedOut: true);
 
-        await Store.UpsertContactAsync(hh, "Eve Updated", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Eve Updated", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var entry = all.First(e => e.HouseholdRef == hh);
@@ -85,8 +100,8 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         var prefix = $"HH-DIR-ORD-{Guid.NewGuid():N}";
         var a = new HouseholdRef($"{prefix}-A");
         var b = new HouseholdRef($"{prefix}-B");
-        await Store.UpsertContactAsync(b, "Zara", null, null, isOptedOut: null);
-        await Store.UpsertContactAsync(a, "Alice", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(b, "Owner", "Zara",  null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(a, "Owner", "Alice", null, null, isOptedOut: null);
 
         var all = await Store.ListAllAsync();
         var relevant = all.Where(e => e.HouseholdRef == a || e.HouseholdRef == b).ToList();
@@ -102,7 +117,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task DeleteContact_existing_row_returns_Ok_and_row_is_gone()
     {
         var hh = new HouseholdRef($"HH-DEL-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Dave", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Dave", null, null, isOptedOut: null);
 
         var result = await Store.DeleteContactAsync(hh);
 
@@ -126,8 +141,8 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         var target = new HouseholdRef($"HH-DEL-TGT-{Guid.NewGuid():N}");
         var other  = new HouseholdRef($"HH-DEL-OTH-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(target, "Eve",   null, null, isOptedOut: null);
-        await Store.UpsertContactAsync(other,  "Frank", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(target, "Owner", "Eve",   null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(other,  "Owner", "Frank", null, null, isOptedOut: null);
 
         await Store.DeleteContactAsync(target);
 
@@ -140,7 +155,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task MarkDeparted_sets_DepartedAt_and_row_appears_in_ListAll()
     {
         var hh = new HouseholdRef($"HH-DEP-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Departed Dave", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Departed Dave", null, null, isOptedOut: null);
 
         var result = await Store.MarkDepartedAsync(hh);
 
@@ -164,7 +179,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task MarkDeparted_already_departed_is_idempotent_and_preserves_original_date()
     {
         var hh = new HouseholdRef($"HH-DEP-IDEM-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Eve", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Eve", null, null, isOptedOut: null);
 
         // First call sets the date
         await Store.MarkDepartedAsync(hh);
@@ -188,8 +203,8 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
         // Two rows with DepartedAt > 1 year ago — both should be deleted
         var hh1 = new HouseholdRef($"HH-PG-OLD-{Guid.NewGuid():N}");
         var hh2 = new HouseholdRef($"HH-PG-OLD2-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh1, "Old1", null, null, isOptedOut: null);
-        await Store.UpsertContactAsync(hh2, "Old2", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh1, "Owner", "Old1", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh2, "Owner", "Old2", null, null, isOptedOut: null);
 
         // Manually set DepartedAt to > 1 year ago using direct SQL
         // (MarkDepartedAsync would set it to NOW; we need a past date for this test)
@@ -220,7 +235,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         // Row with DepartedAt set recently — NOT past the 1-year cutoff
         var hh = new HouseholdRef($"HH-PG-RECENT-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Recent", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Recent", null, null, isOptedOut: null);
         await Store.MarkDepartedAsync(hh); // DepartedAt = NOW (within 1 year)
 
         var result = await Store.PurgeExpiredContactsAsync();
@@ -235,7 +250,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         // Active resident — DepartedAt is NULL
         var hh = new HouseholdRef($"HH-PG-ACTIVE-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Active", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Active", null, null, isOptedOut: null);
 
         var result = await Store.PurgeExpiredContactsAsync();
 
@@ -248,7 +263,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task DeleteContact_cascade_deletes_subscription_and_history()
     {
         var hh = new HouseholdRef($"HH-CASCADE-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Alice", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Alice", null, null, isOptedOut: null);
         await SeedSubscriptionAsync(hh);
         await SeedHistoryAsync(hh);
 
@@ -265,8 +280,8 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     {
         var target = new HouseholdRef($"HH-CASCADE-TGT-{Guid.NewGuid():N}");
         var other  = new HouseholdRef($"HH-CASCADE-OTH-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(target, "Target", null, null, isOptedOut: null);
-        await Store.UpsertContactAsync(other,  "Other",  null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(target, "Owner", "Target", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(other,  "Owner", "Other",  null, null, isOptedOut: null);
         await SeedSubscriptionAsync(target);
         await SeedSubscriptionAsync(other);
         await SeedHistoryAsync(target);
@@ -286,7 +301,7 @@ public class SqlDirectoryStoreTests(SqlServerFixture fixture)
     public async Task DeleteContact_cascade_succeeds_when_no_subscription_or_history()
     {
         var hh = new HouseholdRef($"HH-CASCADE-NOANCIL-{Guid.NewGuid():N}");
-        await Store.UpsertContactAsync(hh, "Bob", null, null, isOptedOut: null);
+        await Store.UpsertContactAsync(hh, "Owner", "Bob", null, null, isOptedOut: null);
 
         var result = await Store.DeleteContactAsync(hh);
 

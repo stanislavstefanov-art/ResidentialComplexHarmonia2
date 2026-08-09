@@ -103,18 +103,19 @@ public interface IDirectoryStore
     Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Returns the contact record for a single household, or <see langword="null"/> if no row exists.
+    /// Returns the contact record for a single (household, role) pair, or <see langword="null"/> if no row exists.
     /// R3: never log <paramref name="householdRef"/> value.
     /// </summary>
-    Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, CancellationToken ct = default);
+    Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default);
 
     /// <summary>
-    /// Upserts display name, phone, email, and opt-out flag for <paramref name="householdRef"/>.
+    /// Upserts display name, phone, email, and opt-out flag for <paramref name="householdRef"/> + <paramref name="role"/>.
     /// Passing <see langword="null"/> for any field preserves the existing stored value (COALESCE semantics).
     /// R3: never log <paramref name="phone"/> or <paramref name="email"/> values.
     /// </summary>
     Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef,
+        string       role,
         string?      displayName,
         string?      phone,
         string?      email,

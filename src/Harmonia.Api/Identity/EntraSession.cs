@@ -35,11 +35,11 @@ public sealed class EntraSession(
             return new SessionContext(IsResident: false, IsAdmin: true,
                 HouseholdRef: null, EntraObjectId: oid, IsPending: false);
 
-        var householdRef = await householdLookup.FindHouseholdRefAsync(oid);
-        if (householdRef is not null)
+        var link = await householdLookup.FindAsync(oid);
+        if (link is not null)
             return new SessionContext(IsResident: true, IsAdmin: false,
-                HouseholdRef: new HouseholdRef(householdRef),
-                EntraObjectId: oid, IsPending: false);
+                HouseholdRef: new HouseholdRef(link.HouseholdRef),
+                EntraObjectId: oid, IsPending: false, Role: link.Role);
 
         var email       = user.FindFirstValue("email") ?? string.Empty;
         var displayName = user.FindFirstValue(ClaimTypes.Name)

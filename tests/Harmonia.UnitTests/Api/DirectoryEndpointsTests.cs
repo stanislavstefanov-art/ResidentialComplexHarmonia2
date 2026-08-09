@@ -162,8 +162,8 @@ public class DirectoryEndpointsTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-EP-PII"), "Alice", "555-9999", "alice@test.com", "secret",
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-EP-PII"), "Owner", "Alice", "555-9999", "alice@test.com", "secret",
+            false, DateTimeOffset.UtcNow, null));
         var uc = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -178,8 +178,8 @@ public class DirectoryEndpointsTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-OPT-DTO"), "Carol", null, null, null,
-            IsOptedOut: true, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-OPT-DTO"), "Owner", "Carol", null, null, null,
+            true, DateTimeOffset.UtcNow, null));
         var uc = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -208,8 +208,8 @@ public class DirectoryEndpointsTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-EP-1"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-EP-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status204NoContent,
@@ -250,8 +250,8 @@ public class DirectoryEndpointsTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-TARGET-1"), "Bob", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-TARGET-1"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
         var uc = new EraseContact(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.EraseContactEndpoint(
             uc, "HH-TARGET-1", NullLogger.Instance, default);
@@ -296,8 +296,8 @@ public class DirectoryEndpointsTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-MD-1"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-MD-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
         var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.MarkDepartedEndpoint(
             uc, "HH-MD-1", NullLogger.Instance, default);

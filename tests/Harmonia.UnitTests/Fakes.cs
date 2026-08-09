@@ -325,10 +325,10 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         => Task.FromResult<IReadOnlyList<HouseholdContact>>([.. _contacts]);
 
     public Task<UpdateContactResult> UpsertContactAsync(
-        HouseholdRef householdRef, string? displayName, string? phone, string? email,
+        HouseholdRef householdRef, string role, string? displayName, string? phone, string? email,
         bool? isOptedOut, CancellationToken ct = default)
     {
-        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
+        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef && c.Role == role);
         if (idx >= 0)
         {
             var e = _contacts[idx];
@@ -344,8 +344,8 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         else
         {
             _contacts.Add(new HouseholdContact(
-                householdRef, displayName, phone, email, null,
-                IsOptedOut: isOptedOut ?? false, DateTimeOffset.UtcNow, DepartedAt: null));
+                householdRef, role, displayName, phone, email, null,
+                isOptedOut ?? false, DateTimeOffset.UtcNow, null));
         }
         return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
     }
@@ -362,7 +362,7 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         else
         {
             _contacts.Add(new HouseholdContact(
-                householdRef, null, null, null, notes, IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+                householdRef, "Owner", null, null, null, notes, false, DateTimeOffset.UtcNow, null));
         }
         return Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Ok());
     }
@@ -393,9 +393,9 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         return Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Ok(removed));
     }
 
-    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, CancellationToken ct = default)
+    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default)
     {
-        var contact = _contacts.FirstOrDefault(c => c.HouseholdRef == householdRef);
+        var contact = _contacts.FirstOrDefault(c => c.HouseholdRef == householdRef && c.Role == role);
         return Task.FromResult<HouseholdContact?>(contact);
     }
 }
@@ -406,7 +406,7 @@ public sealed class FailingDirectoryStore : IDirectoryStore
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<UpdateContactResult> UpsertContactAsync(
-        HouseholdRef householdRef, string? displayName, string? phone, string? email,
+        HouseholdRef householdRef, string role, string? displayName, string? phone, string? email,
         bool? isOptedOut, CancellationToken ct = default)
         => Task.FromResult<UpdateContactResult>(new UpdateContactResult.Failed());
 
@@ -425,7 +425,7 @@ public sealed class FailingDirectoryStore : IDirectoryStore
     public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(CancellationToken ct = default)
         => Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Failed());
 
-    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, CancellationToken ct = default)
+    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
@@ -443,7 +443,7 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
         => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
 
-    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
+    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, string role, CancellationToken ct = default)
         => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
 
     public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
@@ -458,7 +458,7 @@ public sealed class FailingPendingSignInStore : IPendingSignInStore
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
-    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
+    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, string role, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
@@ -471,7 +471,7 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
 {
     public List<PendingSignIn> Pending { get; init; } = [];
     public HashSet<string> AlreadyActivated { get; } = [];
-    public List<(string Oid, string HouseholdRef)> ActivateCalls { get; } = [];
+    public List<(string Oid, string HouseholdRef, string Role)> ActivateCalls { get; } = [];
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
     public int PurgeCalls { get; private set; }
 
@@ -484,13 +484,13 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<PendingSignIn>>(Pending.ToList());
 
-    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, CancellationToken ct = default)
+    public Task<ActivateResult> ActivateAsync(string oid, string householdRef, string role, CancellationToken ct = default)
     {
         if (AlreadyActivated.Contains(oid))
             return Task.FromResult(ActivateResult.AlreadyActivated);
         var pending = Pending.FirstOrDefault(p => p.EntraObjectId == oid);
         if (pending is null) return Task.FromResult(ActivateResult.NotFound);
-        ActivateCalls.Add((oid, householdRef));
+        ActivateCalls.Add((oid, householdRef, role));
         Pending.Remove(pending);
         return Task.FromResult(ActivateResult.Ok);
     }
@@ -503,8 +503,8 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
     }
 }
 
-public sealed class FakeHouseholdByOidLookup(string? householdRef) : IHouseholdByOidLookup
+public sealed class FakeHouseholdByOidLookup(string? householdRef, string role = "Owner") : IHouseholdByOidLookup
 {
-    public Task<string?> FindHouseholdRefAsync(string oid, CancellationToken ct = default)
-        => Task.FromResult(householdRef);
+    public Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default)
+        => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, role));
 }

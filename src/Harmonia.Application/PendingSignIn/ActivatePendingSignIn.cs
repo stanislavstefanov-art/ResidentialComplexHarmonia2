@@ -13,13 +13,13 @@ public abstract record ActivatePendingSignInResult
 public sealed class ActivatePendingSignIn(ISession session, IPendingSignInStore store)
 {
     public async Task<ActivatePendingSignInResult> ExecuteAsync(
-        string oid, string householdRef, CancellationToken ct = default)
+        string oid, string householdRef, string role, CancellationToken ct = default)
     {
         if (session.Resolve() is not { IsAdmin: true })
             return new ActivatePendingSignInResult.Refused();
         try
         {
-            return await store.ActivateAsync(oid, householdRef, ct) switch
+            return await store.ActivateAsync(oid, householdRef, role, ct) switch
             {
                 ActivateResult.Ok               => new ActivatePendingSignInResult.Ok(),
                 ActivateResult.NotFound         => new ActivatePendingSignInResult.NotFound(),

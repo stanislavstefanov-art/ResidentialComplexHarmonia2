@@ -9,7 +9,7 @@ public sealed record PendingSignInDto(
     string         DisplayName,
     DateTimeOffset FirstSeenAt);
 
-public sealed record ActivateRequest(string HouseholdRef);
+public sealed record ActivateRequest(string HouseholdRef, string Role = "Owner");
 
 public sealed record PurgeExpiredDto(int Deleted);
 
@@ -38,7 +38,7 @@ public static class AdminPendingEndpoints
     public static async Task<IResult> ActivatePendingEndpoint(
         ActivatePendingSignIn useCase, string oid, ActivateRequest body, ILogger logger, CancellationToken ct)
     {
-        var result = await useCase.ExecuteAsync(oid, body.HouseholdRef, ct);
+        var result = await useCase.ExecuteAsync(oid, body.HouseholdRef, body.Role, ct);
         logger.LogInformation("POST /admin/pending/activate — {Outcome}", result.GetType().Name);
         return result switch
         {

@@ -18,7 +18,7 @@ public sealed class UpdateMyContact(ISession session, IDirectoryStore store)
         try
         {
             return await store.UpsertContactAsync(
-                ctx.HouseholdRef.Value, displayName, phone, email, isOptedOut, ct);
+                ctx.HouseholdRef.Value, ctx.Role ?? "Owner", displayName, phone, email, isOptedOut, ct);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception)

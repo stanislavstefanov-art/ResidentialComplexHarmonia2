@@ -45,11 +45,23 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         var hh  = $"HH-{Guid.NewGuid():N}";
         await Store.UpsertAsync(oid, "test@example.com", "Test User");
 
-        var result = await Store.ActivateAsync(oid, hh);
+        var result = await Store.ActivateAsync(oid, hh, "Owner");
 
         Assert.Equal(ActivateResult.Ok, result);
         Assert.True(await ExistsInLinksAsync(oid));
         Assert.False(await ExistsInPendingAsync(oid));
+    }
+
+    [Fact]
+    public async Task ActivateAsync_stores_role_in_HouseholdLinks()
+    {
+        var oid = $"oid-{Guid.NewGuid():N}";
+        var hh  = $"HH-{Guid.NewGuid():N}";
+        await Store.UpsertAsync(oid, "renter@example.com", "Renter User");
+
+        await Store.ActivateAsync(oid, hh, "Renter");
+
+        Assert.Equal("Renter", await GetRoleAsync(oid));
     }
 
     [Fact]
@@ -58,7 +70,7 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         var oid = $"oid-{Guid.NewGuid():N}";
         var hh  = $"HH-{Guid.NewGuid():N}";
 
-        var result = await Store.ActivateAsync(oid, hh);
+        var result = await Store.ActivateAsync(oid, hh, "Owner");
 
         Assert.Equal(ActivateResult.NotFound, result);
         Assert.False(await ExistsInLinksAsync(oid));
@@ -71,7 +83,7 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         var hh  = $"HH-{Guid.NewGuid():N}";
         await SeedLinkAsync(oid, hh);
 
-        var result = await Store.ActivateAsync(oid, hh);
+        var result = await Store.ActivateAsync(oid, hh, "Owner");
 
         Assert.Equal(ActivateResult.AlreadyActivated, result);
         Assert.Equal(1, await CountLinksAsync(oid));
@@ -122,16 +134,17 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         await cmd.ExecuteNonQueryAsync();
     }
 
-    private async Task SeedLinkAsync(string oid, string householdRef)
+    private async Task SeedLinkAsync(string oid, string householdRef, string role = "Owner")
     {
         await using var conn = new SqlConnection(fixture.ConnectionString);
         await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, LinkedAt) " +
-            "VALUES (@Oid, @HH, SYSUTCDATETIME());";
-        cmd.Parameters.AddWithValue("@Oid", oid);
-        cmd.Parameters.AddWithValue("@HH",  householdRef);
+            "INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt) " +
+            "VALUES (@Oid, @HH, @Role, SYSUTCDATETIME());";
+        cmd.Parameters.AddWithValue("@Oid",  oid);
+        cmd.Parameters.AddWithValue("@HH",   householdRef);
+        cmd.Parameters.AddWithValue("@Role", role);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -163,5 +176,15 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         cmd.CommandText = "SELECT COUNT(*) FROM dbo.HouseholdLinks WHERE EntraObjectId = @Oid;";
         cmd.Parameters.AddWithValue("@Oid", oid);
         return (int)(await cmd.ExecuteScalarAsync())!;
+    }
+
+    private async Task<string?> GetRoleAsync(string oid)
+    {
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Role FROM dbo.HouseholdLinks WHERE EntraObjectId = @Oid;";
+        cmd.Parameters.AddWithValue("@Oid", oid);
+        return (string?)(await cmd.ExecuteScalarAsync());
     }
 }

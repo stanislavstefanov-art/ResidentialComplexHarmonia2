@@ -26,7 +26,7 @@ public class ActivatePendingSignInsTests
         var store = new FakePendingSignInStoreV2 { Pending = pending };
         var useCase = new ActivatePendingSignIn(new FakeSession(AdminSession()), store);
 
-        var result = await useCase.ExecuteAsync("oid-1", "HH-1");
+        var result = await useCase.ExecuteAsync("oid-1", "HH-1", "Owner");
 
         Assert.IsType<ActivatePendingSignInResult.Ok>(result);
         Assert.Empty(store.Pending);
@@ -38,7 +38,7 @@ public class ActivatePendingSignInsTests
         var store = new FakePendingSignInStoreV2 { Pending = [] };
         var useCase = new ActivatePendingSignIn(new FakeSession(AdminSession()), store);
 
-        var result = await useCase.ExecuteAsync("oid-unknown", "HH-1");
+        var result = await useCase.ExecuteAsync("oid-unknown", "HH-1", "Owner");
 
         Assert.IsType<ActivatePendingSignInResult.NotFound>(result);
     }
@@ -50,7 +50,7 @@ public class ActivatePendingSignInsTests
         store.AlreadyActivated.Add("oid-activated");
         var useCase = new ActivatePendingSignIn(new FakeSession(AdminSession()), store);
 
-        var result = await useCase.ExecuteAsync("oid-activated", "HH-1");
+        var result = await useCase.ExecuteAsync("oid-activated", "HH-1", "Owner");
 
         Assert.IsType<ActivatePendingSignInResult.AlreadyActivated>(result);
     }
@@ -61,7 +61,7 @@ public class ActivatePendingSignInsTests
         var ctx = new SessionContext(IsResident: true, IsAdmin: false,
             HouseholdRef: new HouseholdRef("HH-1"), EntraObjectId: "oid-1", IsPending: false);
 
-        var result = await UseCase(ctx).ExecuteAsync("oid-1", "HH-1");
+        var result = await UseCase(ctx).ExecuteAsync("oid-1", "HH-1", "Owner");
 
         Assert.IsType<ActivatePendingSignInResult.Refused>(result);
     }
@@ -69,7 +69,7 @@ public class ActivatePendingSignInsTests
     [Fact]
     public async Task Null_session_returns_Refused()
     {
-        var result = await UseCase(null).ExecuteAsync("oid-1", "HH-1");
+        var result = await UseCase(null).ExecuteAsync("oid-1", "HH-1", "Owner");
 
         Assert.IsType<ActivatePendingSignInResult.Refused>(result);
     }
@@ -79,7 +79,7 @@ public class ActivatePendingSignInsTests
     {
         var useCase = new ActivatePendingSignIn(new FakeSession(AdminSession()), new FailingPendingSignInStore());
 
-        var result = await useCase.ExecuteAsync("oid-1", "HH-1");
+        var result = await useCase.ExecuteAsync("oid-1", "HH-1", "Owner");
 
         Assert.IsType<ActivatePendingSignInResult.Failed>(result);
     }

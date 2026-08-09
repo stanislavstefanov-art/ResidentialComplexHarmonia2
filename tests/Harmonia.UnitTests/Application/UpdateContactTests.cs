@@ -17,7 +17,7 @@ public class UpdateContactTests
     {
         var useCase = new UpdateContact(new FakeSession(AdminCtx), new FakeDirectoryStore());
         Assert.IsType<UpdateContactResult.Ok>(
-            await useCase.ExecuteAsync("HH-TARGET-1", "Bob", "555-0200", null));
+            await useCase.ExecuteAsync("HH-TARGET-1", "Owner", "Bob", "555-0200", null));
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class UpdateContactTests
     {
         var useCase = new UpdateContact(new FakeSession(ResidentCtx), new FakeDirectoryStore());
         Assert.IsType<UpdateContactResult.Refused>(
-            await useCase.ExecuteAsync("HH-OTHER-1", "Bob", null, null));
+            await useCase.ExecuteAsync("HH-OTHER-1", "Owner", "Bob", null, null));
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class UpdateContactTests
     {
         var useCase = new UpdateContact(new FakeSession(null), new FakeDirectoryStore());
         Assert.IsType<UpdateContactResult.Refused>(
-            await useCase.ExecuteAsync("HH-TARGET-1", null, null, null));
+            await useCase.ExecuteAsync("HH-TARGET-1", "Owner", null, null, null));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class UpdateContactTests
     {
         var useCase = new UpdateContact(new FakeSession(AdminCtx), new FailingDirectoryStore());
         Assert.IsType<UpdateContactResult.Failed>(
-            await useCase.ExecuteAsync("HH-TARGET-1", "Bob", null, null));
+            await useCase.ExecuteAsync("HH-TARGET-1", "Owner", "Bob", null, null));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class UpdateContactTests
     {
         var store = new FakeDirectoryStore();
         var useCase = new UpdateContact(new FakeSession(AdminCtx), store);
-        await useCase.ExecuteAsync("HH-FORWARDED-1", "Bob", null, null);
+        await useCase.ExecuteAsync("HH-FORWARDED-1", "Owner", "Bob", null, null);
 
         Assert.Single(store.Contacts);
         Assert.Equal(new HouseholdRef("HH-FORWARDED-1"), store.Contacts[0].HouseholdRef);
@@ -60,7 +60,7 @@ public class UpdateContactTests
     {
         var store = new FakeDirectoryStore();
         var useCase = new UpdateContact(new FakeSession(AdminCtx), store);
-        await useCase.ExecuteAsync("HH-OPT-FWD-1", null, null, null, isOptedOut: true);
+        await useCase.ExecuteAsync("HH-OPT-FWD-1", "Owner", null, null, null, isOptedOut: true);
 
         Assert.Single(store.Contacts);
         Assert.True(store.Contacts[0].IsOptedOut);

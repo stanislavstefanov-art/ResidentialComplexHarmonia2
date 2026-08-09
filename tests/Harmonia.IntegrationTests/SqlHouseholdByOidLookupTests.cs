@@ -16,9 +16,21 @@ public class SqlHouseholdByOidLookupTests(SqlServerFixture fixture)
         var hh  = $"HH-LINK-{Guid.NewGuid():N}";
         await SeedLinkAsync(oid, hh);
 
-        var result = await Lookup.FindHouseholdRefAsync(oid);
+        var result = await Lookup.FindAsync(oid);
 
-        Assert.Equal(hh, result);
+        Assert.Equal(hh, result!.HouseholdRef);
+    }
+
+    [Fact]
+    public async Task OID_present_returns_correct_Role()
+    {
+        var oid = $"oid-{Guid.NewGuid():N}";
+        var hh  = $"HH-LINK-ROLE-{Guid.NewGuid():N}";
+        await SeedLinkAsync(oid, hh, "Renter");
+
+        var result = await Lookup.FindAsync(oid);
+
+        Assert.Equal("Renter", result!.Role);
     }
 
     [Fact]
@@ -26,7 +38,7 @@ public class SqlHouseholdByOidLookupTests(SqlServerFixture fixture)
     {
         var oid = $"oid-{Guid.NewGuid():N}";
 
-        var result = await Lookup.FindHouseholdRefAsync(oid);
+        var result = await Lookup.FindAsync(oid);
 
         Assert.Null(result);
     }
@@ -37,11 +49,11 @@ public class SqlHouseholdByOidLookupTests(SqlServerFixture fixture)
         var oid1 = $"oid-{Guid.NewGuid():N}";
         var oid2 = $"oid-{Guid.NewGuid():N}";
         var hh   = $"HH-FAM-{Guid.NewGuid():N}";
-        await SeedLinkAsync(oid1, hh);
-        await SeedLinkAsync(oid2, hh);
+        await SeedLinkAsync(oid1, hh, "Owner");
+        await SeedLinkAsync(oid2, hh, "Renter");
 
-        Assert.Equal(hh, await Lookup.FindHouseholdRefAsync(oid1));
-        Assert.Equal(hh, await Lookup.FindHouseholdRefAsync(oid2));
+        Assert.Equal(hh, (await Lookup.FindAsync(oid1))!.HouseholdRef);
+        Assert.Equal(hh, (await Lookup.FindAsync(oid2))!.HouseholdRef);
     }
 
     [Fact]
@@ -54,16 +66,17 @@ public class SqlHouseholdByOidLookupTests(SqlServerFixture fixture)
         await Assert.ThrowsAnyAsync<Exception>(() => SeedLinkAsync(oid, hh));
     }
 
-    private async Task SeedLinkAsync(string oid, string householdRef)
+    private async Task SeedLinkAsync(string oid, string householdRef, string role = "Owner")
     {
         await using var conn = new SqlConnection(fixture.ConnectionString);
         await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, LinkedAt) " +
-            "VALUES (@Oid, @HH, SYSUTCDATETIME());";
-        cmd.Parameters.AddWithValue("@Oid", oid);
-        cmd.Parameters.AddWithValue("@HH",  householdRef);
+            "INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt) " +
+            "VALUES (@Oid, @HH, @Role, SYSUTCDATETIME());";
+        cmd.Parameters.AddWithValue("@Oid",  oid);
+        cmd.Parameters.AddWithValue("@HH",   householdRef);
+        cmd.Parameters.AddWithValue("@Role", role);
         await cmd.ExecuteNonQueryAsync();
     }
 }

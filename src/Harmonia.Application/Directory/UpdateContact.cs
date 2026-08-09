@@ -6,7 +6,7 @@ namespace Harmonia.Application.Directory;
 public sealed class UpdateContact(ISession session, IDirectoryStore store)
 {
     public async Task<UpdateContactResult> ExecuteAsync(
-        string householdRef, string? displayName, string? phone, string? email,
+        string householdRef, string role, string? displayName, string? phone, string? email,
         bool? isOptedOut = null, CancellationToken ct = default)
     {
         var ctx = session.Resolve();
@@ -16,7 +16,7 @@ public sealed class UpdateContact(ISession session, IDirectoryStore store)
         try
         {
             return await store.UpsertContactAsync(
-                new HouseholdRef(householdRef), displayName, phone, email, isOptedOut, ct);
+                new HouseholdRef(householdRef), role, displayName, phone, email, isOptedOut, ct);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception)

@@ -33,8 +33,8 @@ public class MarkDepartedTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-TARGET-1"), "Alice", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-TARGET-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
         var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
         var result = await uc.ExecuteAsync("HH-TARGET-1");
         Assert.IsType<MarkDepartedResult.Ok>(result);
@@ -53,8 +53,8 @@ public class MarkDepartedTests
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
-            new HouseholdRef("HH-TARGET-2"), "Bob", null, null, null,
-            IsOptedOut: false, DateTimeOffset.UtcNow, DepartedAt: null));
+            new HouseholdRef("HH-TARGET-2"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null));
         var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
 
         // First call — sets DepartedAt

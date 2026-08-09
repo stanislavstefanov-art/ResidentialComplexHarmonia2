@@ -49,7 +49,7 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
     }
 
     public async Task<ActivateResult> ActivateAsync(
-        string oid, string householdRef, CancellationToken ct = default)
+        string oid, string householdRef, string role, CancellationToken ct = default)
     {
         await using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync(ct);
@@ -67,8 +67,8 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
 
                 IF @pendingExists = 1 AND @alreadyLinked = 0
                 BEGIN
-                    INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, LinkedAt)
-                    VALUES (@Oid, @HouseholdRef, SYSUTCDATETIME());
+                    INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
+                    VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
                     DELETE FROM dbo.PendingSignIns WHERE EntraObjectId = @Oid;
                 END
             COMMIT;
@@ -76,6 +76,7 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
             """;
         cmd.Parameters.Add(new SqlParameter("@Oid",          SqlDbType.NVarChar, 36)  { Value = oid });
         cmd.Parameters.Add(new SqlParameter("@HouseholdRef", SqlDbType.NVarChar, 256) { Value = householdRef });
+        cmd.Parameters.Add(new SqlParameter("@Role",         SqlDbType.NVarChar, 10)  { Value = role });
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         await reader.ReadAsync(ct);
         var pendingExists = reader.GetBoolean(0);
