@@ -11,20 +11,20 @@ test('updateMyContact calls PUT /directory/contact', async () => {
   );
 });
 
-test('updateContact calls PUT /directory/{ref}/contact', async () => {
+test('updateContact calls PUT /directory/board/contact with ref in query', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true });
   await updateContact('H001', { displayName: 'Board Edit' });
   expect(global.fetch).toHaveBeenCalledWith(
-    'http://localhost:5000/directory/H001/contact',
+    'http://localhost:5000/directory/board/contact?householdRef=H001',
     expect.objectContaining({ method: 'PUT' }),
   );
 });
 
-test('updateNotes calls PUT /directory/{ref}/notes', async () => {
+test('updateNotes calls PUT /directory/board/notes with ref in query', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({ ok: true });
   await updateNotes('H001', 'Some note');
   expect(global.fetch).toHaveBeenCalledWith(
-    'http://localhost:5000/directory/H001/notes',
+    'http://localhost:5000/directory/board/notes?householdRef=H001',
     expect.objectContaining({ method: 'PUT' }),
   );
 });

@@ -27,19 +27,19 @@ describe('ContactEditService', () => {
     expect(done).toBe(true);
   });
 
-  it('PUT /directory/{ref}/contact updates board-managed contact', () => {
+  it('PUT /directory/board/contact updates board-managed contact', () => {
     let done = false;
     svc.updateContact('H001', { displayName: 'Board Edit' }).subscribe({ complete: () => (done = true) });
-    const req = http.expectOne('http://localhost:5000/directory/H001/contact');
+    const req = http.expectOne('http://localhost:5000/directory/board/contact?householdRef=H001');
     expect(req.request.method).toBe('PUT');
     req.flush('', { status: 200, statusText: 'OK' });
     expect(done).toBe(true);
   });
 
-  it('PUT /directory/{ref}/notes updates notes for a household', () => {
+  it('PUT /directory/board/notes updates notes for a household', () => {
     let done = false;
     svc.updateNotes('H001', 'Some board note').subscribe({ complete: () => (done = true) });
-    const req = http.expectOne('http://localhost:5000/directory/H001/notes');
+    const req = http.expectOne('http://localhost:5000/directory/board/notes?householdRef=H001');
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toMatchObject({ notes: 'Some board note' });
     req.flush('', { status: 200, statusText: 'OK' });

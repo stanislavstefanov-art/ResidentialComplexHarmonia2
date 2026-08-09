@@ -29,14 +29,14 @@ export class ContactEditService {
   /** Board updates any household's contact details. */
   updateContact(householdRef: string, body: UpdateContactRequest): Observable<void> {
     return this.http
-      .put(`${this.base}/directory/${encodeURIComponent(householdRef)}/contact`, body, { responseType: 'text' })
+      .put(`${this.base}/directory/board/contact?householdRef=${encodeURIComponent(householdRef)}`, body, { responseType: 'text' })
       .pipe(map(() => undefined));
   }
 
   /** Board updates internal notes for a household. */
   updateNotes(householdRef: string, notes: string | null): Observable<void> {
     return this.http
-      .put(`${this.base}/directory/${encodeURIComponent(householdRef)}/notes`, { notes }, { responseType: 'text' })
+      .put(`${this.base}/directory/board/notes?householdRef=${encodeURIComponent(householdRef)}`, { notes }, { responseType: 'text' })
       .pipe(map(() => undefined));
   }
 }

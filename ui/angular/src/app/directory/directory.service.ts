@@ -34,12 +34,14 @@ export class DirectoryService {
     return this.http.put<void>(`${API}/directory/contact`, req);
   }
 
+  // householdRef goes in the query string, not the path: multi-apartment refs contain
+  // '/' which ASP.NET Core leaves undecoded (%2F) in a path segment and never matches.
   adminUpdateContact(householdRef: string, req: AdminUpdateContactRequest): Observable<void> {
-    return this.http.put<void>(`${API}/directory/${householdRef}/contact`, req);
+    return this.http.put<void>(`${API}/directory/board/contact?householdRef=${encodeURIComponent(householdRef)}`, req);
   }
 
   markDeparted(householdRef: string): Observable<void> {
-    return this.http.delete<void>(`${API}/directory/${householdRef}/departed`);
+    return this.http.delete<void>(`${API}/directory/board/departed?householdRef=${encodeURIComponent(householdRef)}`);
   }
 
   eraseMyContact(): Observable<void> {
@@ -47,6 +49,6 @@ export class DirectoryService {
   }
 
   eraseContact(householdRef: string): Observable<void> {
-    return this.http.delete<void>(`${API}/directory/${encodeURIComponent(householdRef)}/contact`);
+    return this.http.delete<void>(`${API}/directory/board/contact?householdRef=${encodeURIComponent(householdRef)}`);
   }
 }

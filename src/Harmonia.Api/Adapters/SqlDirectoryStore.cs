@@ -215,7 +215,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                 "DELETE FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef AND Role = @Role;";
             contactCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
             contactCmd.Parameters.Add(new SqlParameter("@Role", SqlDbType.NVarChar, 10) { Value = role });
-            await contactCmd.ExecuteNonQueryAsync(ct);
+            var contactRows = await contactCmd.ExecuteNonQueryAsync(ct);
 
             await using var linkCmd = conn.CreateCommand();
             linkCmd.Transaction = tx;
@@ -227,7 +227,9 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
 
             await tx.CommitAsync(ct);
 
-            return linkRows == 0
+            // Ok when either table had a matching row — a directory (contact) row
+            // removed without a link (or vice-versa) must not report NotFound.
+            return contactRows == 0 && linkRows == 0
                 ? new RemoveResidentResult.NotFound()
                 : new RemoveResidentResult.Ok();
         }

@@ -37,7 +37,8 @@ export async function updateMyContact(body: UpdateContactRequest): Promise<void>
 }
 
 export async function updateContact(householdRef: string, body: UpdateContactRequest): Promise<void> {
-  const res = await apiFetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/contact`, {
+  // householdRef in the query string, not the path — multi-apartment refs contain '/'.
+  const res = await apiFetch(`${BASE}/directory/board/contact?householdRef=${encodeURIComponent(householdRef)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -59,7 +60,7 @@ export async function linkMyHousehold(householdRef: string, role: string): Promi
 }
 
 export async function updateNotes(householdRef: string, notes: string | null): Promise<void> {
-  const res = await apiFetch(`${BASE}/directory/${encodeURIComponent(householdRef)}/notes`, {
+  const res = await apiFetch(`${BASE}/directory/board/notes?householdRef=${encodeURIComponent(householdRef)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ notes }),

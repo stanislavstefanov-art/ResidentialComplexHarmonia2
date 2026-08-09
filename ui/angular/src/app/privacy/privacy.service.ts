@@ -19,7 +19,7 @@ export class PrivacyService {
   /** Board DSAR hard-delete. 204 = erased, 404 = not found. */
   eraseContact(householdRef: string): Observable<EraseContactOutcome> {
     return this.http
-      .delete(`${this.base}/directory/${encodeURIComponent(householdRef)}/contact`, { responseType: 'text' })
+      .delete(`${this.base}/directory/board/contact?householdRef=${encodeURIComponent(householdRef)}`, { responseType: 'text' })
       .pipe(
         map(() => 'erased' as EraseContactOutcome),
         catchError(err => {
@@ -32,7 +32,7 @@ export class PrivacyService {
   /** Board sets departure date on a household. DELETE 200 = ok, 404 = not found. */
   markDeparted(householdRef: string): Observable<MarkDepartedOutcome> {
     return this.http
-      .delete(`${this.base}/directory/${encodeURIComponent(householdRef)}/departed`, { responseType: 'text' })
+      .delete(`${this.base}/directory/board/departed?householdRef=${encodeURIComponent(householdRef)}`, { responseType: 'text' })
       .pipe(
         map(() => 'ok' as MarkDepartedOutcome),
         catchError(err => {

@@ -328,15 +328,18 @@ app.MapPut(
         DirectoryEndpoints.UpdateMyContactEndpoint(
             uc, body, loggers.CreateLogger("Directory"), ct));
 
+// householdRef is a query parameter (not a path segment): multi-apartment refs
+// legitimately contain '/', which ASP.NET Core leaves undecoded (%2F) in a path
+// segment and never matches the stored value. Query values decode correctly.
 app.MapPut(
-    "/directory/{householdRef}/contact",
+    "/directory/board/contact",
     (UpdateContact uc, string householdRef, UpdateContactRequest body,
      ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.UpdateContactEndpoint(
             uc, householdRef, body, loggers.CreateLogger("Directory"), ct));
 
 app.MapPut(
-    "/directory/{householdRef}/notes",
+    "/directory/board/notes",
     (UpdateNotes uc, string householdRef, UpdateNotesRequest body,
      ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.UpdateNotesEndpoint(
@@ -349,19 +352,19 @@ app.MapDelete(
             uc, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
-    "/directory/{householdRef}/contact",
+    "/directory/board/contact",
     (EraseContact uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.EraseContactEndpoint(
             uc, householdRef, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
-    "/directory/{householdRef}/departed",
+    "/directory/board/departed",
     (MarkDeparted uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.MarkDepartedEndpoint(
             uc, householdRef, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
-    "/directory/{householdRef}/{role}/resident",
+    "/directory/board/resident",
     (RemoveResident uc, string householdRef, string role, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.RemoveResidentEndpoint(
             uc, householdRef, role, loggers.CreateLogger("Directory"), ct));

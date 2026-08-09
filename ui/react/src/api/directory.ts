@@ -43,17 +43,18 @@ export async function adminUpdateContact(
   householdRef: string,
   req: AdminUpdateContactRequest,
 ): Promise<void> {
-  const res = await apiFetch(`${API}/directory/${householdRef}/contact`, {
+  // householdRef in the query string, not the path — multi-apartment refs contain '/'.
+  const res = await apiFetch(`${API}/directory/board/contact?householdRef=${encodeURIComponent(householdRef)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   });
-  if (!res.ok) throw new Error(`PUT /directory/${householdRef}/contact failed: ${res.status}`);
+  if (!res.ok) throw new Error(`PUT /directory/board/contact failed: ${res.status}`);
 }
 
 export async function markDeparted(householdRef: string): Promise<void> {
-  const res = await apiFetch(`${API}/directory/${householdRef}/departed`, {
+  const res = await apiFetch(`${API}/directory/board/departed?householdRef=${encodeURIComponent(householdRef)}`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error(`DELETE /directory/${householdRef}/departed failed: ${res.status}`);
+  if (!res.ok) throw new Error(`DELETE /directory/board/departed failed: ${res.status}`);
 }

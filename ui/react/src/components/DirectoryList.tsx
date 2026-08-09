@@ -218,11 +218,9 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
     setRemovingResident(true);
     try {
       await removeResident(removeResidentRef, removeResidentRole);
-      setAdminRows(prev => prev.filter(r =>
-        !(r.householdRef === removeResidentRef && (r.role ?? 'Owner') === removeResidentRole),
-      ));
       setRemoveResidentOpen(false);
       showToast(t('directory.toastRemoved', { ref: removeResidentRef }));
+      await load();
     } catch {
       setError(t('directory.errRemove'));
     } finally {
