@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Checkbox, CircularProgress,
-  FormControlLabel, TextField, Typography,
+  FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, TextField, Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
@@ -246,19 +246,13 @@ export default function ContactEditScreen({ role }: Props) {
             {linkError && <Alert severity="error" sx={{ mb: 2 }}>{linkError}</Alert>}
             <Box component="form" onSubmit={handleLink} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <HouseholdRefPicker onChange={setLinkRef} />
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                {(['Owner', 'Renter'] as const).map(r => (
-                  <Button
-                    key={r}
-                    variant={linkRole === r ? 'contained' : 'outlined'}
-                    size="small"
-                    onClick={() => setLinkRole(r)}
-                    type="button"
-                  >
-                    {t(r === 'Owner' ? 'adminPending.roleOwner' : 'adminPending.roleRenter')}
-                  </Button>
-                ))}
-              </Box>
+              <FormControl>
+                <FormLabel sx={{ fontSize: '0.75rem' }}>{t('adminPending.roleLabel')}</FormLabel>
+                <RadioGroup row value={linkRole} onChange={e => setLinkRole(e.target.value as 'Owner' | 'Renter')}>
+                  <FormControlLabel value="Owner" control={<Radio size="small" />} label={t('adminPending.roleOwner')} />
+                  <FormControlLabel value="Renter" control={<Radio size="small" />} label={t('adminPending.roleRenter')} />
+                </RadioGroup>
+              </FormControl>
               <Button type="submit" variant="contained" disabled={!linkRef || linking} sx={{ alignSelf: 'flex-start' }}>
                 {t('contactEdit.linkBtn')}
               </Button>

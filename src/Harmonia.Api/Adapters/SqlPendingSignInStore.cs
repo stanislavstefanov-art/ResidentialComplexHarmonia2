@@ -79,6 +79,9 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
                           WHERE hc.HouseholdRef = @HouseholdRef AND hc.Role = @Role
                       );
 
+                    IF NOT EXISTS (SELECT 1 FROM dbo.Households WHERE HouseholdRef = @HouseholdRef)
+                        INSERT INTO dbo.Households (HouseholdRef, SqMeters) VALUES (@HouseholdRef, 0);
+
                     DELETE FROM dbo.PendingSignIns WHERE EntraObjectId = @Oid;
                 END
             COMMIT;
@@ -110,8 +113,12 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
             IF EXISTS (SELECT 1 FROM dbo.HouseholdLinks WHERE EntraObjectId = @Oid)
                 SET @alreadyLinked = 1;
             ELSE
+            BEGIN
                 INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
                 VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
+                IF NOT EXISTS (SELECT 1 FROM dbo.Households WHERE HouseholdRef = @HouseholdRef)
+                    INSERT INTO dbo.Households (HouseholdRef, SqMeters) VALUES (@HouseholdRef, 0);
+            END
             SELECT @alreadyLinked;
             """;
         cmd.Parameters.Add(new SqlParameter("@Oid",          SqlDbType.NVarChar, 36)  { Value = oid });
