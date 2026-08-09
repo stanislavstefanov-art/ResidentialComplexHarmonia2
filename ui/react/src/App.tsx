@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import {
   AppBar, Avatar, Box, Button, CircularProgress, Divider, IconButton,
-  ListItemIcon, Menu, MenuItem, Tab, Tabs, Toolbar, ToggleButton,
-  ToggleButtonGroup, Typography
+  ListItemIcon, Menu, MenuItem, Tab, Tabs, Toolbar, Typography
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -59,7 +58,7 @@ function MainApp() {
   const claims = accounts[0]?.idTokenClaims as Record<string, unknown> | undefined;
   const roles = claims?.['roles'] as string[] | undefined;
   const initialRole: Role = roles?.includes('admin') ? 'admin' : 'resident';
-  const [role, setRole] = useState<Role>(initialRole);
+  const role = initialRole;
 
   const firstLogin = initialRole === 'resident' && !localStorage.getItem('harmonia-welcomed');
   const [screen, setScreen] = useState<Screen>(
@@ -76,10 +75,6 @@ function MainApp() {
 
   const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
-  useEffect(() => {
-    if (role === 'admin' && screen === 'reservations') setScreen('directory');
-  }, [role, screen]);
-
   return (
     <>
       <AppBar position="static" elevation={2}>
@@ -90,36 +85,6 @@ function MainApp() {
             {t('app.brand')}
           </Typography>
           <Box sx={{ flexGrow: { xs: 1, sm: 0 } }} />
-          {initialRole === 'admin' && roleScreens.includes(screen) && (
-            <ToggleButtonGroup
-              value={role}
-              exclusive
-              onChange={(_, v) => v && setRole(v)}
-              size="small"
-              sx={{
-                bgcolor: 'rgba(255,255,255,0.12)',
-                borderRadius: 2,
-                '& .MuiToggleButton-root': {
-                  color: 'rgba(255,255,255,0.75)',
-                  border: 'none',
-                  px: { xs: 1, sm: 2 },
-                  py: 0.5,
-                  textTransform: 'none',
-                  fontSize: '0.8125rem',
-                  '&.Mui-selected': {
-                    bgcolor: 'rgba(255,255,255,0.22)',
-                    color: 'white',
-                    fontWeight: 600,
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
-                  },
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                },
-              }}
-            >
-              <ToggleButton value="resident">{t('app.roleResident')}</ToggleButton>
-              <ToggleButton value="admin">{t('app.roleAdmin')}</ToggleButton>
-            </ToggleButtonGroup>
-          )}
           <LanguageSwitcher />
           <IconButton onClick={(e) => setProfileAnchor(e.currentTarget)} sx={{ p: 0.5, ml: 0.5 }} size="small">
             <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(255,255,255,0.2)', fontSize: '0.8125rem', fontWeight: 700 }}>
