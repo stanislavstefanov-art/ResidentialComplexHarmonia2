@@ -6,6 +6,7 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { UserMenuComponent } from '../user-menu/user-menu.component';
 import { PrivacyService } from './privacy.service';
 import { PurgeExpiredResult } from './models';
 import { RoleService } from '../role.service';
@@ -13,7 +14,7 @@ import { RoleService } from '../role.service';
 @Component({
   selector: 'app-privacy',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
@@ -21,7 +22,6 @@ import { RoleService } from '../role.service';
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
@@ -34,6 +34,7 @@ import { RoleService } from '../role.service';
         </span>
         }
         <app-language-switcher />
+        <app-user-menu />
       </header>
 
       <main class="harmonia-content">

@@ -15,6 +15,7 @@ import { AdminPendingService } from './admin-pending.service';
 import { PendingSignInDto } from './models';
 import { RoleService } from '../role.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { UserMenuComponent } from '../user-menu/user-menu.component';
 
 @Component({
   selector: 'app-admin-pending',
@@ -33,6 +34,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
     CardModule,
     TranslatePipe,
     LanguageSwitcherComponent,
+    UserMenuComponent,
   ],
   providers: [MessageService],
   template: `
@@ -44,7 +46,6 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link nav-active">{{ 'nav.adminPending' | translate }}</a> }
@@ -57,6 +58,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
         </span>
         }
         <app-language-switcher />
+        <app-user-menu />
       </header>
 
       <main class="harmonia-content">
@@ -148,6 +150,19 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
             class="w-full"
           />
         </div>
+        <div class="field">
+          <label>{{ 'adminPending.roleLabel' | translate }}</label>
+          <div class="role-radio-row">
+            <label class="role-radio-label">
+              <input type="radio" name="activateRole" value="Owner" [(ngModel)]="selectedRole" />
+              {{ 'adminPending.roleOwner' | translate }}
+            </label>
+            <label class="role-radio-label">
+              <input type="radio" name="activateRole" value="Renter" [(ngModel)]="selectedRole" />
+              {{ 'adminPending.roleRenter' | translate }}
+            </label>
+          </div>
+        </div>
       </div>
       <ng-template #footer>
         <p-button [label]="'common.cancel' | translate" severity="secondary" [outlined]="true"
@@ -209,6 +224,8 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
     .field label { font-size: .875rem; font-weight: 500; }
     .w-full { width: 100%; }
     .purge-message { margin: 0; line-height: 1.6; color: var(--p-text-color); }
+    .role-radio-row { display: flex; gap: 1.5rem; align-items: center; padding-top: 0.25rem; }
+    .role-radio-label { display: flex; align-items: center; gap: 0.375rem; cursor: pointer; font-size: .875rem; }
     .role-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); margin-left: 8px; }
     .role-btn { background: transparent; color: rgba(255,255,255,.75); border: none; padding: 4px 12px; cursor: pointer; font-size: .8125rem; }
     .role-btn.role-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
@@ -233,6 +250,7 @@ export class AdminPendingComponent implements OnInit {
   purgeVisible    = false;
   activateOid     = '';
   householdRef    = '';
+  selectedRole: 'Owner' | 'Renter' = 'Owner';
   activateError: string | null = null;
 
   ngOnInit() { this.load(); }
@@ -259,8 +277,9 @@ export class AdminPendingComponent implements OnInit {
   }
 
   openActivate(entry: PendingSignInDto) {
-    this.activateOid  = entry.entraObjectId;
-    this.householdRef = '';
+    this.activateOid   = entry.entraObjectId;
+    this.householdRef  = '';
+    this.selectedRole  = 'Owner';
     this.activateError = null;
     this.activateVisible = true;
   }
@@ -268,7 +287,7 @@ export class AdminPendingComponent implements OnInit {
   confirmActivate() {
     this.activating.set(true);
     this.activateError = null;
-    this.svc.activatePending(this.activateOid, { householdRef: this.householdRef }).subscribe({
+    this.svc.activatePending(this.activateOid, { householdRef: this.householdRef, role: this.selectedRole }).subscribe({
       next: () => {
         this.activating.set(false);
         this.activateVisible = false;

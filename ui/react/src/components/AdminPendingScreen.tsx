@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogContentText, DialogTitle, IconButton, Table,
+  DialogContent, DialogContentText, DialogTitle, FormControl,
+  FormControlLabel, FormLabel, IconButton, Radio, RadioGroup, Table,
   TableBody, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
@@ -24,6 +25,7 @@ export default function AdminPendingScreen({ role }: Props) {
   const [activateOpen, setActivateOpen] = useState(false);
   const [activateOid, setActivateOid] = useState('');
   const [householdRef, setHouseholdRef] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'Owner' | 'Renter'>('Owner');
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState<string>('');
 
@@ -59,6 +61,7 @@ export default function AdminPendingScreen({ role }: Props) {
   const openActivate = (row: PendingSignInDto) => {
     setActivateOid(row.entraObjectId);
     setHouseholdRef('');
+    setSelectedRole('Owner');
     setActivateError('');
     setActivateOpen(true);
   };
@@ -67,7 +70,7 @@ export default function AdminPendingScreen({ role }: Props) {
     setActivating(true);
     setActivateError('');
     try {
-      await activatePending(activateOid, householdRef);
+      await activatePending(activateOid, householdRef, selectedRole);
       setActivateOpen(false);
       showToast(t('adminPending.linked'));
       load();
@@ -168,6 +171,17 @@ export default function AdminPendingScreen({ role }: Props) {
             placeholder={t('adminPending.refPlaceholder')}
             sx={{ mt: 1 }}
           />
+          <FormControl sx={{ mt: 2 }}>
+            <FormLabel>{t('adminPending.roleLabel')}</FormLabel>
+            <RadioGroup
+              row
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value as 'Owner' | 'Renter')}
+            >
+              <FormControlLabel value="Owner" control={<Radio />} label={t('adminPending.roleOwner')} />
+              <FormControlLabel value="Renter" control={<Radio />} label={t('adminPending.roleRenter')} />
+            </RadioGroup>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setActivateOpen(false)} disabled={activating}>{t('common.cancel')}</Button>

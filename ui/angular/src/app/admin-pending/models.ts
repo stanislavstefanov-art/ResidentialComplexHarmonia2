@@ -7,6 +7,7 @@ export interface PendingSignInDto {
 
 export interface ActivateRequest {
   householdRef: string;
+  role: string;
 }
 
 export interface PurgeExpiredResult {

@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { UserMenuComponent } from '../user-menu/user-menu.component';
 import { PaymentService } from './payment.service';
 import { PaymentDto, BalanceDto } from './models';
 import { RoleService } from '../role.service';
@@ -26,7 +27,7 @@ function currentMonth(): string {
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
@@ -34,7 +35,6 @@ function currentMonth(): string {
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
@@ -47,6 +47,7 @@ function currentMonth(): string {
         </span>
         }
         <app-language-switcher />
+        <app-user-menu />
       </header>
 
       <main class="harmonia-content">

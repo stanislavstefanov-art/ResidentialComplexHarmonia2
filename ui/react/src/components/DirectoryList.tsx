@@ -300,6 +300,7 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
                 <TableCell>{t('directory.name')}</TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('common.phone')}</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{t('common.email')}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('adminPending.roleLabel')}</TableCell>
                 <TableCell>{t('directory.optOut')}</TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('directory.departed')}</TableCell>
                 <TableCell />
@@ -308,18 +309,23 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <TableBody>
               {filteredAdminRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                  <TableCell colSpan={8} align="center" sx={{ color: 'text.secondary', py: 4 }}>
                     {t('directory.noResidents')}
                   </TableCell>
                 </TableRow>
               ) : filteredAdminRows.map(r => (
-                <TableRow key={r.householdRef}>
+                <TableRow key={`${r.householdRef}-${r.role ?? 'Owner'}`}>
                   <TableCell>
                     <Chip label={r.householdRef} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
                   </TableCell>
                   <TableCell>{r.displayName ?? '—'}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{r.phone ?? '—'}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{r.email ?? '—'}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                    {r.role
+                      ? <Chip label={t(`directory.role${r.role}`)} size="small" variant="outlined" />
+                      : '—'}
+                  </TableCell>
                   <TableCell>
                     {r.isOptedOut
                       ? <Chip label={t('directory.optedOut')} size="small" color="warning" />

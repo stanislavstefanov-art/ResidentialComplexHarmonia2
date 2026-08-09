@@ -1,6 +1,7 @@
 export interface DirectoryEntry {
   householdRef: string;
   displayName: string | null;
+  role?: string;
 }
 
 export interface DirectoryListResponse {
@@ -15,6 +16,7 @@ export interface DirectoryEntryAdmin {
   notes: string | null;
   isOptedOut: boolean;
   deactivatedAt: string | null;
+  role?: string;
 }
 
 export interface AdminDirectoryListResponse {

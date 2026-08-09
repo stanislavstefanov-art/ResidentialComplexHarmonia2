@@ -46,6 +46,8 @@
   },
   "directory": {
     "title": "Member Directory",
+    "roleOwner": "Owner",
+    "roleRenter": "Renter",
     "adminSubtitle": "Admin view — all active residents including opted-out.",
     "residentSubtitle": "Showing residents who have shared their details.",
     "myProfile": "My Profile",
@@ -212,6 +214,9 @@
   "adminPending": {
     "title": "Pending Sign-Ins",
     "subtitle": "Users awaiting household assignment.",
+    "roleLabel": "Role",
+    "roleOwner": "Owner",
+    "roleRenter": "Renter",
     "accessRequired": "Admin access required to view pending sign-ins.",
     "oid": "OID",
     "firstSeen": "First Seen",

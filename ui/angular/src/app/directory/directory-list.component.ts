@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { UserMenuComponent } from '../user-menu/user-menu.component';
 
 import { TableModule, SortIcon } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -37,6 +38,7 @@ import { RoleService } from '../role.service';
     CardModule,
     TranslatePipe,
     LanguageSwitcherComponent,
+    UserMenuComponent,
   ],
   providers: [MessageService],
   template: `
@@ -48,7 +50,6 @@ import { RoleService } from '../role.service';
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/contact-edit" class="nav-link">{{ 'nav.contactEdit' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
@@ -61,6 +62,7 @@ import { RoleService } from '../role.service';
         </span>
         }
         <app-language-switcher />
+        <app-user-menu />
       </header>
 
       <main class="harmonia-content" [class.wide]="selectedRole === 'admin'">
@@ -187,6 +189,9 @@ import { RoleService } from '../role.service';
                   <th pSortableColumn="email" style="width:16rem">
                     {{ 'common.email' | translate }} <p-sort-icon field="email" />
                   </th>
+                  <th pSortableColumn="role" style="width:8rem">
+                    {{ 'adminPending.roleLabel' | translate }} <p-sort-icon field="role" />
+                  </th>
                   <th style="width:9rem">{{ 'directory.optOut' | translate }}</th>
                   <th pSortableColumn="deactivatedAt" style="width:12rem">
                     {{ 'directory.departed' | translate }} <p-sort-icon field="deactivatedAt" />
@@ -201,6 +206,13 @@ import { RoleService } from '../role.service';
                   <td>{{ entry.displayName ?? '—' }}</td>
                   <td>{{ entry.phone ?? '—' }}</td>
                   <td>{{ entry.email ?? '—' }}</td>
+                  <td>
+                    @if (entry.role) {
+                      <p-tag [value]="'directory.role' + entry.role | translate" severity="secondary" />
+                    } @else {
+                      —
+                    }
+                  </td>
                   <td>
                     @if (entry.isOptedOut) {
                       <p-tag [value]="'directory.optedOut' | translate" severity="warn" />
@@ -238,7 +250,7 @@ import { RoleService } from '../role.service';
               </ng-template>
 
               <ng-template #emptymessage>
-                <tr><td colspan="7" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
+                <tr><td colspan="8" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
               </ng-template>
             </p-table>
 

@@ -8,11 +8,11 @@ export async function listPending(): Promise<PendingSignInDto[]> {
   return res.json();
 }
 
-export async function activatePending(oid: string, householdRef: string): Promise<void> {
+export async function activatePending(oid: string, householdRef: string, role: string): Promise<void> {
   const res = await apiFetch(`${API_BASE}/admin/pending/${encodeURIComponent(oid)}/activate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ householdRef }),
+    body: JSON.stringify({ householdRef, role }),
   });
   if (res.status === 403) throw Object.assign(new Error('forbidden'), { status: 403 });
   if (res.status === 404) throw Object.assign(new Error('not-found'), { status: 404 });

@@ -8,12 +8,13 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ContactEditService } from './contact-edit.service';
 import { RoleService } from '../role.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { UserMenuComponent } from '../user-menu/user-menu.component';
 import type { MyContactDto } from './models';
 
 @Component({
   selector: 'app-contact-edit',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
@@ -21,7 +22,6 @@ import type { MyContactDto } from './models';
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/contact-edit" class="nav-link nav-active">{{ 'nav.contactEdit' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
@@ -34,6 +34,7 @@ import type { MyContactDto } from './models';
         </span>
         }
         <app-language-switcher />
+        <app-user-menu />
       </header>
 
       <main class="harmonia-content">

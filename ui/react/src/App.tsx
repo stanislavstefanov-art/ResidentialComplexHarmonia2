@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import {
-  AppBar, Box, Button, CircularProgress, Tab, Tabs, Toolbar, ToggleButton,
+  AppBar, Avatar, Box, Button, CircularProgress, Divider, IconButton,
+  ListItemIcon, Menu, MenuItem, Tab, Tabs, Toolbar, ToggleButton,
   ToggleButtonGroup, Typography
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccountsOutlined';
+import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { useTranslation } from 'react-i18next';
 import { makeTheme } from './theme';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
@@ -69,6 +72,7 @@ function MainApp() {
   }, []);
 
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
+  const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
 
   const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
 
@@ -116,22 +120,39 @@ function MainApp() {
               <ToggleButton value="admin">{t('app.roleAdmin')}</ToggleButton>
             </ToggleButtonGroup>
           )}
-          <Button
-            size="small"
-            onClick={() => setScreen('contact-edit')}
-            sx={{ color: 'rgba(255,255,255,0.8)', textTransform: 'none', display: { xs: 'none', md: 'flex' }, fontSize: '0.75rem', px: 1 }}
-          >
-            {displayName}
-          </Button>
           <LanguageSwitcher />
-          <Button
-            size="small"
-            sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none', minWidth: 0, px: { xs: 1, sm: 1.5 } }}
-            onClick={() => instance.logoutRedirect()}
+          <IconButton onClick={(e) => setProfileAnchor(e.currentTarget)} sx={{ p: 0.5, ml: 0.5 }} size="small">
+            <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(255,255,255,0.2)', fontSize: '0.8125rem', fontWeight: 700 }}>
+              {displayName.charAt(0).toUpperCase()}
+            </Avatar>
+          </IconButton>
+          <Menu
+            anchorEl={profileAnchor}
+            open={Boolean(profileAnchor)}
+            onClose={() => setProfileAnchor(null)}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            slotProps={{ paper: { sx: { minWidth: 240, mt: 0.5 } } }}
           >
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('app.signOut')}</Box>
-            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>✕</Box>
-          </Button>
+            <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 48, height: 48, bgcolor: 'primary.main', fontSize: '1.25rem', fontWeight: 700 }}>
+                {displayName.charAt(0).toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>{displayName}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{accounts[0]?.username}</Typography>
+              </Box>
+            </Box>
+            <Divider />
+            <MenuItem onClick={() => { setScreen('contact-edit'); setProfileAnchor(null); }}>
+              <ListItemIcon><ManageAccountsIcon fontSize="small" /></ListItemIcon>
+              {t('nav.contactEdit')}
+            </MenuItem>
+            <MenuItem onClick={() => instance.logoutRedirect()}>
+              <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
+              {t('app.signOut')}
+            </MenuItem>
+          </Menu>
         </Toolbar>
         {/* Nav row: swipe-scrollable tabs */}
         <Box sx={{
@@ -159,7 +180,6 @@ function MainApp() {
             }}
           >
             <Tab label={t('nav.notifications')} value="notifications" />
-            <Tab label={t('nav.contactEdit')} value="contact-edit" />
             <Tab label={t('nav.finance')} value="financial" />
             {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
             {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
