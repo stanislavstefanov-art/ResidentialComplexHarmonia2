@@ -153,10 +153,6 @@ BEGIN
     ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef, Role);
 END
 
-IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL
-    ALTER TABLE dbo.HouseholdLinks ADD Role nvarchar(10) NOT NULL
-        CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner';
-
 -- Pending activation queue: authenticated residents not yet linked to a household.
 -- EntraObjectId is the JWT 'oid' claim. FirstSeenAt is set once on INSERT, never updated.
 -- Email, DisplayName, EntraObjectId are personal data (R3) — never log their values.
@@ -179,6 +175,13 @@ CREATE TABLE dbo.HouseholdLinks
 (
     EntraObjectId  nvarchar(36)   NOT NULL,
     HouseholdRef   nvarchar(128)  NOT NULL,
+    Role           nvarchar(10)   NOT NULL
+        CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner',
     LinkedAt       datetime2(3)   NOT NULL,
     CONSTRAINT PK_HouseholdLinks PRIMARY KEY (EntraObjectId)
 );
+
+-- Add Role to existing HouseholdLinks rows (idempotent upgrade for pre-existing databases).
+IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL
+    ALTER TABLE dbo.HouseholdLinks ADD Role nvarchar(10) NOT NULL
+        CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner';
