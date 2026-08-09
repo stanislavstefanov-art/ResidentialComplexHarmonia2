@@ -175,14 +175,19 @@ function MainApp() {
 }
 
 function AppStatusGate() {
-  const { instance } = useMsal();
-  const [status, setStatus] = useState<'loading' | 'pending' | 'ok'>('loading');
+  const { instance, accounts } = useMsal();
+  const claims = accounts[0]?.idTokenClaims as Record<string, unknown> | undefined;
+  const roles = claims?.['roles'] as string[] | undefined;
+  const isAdmin = roles?.includes('admin') ?? false;
+
+  const [status, setStatus] = useState<'loading' | 'pending' | 'ok'>(isAdmin ? 'ok' : 'loading');
 
   useEffect(() => {
+    if (isAdmin) return;
     getMyStatus()
       .then((res) => setStatus(res.status === 'pending' ? 'pending' : 'ok'))
       .catch(() => setStatus('pending'));
-  }, []);
+  }, [isAdmin]);
 
   if (status === 'loading') {
     return <CircularProgress sx={{ mt: 8, display: 'block', mx: 'auto' }} />;
