@@ -103,6 +103,16 @@ public abstract record PurgeExpiredContactsResult
     public sealed record Failed             : PurgeExpiredContactsResult;
 }
 
+/// <summary>Outcome of removing a resident (deletes HouseholdContacts + HouseholdLinks).</summary>
+public abstract record RemoveResidentResult
+{
+    private RemoveResidentResult() { }
+    public sealed record Refused  : RemoveResidentResult;
+    public sealed record Ok       : RemoveResidentResult;
+    public sealed record NotFound : RemoveResidentResult;
+    public sealed record Failed   : RemoveResidentResult;
+}
+
 /// <summary>
 /// Directory store port — SQL adapter lives in <c>Harmonia.Api.Reservations.Adapters</c>.
 /// R3: <paramref name="phone"/> and <paramref name="email"/> values must never appear in log output;
@@ -165,5 +175,17 @@ public interface IDirectoryStore
     /// Returns the count of deleted rows.
     /// </summary>
     Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Removes a resident completely: deletes the <c>HouseholdContacts</c> row and the
+    /// <c>HouseholdLinks</c> row for the given (householdRef, role) pair.
+    /// After this call the resident's Entra account is unlinked and they re-enter
+    /// the pending flow on next sign-in.
+    /// R3: never log <paramref name="householdRef"/> value.
+    /// </summary>
+    Task<RemoveResidentResult> RemoveResidentAsync(
+        HouseholdRef householdRef,
+        string       role,
         CancellationToken ct = default);
 }

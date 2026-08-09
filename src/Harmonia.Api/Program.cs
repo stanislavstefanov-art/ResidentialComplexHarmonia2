@@ -174,6 +174,7 @@ builder.Services.AddScoped<UpdateNotes>();
 builder.Services.AddScoped<EraseMyContact>();
 builder.Services.AddScoped<EraseContact>();
 builder.Services.AddScoped<MarkDeparted>();
+builder.Services.AddScoped<RemoveResident>();
 builder.Services.AddScoped<PurgeExpiredContacts>();
 builder.Services.AddScoped<LinkMyHousehold>();
 builder.Services.AddScoped<ListPendingSignIns>();
@@ -353,6 +354,12 @@ app.MapDelete(
     (MarkDeparted uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.MarkDepartedEndpoint(
             uc, householdRef, loggers.CreateLogger("Directory"), ct));
+
+app.MapDelete(
+    "/directory/{householdRef}/{role}/resident",
+    (RemoveResident uc, string householdRef, string role, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.RemoveResidentEndpoint(
+            uc, householdRef, role, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
     "/directory/purge-expired",

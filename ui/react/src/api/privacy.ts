@@ -21,6 +21,15 @@ export async function markDeparted(householdRef: string): Promise<'ok' | 'not-fo
   throw new Error(`markDeparted failed: ${res.status}`);
 }
 
+export async function removeResident(householdRef: string, role: string): Promise<void> {
+  const res = await apiFetch(
+    `${BASE}/directory/${encodeURIComponent(householdRef)}/${encodeURIComponent(role)}/resident`,
+    { method: 'DELETE' },
+  );
+  if (res.status === 204 || res.status === 404) return;
+  throw new Error(`removeResident failed: ${res.status}`);
+}
+
 export async function purgeExpired(): Promise<{ deleted: number }> {
   const res = await apiFetch(`${BASE}/directory/purge-expired`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`purgeExpired failed: ${res.status}`);

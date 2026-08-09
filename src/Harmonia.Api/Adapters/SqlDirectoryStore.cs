@@ -200,6 +200,41 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         catch (Exception) { return new PurgeExpiredContactsResult.Failed(); }
     }
 
+    public async Task<RemoveResidentResult> RemoveResidentAsync(
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
+    {
+        try
+        {
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync(ct);
+
+            await using var contactCmd = conn.CreateCommand();
+            contactCmd.Transaction = tx;
+            contactCmd.CommandText =
+                "DELETE FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef AND Role = @Role;";
+            contactCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            contactCmd.Parameters.Add(new SqlParameter("@Role", SqlDbType.NVarChar, 10) { Value = role });
+            await contactCmd.ExecuteNonQueryAsync(ct);
+
+            await using var linkCmd = conn.CreateCommand();
+            linkCmd.Transaction = tx;
+            linkCmd.CommandText =
+                "DELETE FROM dbo.HouseholdLinks WHERE HouseholdRef = @HouseholdRef AND Role = @Role;";
+            linkCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            linkCmd.Parameters.Add(new SqlParameter("@Role", SqlDbType.NVarChar, 10) { Value = role });
+            var linkRows = await linkCmd.ExecuteNonQueryAsync(ct);
+
+            await tx.CommitAsync(ct);
+
+            return linkRows == 0
+                ? new RemoveResidentResult.NotFound()
+                : new RemoveResidentResult.Ok();
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return new RemoveResidentResult.Failed(); }
+    }
+
     private static HouseholdContact ReadRow(SqlDataReader r) =>
         new(HouseholdRef: new HouseholdRef(r.GetString(0)),
             Role:         r.IsDBNull(1) ? "Owner" : r.GetString(1),

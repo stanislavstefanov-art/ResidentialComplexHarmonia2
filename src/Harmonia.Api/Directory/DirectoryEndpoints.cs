@@ -206,6 +206,27 @@ public static class DirectoryEndpoints
         };
     }
 
+    /// <summary>
+    /// DELETE /directory/{householdRef}/{role}/resident — fully removes a resident
+    /// (HouseholdContacts + HouseholdLinks). Their Entra account is unlinked and they
+    /// re-enter the pending flow on next sign-in.
+    /// R3: householdRef never logged here.
+    /// </summary>
+    public static async Task<IResult> RemoveResidentEndpoint(
+        RemoveResident useCase, string householdRef, string role, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(householdRef, role, ct);
+        logger.LogInformation("DELETE /directory/.../resident — {Outcome}", result.GetType().Name);
+        return result switch
+        {
+            RemoveResidentResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            RemoveResidentResult.Ok       => TypedResults.NoContent(),
+            RemoveResidentResult.NotFound => TypedResults.NotFound(),
+            RemoveResidentResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                            => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
     private static DirectoryEntryFullDto ToFullDto(HouseholdContact c) =>
         new(c.HouseholdRef.Value, c.Role, c.DisplayName, c.Phone, c.Email, c.Notes, c.IsOptedOut, c.UpdatedAt, c.DepartedAt);
 }

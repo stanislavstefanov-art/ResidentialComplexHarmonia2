@@ -40,9 +40,11 @@ import AdminEditDialog from './AdminEditDialog';
 import EditContactDialog from './EditContactDialog';
 import MarkDepartedDialog from './MarkDepartedDialog';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForeverOutlined';
-import { eraseMyContact, eraseContact } from '../api/privacy';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemoveOutlined';
+import { eraseMyContact, eraseContact, removeResident } from '../api/privacy';
 import EraseMyContactDialog from './EraseMyContactDialog';
 import EraseContactDialog from './EraseContactDialog';
+import RemoveResidentDialog from './RemoveResidentDialog';
 
 const BLANK_RESIDENT: MyContact = { displayName: '', phone: '', email: '', isOptedOut: false };
 const BLANK_ADMIN: AdminContact = { displayName: '', phone: '', email: '', notes: '', isOptedOut: false };
@@ -77,6 +79,12 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
   const [eraseContactOpen, setEraseContactOpen] = useState(false);
   const [eraseContactRef, setEraseContactRef]   = useState('');
   const [erasingContact, setErasingContact]     = useState(false);
+
+  // remove resident (admin)
+  const [removeResidentOpen, setRemoveResidentOpen] = useState(false);
+  const [removeResidentRef, setRemoveResidentRef]   = useState('');
+  const [removeResidentRole, setRemoveResidentRole] = useState('');
+  const [removingResident, setRemovingResident]     = useState(false);
 
   // shared
   const [loading, setLoading]             = useState(false);
@@ -202,6 +210,22 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
       setError(t('directory.errErase'));
     } finally {
       setErasingContact(false);
+    }
+  };
+
+  const handleRemoveResident = async () => {
+    setRemovingResident(true);
+    try {
+      await removeResident(removeResidentRef, removeResidentRole);
+      setAdminRows(prev => prev.filter(r =>
+        !(r.householdRef === removeResidentRef && (r.role ?? 'Owner') === removeResidentRole),
+      ));
+      setRemoveResidentOpen(false);
+      showToast(t('directory.toastRemoved', { ref: removeResidentRef }));
+    } catch {
+      setError(t('directory.errRemove'));
+    } finally {
+      setRemovingResident(false);
     }
   };
 
@@ -342,6 +366,10 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
                       <IconButton size="small" color="error" title={t('directory.tipDepart')} onClick={() => openDepart(r.householdRef)}>
                         <PersonOffIcon fontSize="small" />
                       </IconButton>
+                      <IconButton size="small" color="error" title={t('directory.tipRemove')}
+                        onClick={() => { setRemoveResidentRef(r.householdRef); setRemoveResidentRole(r.role ?? 'Owner'); setRemoveResidentOpen(true); }}>
+                        <PersonRemoveIcon fontSize="small" />
+                      </IconButton>
                       <IconButton size="small" color="error" title={t('directory.tipErase')}
                         onClick={() => { setEraseContactRef(r.householdRef); setEraseContactOpen(true); }}>
                         <DeleteForeverIcon fontSize="small" />
@@ -425,6 +453,14 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
         erasing={erasingContact}
         onConfirm={handleEraseContact}
         onClose={() => setEraseContactOpen(false)}
+      />
+
+      <RemoveResidentDialog
+        open={removeResidentOpen}
+        householdRef={removeResidentRef}
+        removing={removingResident}
+        onConfirm={handleRemoveResident}
+        onClose={() => setRemoveResidentOpen(false)}
       />
     </Box>
   );

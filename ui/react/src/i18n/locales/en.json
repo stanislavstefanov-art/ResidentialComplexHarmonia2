@@ -64,6 +64,7 @@
     "tipEdit": "Edit",
     "tipDepart": "Mark Departed",
     "tipErase": "Erase contact data",
+    "tipRemove": "Remove Resident",
     "toastProfileUpdated": "Profile updated.",
     "toastResidentUpdated": "Resident updated.",
     "toastDeparted": "{{ref}} marked as departed.",
@@ -73,7 +74,9 @@
     "errSave": "Could not save. Please try again.",
     "errDepart": "Could not mark as departed. Please try again.",
     "errDeleteMine": "Could not delete your data. Please try again.",
-    "errErase": "Could not erase contact data. Please try again."
+    "errErase": "Could not erase contact data. Please try again.",
+    "toastRemoved": "{{ref}} has been removed.",
+    "errRemove": "Could not remove resident. Please try again."
   },
   "dialog": {
     "myProfileTitle": "My Profile",
@@ -96,7 +99,11 @@
     "deleteMine": "Delete my data",
     "markDepartedTitle": "Mark as Departed?",
     "marking": "Marking…",
-    "markDeparted": "Mark Departed"
+    "markDeparted": "Mark Departed",
+    "removeResidentTitle": "Remove Resident?",
+    "removeResidentBody": "Apartment <b>{{ref}}</b> will be fully removed — both their contact data and login link will be deleted. They will re-enter the pending queue on next sign-in.",
+    "removing": "Removing…",
+    "removeResident": "Remove Resident"
   },
   "errorBoundary": { "title": "Something went wrong", "reload": "Reload" },
   "finance": {
