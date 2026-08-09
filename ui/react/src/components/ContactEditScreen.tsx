@@ -6,6 +6,8 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
 import { updateMyContact, getMyContact, linkMyHousehold } from '../api/contactEdit';
+import { isValidEmail } from '../utils/validation';
+import HouseholdRefPicker from './HouseholdRefPicker';
 import type { MyContactDto } from '../api/contactEdit';
 
 interface Props {
@@ -100,8 +102,11 @@ export default function ContactEditScreen({ role }: Props) {
     setEditing(true);
   };
 
+  const emailValid = isValidEmail(myEmail);
+
   const handleMyContact = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!emailValid) return;
     setMySuccess(false); setMyError(''); setMySaving(true);
     try {
       await updateMyContact({
@@ -197,6 +202,8 @@ export default function ContactEditScreen({ role }: Props) {
                   onChange={e => setMyEmail(e.target.value)}
                   size="small"
                   fullWidth
+                  error={!emailValid}
+                  helperText={!emailValid ? t('common.emailInvalid') : undefined}
                 />
                 <FormControlLabel
                   control={
@@ -209,7 +216,7 @@ export default function ContactEditScreen({ role }: Props) {
                   label={t('contactEdit.optOut')}
                 />
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button data-testid="my-contact-btn" type="submit" variant="contained" disabled={mySaving} sx={{ alignSelf: 'flex-start' }}>
+                  <Button data-testid="my-contact-btn" type="submit" variant="contained" disabled={mySaving || !emailValid} sx={{ alignSelf: 'flex-start' }}>
                     {t('contactEdit.saveChanges')}
                   </Button>
                   {contact !== null && (
@@ -238,15 +245,7 @@ export default function ContactEditScreen({ role }: Props) {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{t('contactEdit.linkSubtitle')}</Typography>
             {linkError && <Alert severity="error" sx={{ mb: 2 }}>{linkError}</Alert>}
             <Box component="form" onSubmit={handleLink} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField
-                label={t('common.householdRef')}
-                value={linkRef}
-                onChange={e => setLinkRef(e.target.value)}
-                size="small"
-                placeholder={t('adminPending.refPlaceholder')}
-                required
-                fullWidth
-              />
+              <HouseholdRefPicker onChange={setLinkRef} />
               <Box sx={{ display: 'flex', gap: 2 }}>
                 {(['Owner', 'Renter'] as const).map(r => (
                   <Button
@@ -310,7 +309,7 @@ export default function ContactEditScreen({ role }: Props) {
                 <TextField label={t('common.email')} slotProps={{ htmlInput: { 'data-testid': 'my-email-input' } }} type="email" value={myEmail} onChange={e => setMyEmail(e.target.value)} size="small" fullWidth />
                 <FormControlLabel control={<Checkbox data-testid="my-opted-out" checked={myOptedOut} onChange={e => setMyOptedOut(e.target.checked)} />} label={t('contactEdit.optOut')} />
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button data-testid="my-contact-btn" type="submit" variant="contained" disabled={mySaving} sx={{ alignSelf: 'flex-start' }}>{t('contactEdit.saveChanges')}</Button>
+                  <Button data-testid="my-contact-btn" type="submit" variant="contained" disabled={mySaving || !emailValid} sx={{ alignSelf: 'flex-start' }}>{t('contactEdit.saveChanges')}</Button>
                   {contact !== null && <Button variant="outlined" onClick={() => setEditing(false)} sx={{ alignSelf: 'flex-start' }}>{t('common.cancel')}</Button>}
                 </Box>
               </Box>

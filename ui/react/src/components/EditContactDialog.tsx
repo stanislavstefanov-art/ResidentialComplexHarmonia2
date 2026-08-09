@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { MyContact } from '../types';
+import { isValidEmail } from '../utils/validation';
 
 interface Props {
   open: boolean;
@@ -30,6 +31,7 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
   const { t } = useTranslation();
   const set = (field: keyof MyContact, value: string | boolean) =>
     onChange({ ...form, [field]: value });
+  const emailInvalid = !isValidEmail(form.email ?? '');
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth disableRestoreFocus>
@@ -60,6 +62,8 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
             placeholder={t('dialog.emailPlaceholder')}
             fullWidth
             size="small"
+            error={emailInvalid}
+            helperText={emailInvalid ? t('common.emailInvalid') : undefined}
           />
 
           <Divider />
@@ -96,7 +100,7 @@ const EditContactDialog: React.FC<Props> = ({ open, saving, form, onChange, onSa
         <Button
           onClick={onSave}
           variant="contained"
-          disabled={saving}
+          disabled={saving || emailInvalid}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           {saving ? t('common.saving') : t('common.save')}

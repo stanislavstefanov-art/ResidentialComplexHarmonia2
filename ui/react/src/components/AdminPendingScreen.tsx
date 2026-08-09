@@ -3,12 +3,13 @@ import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogContentText, DialogTitle, FormControl,
   FormControlLabel, FormLabel, IconButton, Radio, RadioGroup, Table,
-  TableBody, TableCell, TableHead, TableRow, TextField, Typography,
+  TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
 import { useTranslation } from 'react-i18next';
 import { listPending, activatePending, purgeExpired } from '../api/adminPending';
 import { PendingSignInDto, Role } from '../types';
+import HouseholdRefPicker from './HouseholdRefPicker';
 
 interface Props {
   role: Role;
@@ -163,14 +164,7 @@ export default function AdminPendingScreen({ role }: Props) {
         <DialogTitle>{t('adminPending.linkTitle')}</DialogTitle>
         <DialogContent>
           {activateError && <Alert severity="error" sx={{ mb: 2 }}>{activateError}</Alert>}
-          <TextField
-            label={t('adminPending.householdRefLabel')}
-            value={householdRef}
-            onChange={(e) => setHouseholdRef(e.target.value)}
-            fullWidth
-            placeholder={t('adminPending.refPlaceholder')}
-            sx={{ mt: 1 }}
-          />
+          <HouseholdRefPicker onChange={setHouseholdRef} />
           <FormControl sx={{ mt: 2 }}>
             <FormLabel>{t('adminPending.roleLabel')}</FormLabel>
             <RadioGroup

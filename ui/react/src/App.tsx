@@ -18,6 +18,7 @@ import PrivacyScreen from './components/PrivacyScreen';
 import AdminPendingScreen from './components/AdminPendingScreen';
 import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
+import HouseholdsScreen from './components/HouseholdsScreen';
 import { getMyStatus } from './api/me';
 import ResidentPendingScreen from './components/ResidentPendingScreen';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -25,7 +26,7 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 import IosSafariInstallBanner from './components/IosSafariInstallBanner';
 import { Role } from './types';
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending';
+type Screen = 'directory' | 'reservations' | 'financial' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending' | 'households';
 
 function SignInPage() {
   const { instance, inProgress } = useMsal();
@@ -73,7 +74,7 @@ function MainApp() {
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
 
-  const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending'];
+  const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending', 'households'];
 
   return (
     <>
@@ -148,6 +149,7 @@ function MainApp() {
             <Tab label={t('nav.finance')} value="financial" />
             {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
             {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
+            {initialRole === 'admin' && <Tab label={t('nav.households')} value="households" />}
             <Tab label={t('nav.directory')} value="directory" />
             <Tab label={t('nav.privacy')} value="privacy" />
           </Tabs>
@@ -169,6 +171,7 @@ function MainApp() {
         {screen === 'privacy' && <PrivacyScreen role={role} />}
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
         {screen === 'admin-pending' && initialRole === 'admin' && <AdminPendingScreen role={role} />}
+        {screen === 'households' && initialRole === 'admin' && <HouseholdsScreen />}
       </Box>
     </>
   );

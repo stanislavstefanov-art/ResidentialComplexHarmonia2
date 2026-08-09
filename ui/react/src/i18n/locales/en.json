@@ -16,7 +16,8 @@
     "phone": "Phone",
     "email": "Email",
     "notes": "Notes",
-    "edit": "Edit"
+    "edit": "Edit",
+    "emailInvalid": "Enter a valid email address."
   },
   "nav": {
     "directory": "Directory",
@@ -28,7 +29,8 @@
     "notifications": "Notifications",
     "privacy": "Privacy",
     "contactEdit": "My Details",
-    "adminPending": "Pending Users"
+    "adminPending": "Pending Users",
+    "households": "Households"
   },
   "app": {
     "brand": "Harmonia",
@@ -323,6 +325,25 @@
     "errScan": "Could not scan invoice. Please try again.",
     "errSave": "Could not save expense. Please try again.",
     "errEmpty": "Please select a file."
+  },
+  "households": {
+    "title": "Households",
+    "subtitle": "Manage household records and square metres for fee calculation.",
+    "addHousehold": "Add Household",
+    "loading": "Loading households…",
+    "none": "No households on record.",
+    "sqMeters": "Sq.m.",
+    "addTitle": "Add Household",
+    "pickerLabel": "Select apartment(s)",
+    "sqMetersLabel": "Square metres",
+    "errRefRequired": "Please select at least one apartment.",
+    "errSave": "Could not save. Please try again.",
+    "saved": "Household saved.",
+    "editTitle": "Edit — {{ref}}",
+    "errLoad": "Could not load households. Please try again.",
+    "building": "Building",
+    "apartment": "Apartment",
+    "addApartment": "Add apartment"
   },
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",

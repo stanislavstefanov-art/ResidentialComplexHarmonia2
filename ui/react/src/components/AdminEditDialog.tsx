@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { AdminContact } from '../types';
+import { isValidEmail } from '../utils/validation';
 
 interface Props {
   open: boolean;
@@ -32,6 +33,7 @@ const AdminEditDialog: React.FC<Props> = ({
   const { t } = useTranslation();
   const set = (field: keyof AdminContact, value: string | boolean) =>
     onChange({ ...form, [field]: value });
+  const emailInvalid = !isValidEmail(form.email ?? '');
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth disableRestoreFocus>
@@ -56,6 +58,8 @@ const AdminEditDialog: React.FC<Props> = ({
             value={form.email}
             onChange={e => set('email', e.target.value)}
             fullWidth size="small"
+            error={emailInvalid}
+            helperText={emailInvalid ? t('common.emailInvalid') : undefined}
           />
           <TextField
             label={t('common.notes')}
@@ -88,7 +92,7 @@ const AdminEditDialog: React.FC<Props> = ({
         <Button
           onClick={onSave}
           variant="contained"
-          disabled={saving}
+          disabled={saving || emailInvalid}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           {saving ? t('common.saving') : t('common.save')}

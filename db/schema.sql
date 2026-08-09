@@ -185,3 +185,13 @@ CREATE TABLE dbo.HouseholdLinks
 IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL
     ALTER TABLE dbo.HouseholdLinks ADD Role nvarchar(10) NOT NULL
         CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner';
+
+-- Household master data: sq.m. per household for fee calculation.
+IF OBJECT_ID(N'dbo.Households', N'U') IS NULL
+CREATE TABLE dbo.Households
+(
+    HouseholdRef nvarchar(128) NOT NULL,
+    SqMeters     decimal(8, 2) NOT NULL
+        CONSTRAINT DF_Households_SqMeters DEFAULT 0,
+    CONSTRAINT PK_Households PRIMARY KEY (HouseholdRef)
+);

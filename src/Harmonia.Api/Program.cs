@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Harmonia.Api.Adapters;
 using Harmonia.Api.Admin;
+using Harmonia.Api.Households;
+using Harmonia.Application.Households;
 using Harmonia.Api.Directory;
 using Harmonia.Api.Expenses;
 using Harmonia.Api.Financial;
@@ -47,6 +49,7 @@ builder.Services.AddSingleton<IIncomeStore>(new SqlIncomeStore(defaultConn));
 builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(defaultConn));
 builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(defaultConn));
 builder.Services.AddSingleton<IDirectoryStore>(new SqlDirectoryStore(defaultConn));
+builder.Services.AddSingleton<IHouseholdStore>(new SqlHouseholdStore(defaultConn));
 builder.Services.AddSingleton<IPendingSignInStore>(new SqlPendingSignInStore(defaultConn));
 builder.Services.AddSingleton<IHouseholdByOidLookup>(new SqlHouseholdByOidLookup(defaultConn));
 
@@ -180,6 +183,8 @@ builder.Services.AddScoped<LinkMyHousehold>();
 builder.Services.AddScoped<ListPendingSignIns>();
 builder.Services.AddScoped<ActivatePendingSignIn>();
 builder.Services.AddScoped<PurgeExpiredPendingSignIns>();
+builder.Services.AddScoped<GetHouseholds>();
+builder.Services.AddScoped<UpsertHousehold>();
 
 var app = builder.Build();
 
@@ -414,6 +419,16 @@ app.MapGet(
     "/me",
     (GetCallerStatus useCase, ILoggerFactory loggers, CancellationToken ct)
         => MeEndpoints.GetMe(useCase, loggers.CreateLogger("Me"), ct));
+
+app.MapGet(
+    "/households",
+    (GetHouseholds uc, CancellationToken ct) =>
+        HouseholdsEndpoints.GetHouseholdsEndpoint(uc, ct));
+
+app.MapPut(
+    "/households/{householdRef}",
+    (UpsertHousehold uc, string householdRef, UpsertHouseholdRequest body, CancellationToken ct) =>
+        HouseholdsEndpoints.UpsertHouseholdEndpoint(uc, householdRef, body, ct));
 
 app.MapGet("/healthz", () => Results.Ok()).AllowAnonymous();
 
