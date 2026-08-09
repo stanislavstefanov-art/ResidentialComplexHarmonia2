@@ -181,7 +181,7 @@ function AppStatusGate() {
   useEffect(() => {
     getMyStatus()
       .then((res) => setStatus(res.status === 'pending' ? 'pending' : 'ok'))
-      .catch(() => setStatus('ok'));
+      .catch(() => setStatus('pending'));
   }, []);
 
   if (status === 'loading') {
