@@ -25,5 +25,5 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
   const token = await getBearerToken();
   const headers = new Headers(init?.headers);
   if (token) headers.set('Authorization', `Bearer ${token}`);
-  return fetch(url, { ...init, headers });
+  return fetch(url, { ...init, headers, cache: 'no-store' });
 }
