@@ -209,7 +209,12 @@
     "notesUpdated": "Notes updated.",
     "errSave": "Could not save contact details. Please try again.",
     "errUpdate": "Could not update contact. Please try again.",
-    "errNotes": "Could not update notes. Please try again."
+    "errNotes": "Could not update notes. Please try again.",
+    "linkTitle": "Link Your Apartment",
+    "linkSubtitle": "As admin you are not yet linked to a household. Enter your apartment reference to connect your account.",
+    "linkBtn": "Link",
+    "alreadyLinked": "This account is already linked to a household.",
+    "linkFailed": "Could not link household. Please try again."
   },
   "adminPending": {
     "title": "Pending Sign-Ins",

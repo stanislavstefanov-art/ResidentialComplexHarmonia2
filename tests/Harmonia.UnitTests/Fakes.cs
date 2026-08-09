@@ -448,6 +448,9 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
 
     public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
         => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
+
+    public Task<DirectLinkResult> DirectLinkAsync(string oid, string householdRef, string role, CancellationToken ct = default)
+        => throw new NotSupportedException("Use FakePendingSignInStoreV2 for Slice 2 tests.");
 }
 
 public sealed class FailingPendingSignInStore : IPendingSignInStore
@@ -462,6 +465,9 @@ public sealed class FailingPendingSignInStore : IPendingSignInStore
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<DirectLinkResult> DirectLinkAsync(string oid, string householdRef, string role, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
@@ -500,6 +506,17 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
         PurgeCalls++;
         var removed = Pending.RemoveAll(p => p.FirstSeenAt < olderThan);
         return Task.FromResult(removed);
+    }
+
+    public List<(string Oid, string HouseholdRef, string Role)> DirectLinkCalls { get; } = [];
+    public bool DirectLinkAlreadyLinked { get; set; }
+
+    public Task<DirectLinkResult> DirectLinkAsync(string oid, string householdRef, string role, CancellationToken ct = default)
+    {
+        if (DirectLinkAlreadyLinked)
+            return Task.FromResult(DirectLinkResult.AlreadyLinked);
+        DirectLinkCalls.Add((oid, householdRef, role));
+        return Task.FromResult(DirectLinkResult.Ok);
     }
 }
 

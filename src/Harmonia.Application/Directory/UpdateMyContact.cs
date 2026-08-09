@@ -12,7 +12,7 @@ public sealed class UpdateMyContact(ISession session, IDirectoryStore store)
         CancellationToken ct = default)
     {
         var ctx = session.Resolve();
-        if (ctx is not { IsResident: true, HouseholdRef: not null })
+        if (ctx is null || ctx.HouseholdRef is null)
             return new UpdateContactResult.Refused();
 
         try

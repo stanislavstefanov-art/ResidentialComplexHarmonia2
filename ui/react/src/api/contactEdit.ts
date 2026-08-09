@@ -12,7 +12,11 @@ export interface MyContactDto {
 export async function getMyContact(): Promise<MyContactDto | null> {
   const res = await apiFetch(`${BASE}/directory/contact`);
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`getMyContact failed: ${res.status}`);
+  if (!res.ok) {
+    const err: any = new Error(`getMyContact failed: ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -39,6 +43,19 @@ export async function updateContact(householdRef: string, body: UpdateContactReq
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`updateContact failed: ${res.status}`);
+}
+
+export async function linkMyHousehold(householdRef: string, role: string): Promise<void> {
+  const res = await apiFetch(`${BASE}/directory/me/link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ householdRef, role }),
+  });
+  if (!res.ok) {
+    const err: any = new Error(`linkMyHousehold failed: ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
 }
 
 export async function updateNotes(householdRef: string, notes: string | null): Promise<void> {

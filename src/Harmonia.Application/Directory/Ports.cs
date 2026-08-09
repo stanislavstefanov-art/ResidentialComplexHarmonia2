@@ -81,6 +81,16 @@ public abstract record MarkDepartedResult
     public sealed record Failed   : MarkDepartedResult;
 }
 
+/// <summary>Outcome of an admin self-linking to a household.</summary>
+public abstract record LinkMyHouseholdResult
+{
+    private LinkMyHouseholdResult() { }
+    public sealed record Refused       : LinkMyHouseholdResult;
+    public sealed record Ok            : LinkMyHouseholdResult;
+    public sealed record AlreadyLinked : LinkMyHouseholdResult;
+    public sealed record Failed        : LinkMyHouseholdResult;
+}
+
 /// <summary>Outcome of the annual retention purge sweep.</summary>
 public abstract record PurgeExpiredContactsResult
 {

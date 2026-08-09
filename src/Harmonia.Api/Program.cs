@@ -175,6 +175,7 @@ builder.Services.AddScoped<EraseMyContact>();
 builder.Services.AddScoped<EraseContact>();
 builder.Services.AddScoped<MarkDeparted>();
 builder.Services.AddScoped<PurgeExpiredContacts>();
+builder.Services.AddScoped<LinkMyHousehold>();
 builder.Services.AddScoped<ListPendingSignIns>();
 builder.Services.AddScoped<ActivatePendingSignIn>();
 builder.Services.AddScoped<PurgeExpiredPendingSignIns>();
@@ -302,6 +303,12 @@ app.MapGet(
     (GetMyContact uc, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.GetMyContactEndpoint(
             uc, loggers.CreateLogger("Directory"), ct));
+
+app.MapPost(
+    "/directory/me/link",
+    (LinkMyHousehold uc, LinkMyHouseholdRequest body, ILoggerFactory loggers, CancellationToken ct) =>
+        DirectoryEndpoints.LinkMyHouseholdEndpoint(
+            uc, body, loggers.CreateLogger("Directory"), ct));
 
 app.MapGet(
     "/directory",

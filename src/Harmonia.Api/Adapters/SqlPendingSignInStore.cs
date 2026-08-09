@@ -89,6 +89,28 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
         };
     }
 
+    public async Task<DirectLinkResult> DirectLinkAsync(
+        string oid, string householdRef, string role, CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            DECLARE @alreadyLinked bit = 0;
+            IF EXISTS (SELECT 1 FROM dbo.HouseholdLinks WHERE EntraObjectId = @Oid)
+                SET @alreadyLinked = 1;
+            ELSE
+                INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
+                VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
+            SELECT @alreadyLinked;
+            """;
+        cmd.Parameters.Add(new SqlParameter("@Oid",          SqlDbType.NVarChar, 36)  { Value = oid });
+        cmd.Parameters.Add(new SqlParameter("@HouseholdRef", SqlDbType.NVarChar, 128) { Value = householdRef });
+        cmd.Parameters.Add(new SqlParameter("@Role",         SqlDbType.NVarChar, 10)  { Value = role });
+        var alreadyLinked = (bool)(await cmd.ExecuteScalarAsync(ct))!;
+        return alreadyLinked ? DirectLinkResult.AlreadyLinked : DirectLinkResult.Ok;
+    }
+
     public async Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default)
     {
         await using var conn = new SqlConnection(connectionString);

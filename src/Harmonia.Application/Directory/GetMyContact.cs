@@ -10,7 +10,7 @@ public sealed class GetMyContact(ISession session, IDirectoryStore store)
     public async Task<GetMyContactResult> ExecuteAsync(CancellationToken ct = default)
     {
         var ctx = session.Resolve();
-        if (ctx is not { IsResident: true, HouseholdRef: not null })
+        if (ctx is null || ctx.HouseholdRef is null)
             return new GetMyContactResult.Refused();
 
         try

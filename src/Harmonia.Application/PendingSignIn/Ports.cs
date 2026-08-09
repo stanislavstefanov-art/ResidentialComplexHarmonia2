@@ -27,9 +27,16 @@ public interface IPendingSignInStore
 
     /// <summary>Deletes rows where FirstSeenAt is older than <paramref name="olderThan"/>. Returns row count.</summary>
     Task<int> PurgeExpiredAsync(DateTimeOffset olderThan, CancellationToken ct = default);
+
+    /// <summary>
+    /// Directly links an OID to a household without requiring a pending row (admin self-link).
+    /// R3: oid and householdRef are personal data — never log their values.
+    /// </summary>
+    Task<DirectLinkResult> DirectLinkAsync(string oid, string householdRef, string role, CancellationToken ct = default);
 }
 
 public enum ActivateResult { Ok, NotFound, AlreadyActivated }
+public enum DirectLinkResult { Ok, AlreadyLinked }
 
 /// <summary>Household link resolved from an Entra OID.</summary>
 public sealed record HouseholdLink(string HouseholdRef, string Role);

@@ -23,6 +23,9 @@ public sealed record DirectoryEntryFullDto(
 /// <summary>Resident's own contact details returned by GET /directory/contact — phone/email are PII (R3), never logged.</summary>
 public sealed record MyContactDto(string? DisplayName, string? Phone, string? Email, bool IsOptedOut);
 
+/// <summary>Request body for admin self-linking to a household.</summary>
+public sealed record LinkMyHouseholdRequest(string HouseholdRef, string Role);
+
 /// <summary>Request body for contact-detail updates (phone/email are PII — R3).</summary>
 public sealed record UpdateContactRequest(
     string? DisplayName,
@@ -186,6 +189,20 @@ public static class DirectoryEndpoints
             PurgeExpiredContactsResult.Ok ok         => TypedResults.Ok<object>(new { deleted = ok.Deleted }),
             PurgeExpiredContactsResult.Failed        => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
             _                                        => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
+
+    public static async Task<IResult> LinkMyHouseholdEndpoint(
+        LinkMyHousehold useCase, LinkMyHouseholdRequest body, ILogger logger, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(body.HouseholdRef, body.Role, ct);
+        return result switch
+        {
+            LinkMyHouseholdResult.Refused       => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            LinkMyHouseholdResult.Ok            => TypedResults.Ok(),
+            LinkMyHouseholdResult.AlreadyLinked => TypedResults.StatusCode(StatusCodes.Status409Conflict),
+            LinkMyHouseholdResult.Failed        => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                                   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
 

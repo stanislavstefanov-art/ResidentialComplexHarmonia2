@@ -21,10 +21,19 @@ public class UpdateMyContactTests
     }
 
     [Fact]
-    public async Task Admin_session_returns_Refused()
+    public async Task Admin_without_HouseholdRef_returns_Refused()
     {
         var useCase = new UpdateMyContact(new FakeSession(AdminCtx), new FakeDirectoryStore());
         Assert.IsType<UpdateContactResult.Refused>(
+            await useCase.ExecuteAsync("Admin", null, null));
+    }
+
+    [Fact]
+    public async Task Admin_with_HouseholdRef_returns_Ok()
+    {
+        var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: new HouseholdRef("HH-MC-1"));
+        var useCase = new UpdateMyContact(new FakeSession(ctx), new FakeDirectoryStore());
+        Assert.IsType<UpdateContactResult.Ok>(
             await useCase.ExecuteAsync("Admin", null, null));
     }
 

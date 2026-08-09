@@ -32,8 +32,12 @@ public sealed class EntraSession(
         if (oid is null) return null;
 
         if (user.IsInRole("admin"))
+        {
+            var adminLink = await householdLookup.FindAsync(oid);
             return new SessionContext(IsResident: false, IsAdmin: true,
-                HouseholdRef: null, EntraObjectId: oid, IsPending: false);
+                HouseholdRef: adminLink is not null ? new HouseholdRef(adminLink.HouseholdRef) : null,
+                EntraObjectId: oid, IsPending: false, Role: adminLink?.Role);
+        }
 
         var link = await householdLookup.FindAsync(oid);
         if (link is not null)
