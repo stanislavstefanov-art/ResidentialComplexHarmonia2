@@ -7,7 +7,7 @@ export interface HouseholdDto {
 
 export async function getHouseholds(): Promise<HouseholdDto[]> {
   const res = await apiFetch(`${API_BASE}/households`);
-  if (!res.ok) throw { status: res.status };
+  if (!res.ok) throw Object.assign(new Error(`GET /households failed: ${res.status}`), { status: res.status });
   return res.json();
 }
 
@@ -20,5 +20,5 @@ export async function upsertHousehold(householdRef: string, sqMeters: number): P
       body: JSON.stringify({ sqMeters }),
     },
   );
-  if (!res.ok) throw { status: res.status };
+  if (!res.ok) throw Object.assign(new Error(`PUT /households failed: ${res.status}`), { status: res.status });
 }
