@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,10 @@ import { PendingBadgeComponent } from '../pending-badge/pending-badge.component'
 import { ExpenseService } from './expense.service';
 import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES } from './models';
 import { RoleService } from '../role.service';
+import { MaintenanceFeeService } from '../maintenance-fees/maintenance-fee.service';
+import { PaymentService } from '../payments/payment.service';
+import { ChargeDto } from '../maintenance-fees/models';
+import { PaymentDto } from '../payments/models';
 
 function formatEur(n: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
@@ -102,7 +106,81 @@ function formatEur(n: number): string {
               </form>
             }
 
-            @if (!loading() && !error()) {
+            @if (role !== 'admin') {
+
+              <!-- Resident: My Fees -->
+              @if (feesLoading()) {
+                <div class="center-state">
+                  <p-progressspinner strokeWidth="4" [style]="{width:'48px',height:'48px'}" />
+                </div>
+              } @else if (feesError()) {
+                <div class="error-state">
+                  <p>{{ feesError() }}</p>
+                  <button class="retry-btn" (click)="loadFees()">{{ 'common.retry' | translate }}</button>
+                </div>
+              } @else {
+                <!-- Balance summary -->
+                <div class="balance-row">
+                  <div class="balance-block">
+                    <span class="bal-label">{{ 'payments.charged' | translate }}</span>
+                    <span class="bal-value">{{ formatEur(totalCharged()) }}</span>
+                  </div>
+                  <div class="balance-block">
+                    <span class="bal-label">{{ 'payments.paid' | translate }}</span>
+                    <span class="bal-value">{{ formatEur(totalPaid()) }}</span>
+                  </div>
+                  <div class="balance-block balance-block-right">
+                    <span class="bal-label">{{ 'payments.balance' | translate }}</span>
+                    <span class="bal-total" [class.bal-owed]="balance() > 0" [class.bal-clear]="balance() <= 0">
+                      {{ formatEur(balance()) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- My Charges -->
+                <h3 class="section-title">{{ 'finance.myCharges' | translate }}</h3>
+                <table class="fin-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'common.period' | translate }}</th>
+                      <th>{{ 'common.description' | translate }}</th>
+                      <th>{{ 'common.amount' | translate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (c of charges(); track c.id) {
+                      <tr><td>{{ c.period }}</td><td>{{ c.description }}</td><td>{{ formatEur(c.amountEur) }}</td></tr>
+                    }
+                    @if (charges().length === 0) {
+                      <tr><td colspan="3" class="empty-cell">{{ 'finance.noCharges' | translate }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+
+                <!-- My Payments -->
+                <h3 class="section-title" style="margin-top:20px">{{ 'finance.myPayments' | translate }}</h3>
+                <table class="fin-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'common.period' | translate }}</th>
+                      <th>{{ 'finance.dateReceived' | translate }}</th>
+                      <th>{{ 'common.amount' | translate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (p of myPayments(); track p.id) {
+                      <tr><td>{{ p.period }}</td><td>{{ p.dateReceived }}</td><td>{{ formatEur(p.amountEur) }}</td></tr>
+                    }
+                    @if (myPayments().length === 0) {
+                      <tr><td colspan="3" class="empty-cell">{{ 'finance.noPayments' | translate }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              }
+
+            } @else if (!loading() && !error()) {
+
+              <!-- Admin: expense ledger -->
               <h3 class="section-title">{{ 'expenses.ledger' | translate }}</h3>
               <table class="fin-table">
                 <thead>
@@ -127,6 +205,7 @@ function formatEur(n: number): string {
                   }
                 </tbody>
               </table>
+
             }
 
           </ng-template>
@@ -166,20 +245,39 @@ function formatEur(n: number): string {
     .empty-cell { text-align: center; color: #999; padding: 16px; }
     .center-state { display: flex; justify-content: center; padding: 48px; }
     .error-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px; color: #c00; }
+    .retry-btn { background: transparent; border: 1px solid #c00; color: #c00; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
+    .balance-row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+    .balance-block { display: flex; flex-direction: column; gap: 2px; }
+    .balance-block-right { margin-left: auto; }
+    .bal-label { font-size: .75rem; color: #888; }
+    .bal-value { font-size: 1.1rem; font-weight: 600; color: #222; }
+    .bal-total { font-size: 1.3rem; font-weight: 700; }
+    .bal-owed { color: #c62828; }
+    .bal-clear { color: #2e6b4f; }
   `],
 })
-export class ExpenseComponent implements OnInit {
+export class ExpenseComponent implements OnInit, OnChanges {
   @Input() role: 'resident' | 'admin' = 'resident';
 
-  private readonly svc = inject(ExpenseService);
-  private readonly t = inject(TranslateService);
+  private readonly svc     = inject(ExpenseService);
+  private readonly feeSvc  = inject(MaintenanceFeeService);
+  private readonly paySvc  = inject(PaymentService);
+  private readonly t       = inject(TranslateService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   readonly expenses      = signal<ExpenseDto[]>([]);
-  readonly loading       = signal(true);
+  readonly loading       = signal(false);
   readonly error         = signal<string | null>(null);
   readonly submitSuccess = signal(false);
   readonly submitError   = signal<string | null>(null);
+
+  readonly charges      = signal<ChargeDto[]>([]);
+  readonly myPayments   = signal<PaymentDto[]>([]);
+  readonly feesLoading  = signal(false);
+  readonly feesError    = signal<string | null>(null);
+  readonly totalCharged = computed(() => this.charges().reduce((s, c) => s + c.amountEur, 0));
+  readonly totalPaid    = computed(() => this.myPayments().reduce((s, p) => s + p.amountEur, 0));
+  readonly balance      = computed(() => this.totalCharged() - this.totalPaid());
 
   readonly categories      = EXPENSE_CATEGORIES;
   readonly parentCategories = PARENT_CATEGORIES;
@@ -193,7 +291,34 @@ export class ExpenseComponent implements OnInit {
     expenseDate: new Date().toISOString().slice(0, 10),
   };
 
-  ngOnInit(): void { this.loadExpenses(); }
+  ngOnInit(): void {
+    if (this.role === 'resident') this.loadFees();
+    else this.loadExpenses();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['role'] && !changes['role'].firstChange) {
+      const role = changes['role'].currentValue as 'resident' | 'admin';
+      if (role === 'resident' && this.charges().length === 0 && !this.feesLoading()) this.loadFees();
+      else if (role === 'admin' && this.expenses().length === 0 && !this.loading()) this.loadExpenses();
+    }
+  }
+
+  loadFees(): void {
+    this.feesLoading.set(true);
+    this.feesError.set(null);
+    Promise.all([
+      this.feeSvc.getMyCharges().toPromise(),
+      this.paySvc.getMyPayments().toPromise(),
+    ]).then(([charges, payments]) => {
+      this.charges.set(charges ?? []);
+      this.myPayments.set(payments ?? []);
+      this.feesLoading.set(false);
+    }).catch(() => {
+      this.feesError.set(this.t.instant('finance.errLoad'));
+      this.feesLoading.set(false);
+    });
+  }
 
   loadExpenses(): void {
     this.loading.set(true);
