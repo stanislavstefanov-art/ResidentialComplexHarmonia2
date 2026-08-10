@@ -34,9 +34,14 @@ public sealed class ReserveSlot(ISession session, ISlotGrid grid, IReservationSt
     public async Task<ReserveResult> ExecuteAsync(DateOnly day, string slotKey, CancellationToken ct = default)
     {
         var ctx = _session.Resolve();
-        if (ctx is not { IsResident: true })
+        if (ctx is not ({ IsResident: true } or { IsAdmin: true }))
         {
             return new ReserveResult.Refused(); // AC-6: no reservation is created
+        }
+
+        if (ctx.HouseholdRef is null)
+        {
+            return new ReserveResult.Refused(); // admin without a linked household cannot claim
         }
 
         if (!_grid.ForDay(day).Contains(slotKey))
@@ -46,7 +51,7 @@ public sealed class ReserveSlot(ISession session, ISlotGrid grid, IReservationSt
 
         // THE load-bearing line (R1): one atomic conditional write; the store decides
         // the race. No availability pre-check here — that would reopen the TOCTOU gap.
-        var result = await _store.ClaimSlotAsync(day, slotKey, ctx.HouseholdRef!.Value, ct);
+        var result = await _store.ClaimSlotAsync(day, slotKey, ctx.HouseholdRef.Value, ct);
 
         return new ReserveResult.Outcome(OutcomeMapper.Map(result));
     }

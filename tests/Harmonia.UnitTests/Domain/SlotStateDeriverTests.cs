@@ -26,4 +26,16 @@ public class SlotStateDeriverTests
     {
         Assert.Equal(SlotState.TakenOther, SlotStateDeriver.Derive(holder: Other, me: Me));
     }
+
+    [Fact] // T4 — admin without linked household: null me → any holder shows as taken-other
+    public void Null_me_and_holder_present_derives_taken_other()
+    {
+        Assert.Equal(SlotState.TakenOther, SlotStateDeriver.Derive(holder: Other, me: null));
+    }
+
+    [Fact] // T5 — admin without linked household: null me + null holder → free
+    public void Null_me_and_no_holder_derives_free()
+    {
+        Assert.Equal(SlotState.Free, SlotStateDeriver.Derive(holder: null, me: null));
+    }
 }

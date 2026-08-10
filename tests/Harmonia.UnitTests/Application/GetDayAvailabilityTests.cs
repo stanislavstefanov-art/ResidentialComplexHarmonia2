@@ -37,4 +37,33 @@ public class GetDayAvailabilityTests
             },
             ok.Slots);
     }
+
+    [Fact]
+    public async Task Admin_with_linked_household_can_read_slots_and_sees_own_as_mine()
+    {
+        var store = new RecordingStore();
+        store.Holders["S2"] = Me;
+        store.Holders["S3"] = Other;
+        var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: Me);
+        var useCase = new GetDayAvailability(new FakeSession(ctx), new FakeSlotGrid("S1", "S2", "S3"), store);
+
+        var result = await useCase.ExecuteAsync(Day);
+
+        var ok = Assert.IsType<AvailabilityResult.Ok>(result);
+        Assert.Equal(SlotState.TakenMine, ok.Slots.First(s => s.SlotKey == "S2").State);
+    }
+
+    [Fact]
+    public async Task Admin_without_linked_household_can_read_slots_as_observer()
+    {
+        var store = new RecordingStore();
+        store.Holders["S2"] = Me;
+        var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
+        var useCase = new GetDayAvailability(new FakeSession(ctx), new FakeSlotGrid("S1", "S2"), store);
+
+        var result = await useCase.ExecuteAsync(Day);
+
+        var ok = Assert.IsType<AvailabilityResult.Ok>(result);
+        Assert.Equal(SlotState.TakenOther, ok.Slots.First(s => s.SlotKey == "S2").State);
+    }
 }

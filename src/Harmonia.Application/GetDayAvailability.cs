@@ -30,9 +30,9 @@ public sealed class GetDayAvailability(ISession session, ISlotGrid grid, IReserv
     public async Task<AvailabilityResult> ExecuteAsync(DateOnly day, CancellationToken ct = default)
     {
         var ctx = _session.Resolve();
-        if (ctx is not { IsResident: true })
+        if (ctx is not ({ IsResident: true } or { IsAdmin: true }))
         {
-            return new AvailabilityResult.Refused(); // AC-6: no data for non-residents
+            return new AvailabilityResult.Refused(); // AC-6: no data for non-residents/non-admins
         }
 
         var slotKeys = _grid.ForDay(day);
@@ -43,7 +43,7 @@ public sealed class GetDayAvailability(ISession session, ISlotGrid grid, IReserv
                 key,
                 SlotStateDeriver.Derive(
                     holders.TryGetValue(key, out var holder) ? holder : null,
-                    ctx.HouseholdRef!.Value)))
+                    ctx.HouseholdRef)))
             .ToList();
 
         return new AvailabilityResult.Ok(day, slots);

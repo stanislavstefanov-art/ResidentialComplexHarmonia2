@@ -8,8 +8,8 @@ namespace Harmonia.Domain.Reservations;
 /// </summary>
 public static class SlotStateDeriver
 {
-    public static SlotState Derive(HouseholdRef? holder, HouseholdRef me)
+    public static SlotState Derive(HouseholdRef? holder, HouseholdRef? me)
         => holder is null ? SlotState.Free
-         : holder == me ? SlotState.TakenMine
+         : me is not null && holder == me ? SlotState.TakenMine
          : SlotState.TakenOther;
 }

@@ -51,4 +51,31 @@ public class ReserveSlotTests
         var outcome = Assert.IsType<ReserveResult.Outcome>(result);
         Assert.Equal(ClaimOutcome.RefusedAlreadyTaken, outcome.Value);
     }
+
+    [Fact] // admin with linked household can claim slots
+    public async Task Admin_with_linked_household_can_claim()
+    {
+        var store = new RecordingStore { NextClaimResult = ClaimResult.Claimed };
+        var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: SessionHousehold);
+        var useCase = new ReserveSlot(new FakeSession(ctx), new FakeSlotGrid("SLOT"), store);
+
+        var result = await useCase.ExecuteAsync(Day, "SLOT");
+
+        Assert.IsType<ReserveResult.Outcome>(result);
+        Assert.Single(store.ClaimCalls);
+        Assert.Equal(SessionHousehold, store.ClaimCalls[0].HouseholdRef);
+    }
+
+    [Fact] // admin without linked household is refused — cannot claim on behalf of no one
+    public async Task Admin_without_linked_household_is_refused()
+    {
+        var store = new RecordingStore();
+        var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
+        var useCase = new ReserveSlot(new FakeSession(ctx), new FakeSlotGrid("SLOT"), store);
+
+        var result = await useCase.ExecuteAsync(Day, "SLOT");
+
+        Assert.IsType<ReserveResult.Refused>(result);
+        Assert.Empty(store.ClaimCalls);
+    }
 }
