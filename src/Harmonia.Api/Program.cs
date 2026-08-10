@@ -429,12 +429,12 @@ app.MapGet(
     (GetHouseholds uc, CancellationToken ct) =>
         HouseholdsEndpoints.GetHouseholdsEndpoint(uc, ct));
 
+// householdRef as query param — refs can contain '/' which ASP.NET Core leaves undecoded in path segments.
 app.MapPut(
-    "/households/{householdRef}",
+    "/households/item",
     (UpsertHousehold uc, string householdRef, UpsertHouseholdRequest body, CancellationToken ct) =>
         HouseholdsEndpoints.UpsertHouseholdEndpoint(uc, householdRef, body, ct));
 
-// householdRef as query param — refs can contain '/' which ASP.NET Core leaves undecoded in path segments.
 app.MapDelete(
     "/households/item",
     (DeleteHousehold uc, string householdRef, CancellationToken ct) =>

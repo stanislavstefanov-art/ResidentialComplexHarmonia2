@@ -72,7 +72,7 @@
     "toastDeparted": "{{ref}} marked as departed.",
     "toastMyDataDeleted": "Your data has been permanently deleted.",
     "toastContactErased": "Data for {{ref}} has been permanently deleted.",
-    "errApi": "Could not reach the Harmonia API. Is it running on port 5000?",
+    "errApi": "Could not reach the Harmonia API. Please try again later.",
     "errSave": "Could not save. Please try again.",
     "errDepart": "Could not mark as departed. Please try again.",
     "errDeleteMine": "Could not delete your data. Please try again.",

@@ -13,14 +13,14 @@ export async function getHouseholds(): Promise<HouseholdDto[]> {
 
 export async function upsertHousehold(householdRef: string, sqMeters: number): Promise<void> {
   const res = await apiFetch(
-    `${API_BASE}/households/${encodeURIComponent(householdRef)}`,
+    `${API_BASE}/households/item?householdRef=${encodeURIComponent(householdRef)}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sqMeters }),
     },
   );
-  if (!res.ok) throw Object.assign(new Error(`PUT /households failed: ${res.status}`), { status: res.status });
+  if (!res.ok) throw Object.assign(new Error(`PUT /households/item failed: ${res.status}`), { status: res.status });
 }
 
 export async function deleteHousehold(householdRef: string): Promise<void> {
