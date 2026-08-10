@@ -6,8 +6,18 @@ import {
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { getHistory, sendAnnouncement } from '../api/notifications';
+import { getHistory, sendAnnouncement, subscribeToPush, unsubscribeFromPush } from '../api/notifications';
 import { NotificationRecordDto } from '../types';
+
+type PushStatus = 'checking' | 'subscribed' | 'not-subscribed' | 'unsupported' | 'denied';
+
+async function getPushStatus(): Promise<PushStatus> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  return sub ? 'subscribed' : 'not-subscribed';
+}
 
 function formatDate(s: string): string {
   return new Date(s).toLocaleDateString();
@@ -25,6 +35,9 @@ export default function NotificationsScreen({ role }: Props) {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError]     = useState<string>('');
   const [submitting, setSubmitting]       = useState(false);
+  const [pushStatus, setPushStatus]       = useState<PushStatus>('checking');
+  const [pushBusy, setPushBusy]           = useState(false);
+  const [pushError, setPushError]         = useState<string>('');
 
   const [title, setTitle] = useState('');
   const [body, setBody]   = useState('');
@@ -42,6 +55,34 @@ export default function NotificationsScreen({ role }: Props) {
   }, [t]);
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
+
+  useEffect(() => { getPushStatus().then(setPushStatus); }, []);
+
+  const handleSubscribe = async () => {
+    setPushBusy(true);
+    setPushError('');
+    try {
+      await subscribeToPush();
+      setPushStatus('subscribed');
+    } catch {
+      setPushError(t('notifications.errSubscribe'));
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleUnsubscribe = async () => {
+    setPushBusy(true);
+    setPushError('');
+    try {
+      await unsubscribeFromPush();
+      setPushStatus('not-subscribed');
+    } catch {
+      setPushError(t('notifications.errUnsubscribe'));
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +146,33 @@ export default function NotificationsScreen({ role }: Props) {
                 {submitError  && <Alert data-testid="submit-error"   severity="error">{submitError}</Alert>}
               </Box>
             </Box>
+          </CardContent>
+        </Card>
+      )}
+
+      {pushStatus !== 'unsupported' && pushStatus !== 'checking' && (
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>{t('notifications.pushTitle')}</Typography>
+            {pushStatus === 'denied' ? (
+              <Alert severity="warning">{t('notifications.pushDenied')}</Alert>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                <Typography variant="body2" color="text.secondary">
+                  {pushStatus === 'subscribed' ? t('notifications.pushEnabled') : t('notifications.pushDisabled')}
+                </Typography>
+                {pushStatus === 'subscribed' ? (
+                  <Button variant="outlined" size="small" disabled={pushBusy} onClick={handleUnsubscribe}>
+                    {t('notifications.pushDisableBtn')}
+                  </Button>
+                ) : (
+                  <Button variant="contained" size="small" disabled={pushBusy} onClick={handleSubscribe}>
+                    {t('notifications.pushEnableBtn')}
+                  </Button>
+                )}
+                {pushError && <Alert severity="error" sx={{ py: 0 }}>{pushError}</Alert>}
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}

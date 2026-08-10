@@ -21,6 +21,16 @@ self.addEventListener('activate', event => {
   );
 });
 
+self.addEventListener('push', event => {
+  const data = event.data?.json() ?? {};
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? 'Harmonia', {
+      body: data.body ?? '',
+      icon: '/icon-192.png',
+    })
+  );
+});
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);

@@ -178,7 +178,15 @@
     "none": "No notifications on record.",
     "errLoad": "Could not load notifications. Please try again.",
     "errRequired": "Title and body are required.",
-    "errSend": "Could not send announcement. Please try again."
+    "errSend": "Could not send announcement. Please try again.",
+    "pushTitle": "Push Notifications",
+    "pushEnabled": "Push notifications are enabled on this device.",
+    "pushDisabled": "You are not receiving push notifications on this device.",
+    "pushDenied": "Push notifications are blocked by your browser. Allow them in browser settings and reload.",
+    "pushEnableBtn": "Enable notifications",
+    "pushDisableBtn": "Disable notifications",
+    "errSubscribe": "Could not enable push notifications. Please try again.",
+    "errUnsubscribe": "Could not disable push notifications. Please try again."
   },
   "privacy": {
     "deleteMine": "Delete My Contact Data",

@@ -305,6 +305,11 @@ app.MapGet("/notifications",
         NotificationEndpoints.GetHistoryEndpoint(
             useCase, loggers.CreateLogger("Notifications"), ct));
 
+// VAPID public key is safe to expose — browsers need it to create push subscriptions.
+app.MapGet("/notifications/vapid-public-key",
+    () => Results.Ok(new { publicKey = vapidPublic }))
+    .AllowAnonymous();
+
 app.MapGet(
     "/directory/contact",
     (GetMyContact uc, ILoggerFactory loggers, CancellationToken ct) =>

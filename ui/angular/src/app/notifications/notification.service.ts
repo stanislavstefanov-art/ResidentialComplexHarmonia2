@@ -16,4 +16,16 @@ export class NotificationService {
   sendAnnouncement(body: AnnouncementRequest): Observable<void> {
     return this.http.post<void>(`${this.base}/notifications/announce`, body);
   }
+
+  getVapidPublicKey(): Observable<{ publicKey: string }> {
+    return this.http.get<{ publicKey: string }>(`${this.base}/notifications/vapid-public-key`);
+  }
+
+  saveSubscription(endpoint: string, p256dhKey: string, authKey: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/notifications/subscribe`, { endpoint, p256dhKey, authKey });
+  }
+
+  removeSubscription(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/notifications/subscribe`);
+  }
 }

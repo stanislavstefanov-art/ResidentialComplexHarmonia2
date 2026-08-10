@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
+import { adminGuard } from './admin.guard';
 import { AdminPendingComponent } from './admin-pending/admin-pending.component';
 import { DirectoryListComponent } from './directory/directory-list.component';
 import { ReservationsComponent } from './reservations/reservations.component';
@@ -15,7 +16,7 @@ const guard = [MsalGuard];
 
 export const routes: Routes = [
   { path: '', redirectTo: 'notifications', pathMatch: 'full' },
-  { path: 'directory', component: DirectoryListComponent, canActivate: guard },
+  { path: 'directory', component: DirectoryListComponent, canActivate: [...guard, adminGuard] },
   { path: 'reservations', component: ReservationsComponent, canActivate: guard },
   { path: 'financial', component: FinancialComponent, canActivate: guard },
   { path: 'expenses', component: ExpenseComponent, canActivate: guard },

@@ -46,7 +46,7 @@ function formatEur(n: number): string {
         <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
         <div class="flex-spacer"></div>
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
+        @if (isAdmin) { <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a> }
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
         <a routerLink="/financial" class="nav-link nav-active">{{ 'nav.finance' | translate }}</a>
         @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }

@@ -163,7 +163,7 @@ function MainApp() {
               />
             )}
             {initialRole === 'admin' && <Tab label={t('nav.households')} value="households" />}
-            <Tab label={t('nav.directory')} value="directory" />
+            {initialRole === 'admin' && <Tab label={t('nav.directory')} value="directory" />}
             <Tab label={t('nav.privacy')} value="privacy" />
           </Tabs>
         </Box>
