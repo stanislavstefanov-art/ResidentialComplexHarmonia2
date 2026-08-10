@@ -131,21 +131,17 @@ import { RoleService } from '../role.service';
                   <th pSortableColumn="displayName">
                     {{ 'directory.name' | translate }} <p-sort-icon field="displayName" />
                   </th>
-                  <th pSortableColumn="householdRef" style="width:12rem">
-                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
-                  </th>
                 </tr>
               </ng-template>
 
               <ng-template #body let-entry>
                 <tr>
                   <td>{{ entry.displayName ?? '—' }}</td>
-                  <td><p-tag [value]="entry.householdRef" severity="secondary" /></td>
                 </tr>
               </ng-template>
 
               <ng-template #emptymessage>
-                <tr><td colspan="2" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
+                <tr><td colspan="1" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
               </ng-template>
             </p-table>
 
@@ -180,9 +176,6 @@ import { RoleService } from '../role.service';
                   <th pSortableColumn="displayName" style="width:14rem">
                     {{ 'directory.name' | translate }} <p-sort-icon field="displayName" />
                   </th>
-                  <th pSortableColumn="householdRef" style="width:10rem">
-                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
-                  </th>
                   <th pSortableColumn="phone" style="width:12rem">
                     {{ 'common.phone' | translate }} <p-sort-icon field="phone" />
                   </th>
@@ -203,7 +196,6 @@ import { RoleService } from '../role.service';
               <ng-template #body let-entry>
                 <tr>
                   <td>{{ entry.displayName ?? '—' }}</td>
-                  <td><p-tag [value]="entry.householdRef" severity="secondary" /></td>
                   <td>{{ entry.phone ?? '—' }}</td>
                   <td>{{ entry.email ?? '—' }}</td>
                   <td>
@@ -250,7 +242,7 @@ import { RoleService } from '../role.service';
               </ng-template>
 
               <ng-template #emptymessage>
-                <tr><td colspan="8" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
+                <tr><td colspan="7" class="empty-message">{{ 'directory.noResidents' | translate }}</td></tr>
               </ng-template>
             </p-table>
 

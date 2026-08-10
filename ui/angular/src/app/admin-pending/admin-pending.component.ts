@@ -151,7 +151,6 @@ import { UserMenuComponent } from '../user-menu/user-menu.component';
           />
         </div>
         <div class="field">
-          <label>{{ 'adminPending.roleLabel' | translate }}</label>
           <div class="role-radio-row">
             <label class="role-radio-label">
               <input type="radio" name="activateRole" value="Owner" [(ngModel)]="selectedRole" />

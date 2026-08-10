@@ -22,3 +22,12 @@ export async function upsertHousehold(householdRef: string, sqMeters: number): P
   );
   if (!res.ok) throw Object.assign(new Error(`PUT /households failed: ${res.status}`), { status: res.status });
 }
+
+export async function deleteHousehold(householdRef: string): Promise<void> {
+  const res = await apiFetch(
+    `${API_BASE}/households/item?householdRef=${encodeURIComponent(householdRef)}`,
+    { method: 'DELETE' },
+  );
+  if (res.status === 204) return;
+  throw Object.assign(new Error(`DELETE /households/item failed: ${res.status}`), { status: res.status });
+}

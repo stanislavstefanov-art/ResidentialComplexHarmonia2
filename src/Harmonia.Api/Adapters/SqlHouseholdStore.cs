@@ -48,4 +48,23 @@ public sealed class SqlHouseholdStore(string connectionString) : IHouseholdStore
         catch (OperationCanceledException) { throw; }
         catch (Exception) { return new UpsertHouseholdResult.Failed(); }
     }
+
+    public async Task<DeleteHouseholdResult> DeleteAsync(
+        HouseholdRef householdRef, CancellationToken ct = default)
+    {
+        try
+        {
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM dbo.Households WHERE HouseholdRef = @HouseholdRef;";
+            cmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            var rows = await cmd.ExecuteNonQueryAsync(ct);
+            return rows == 0
+                ? new DeleteHouseholdResult.NotFound()
+                : new DeleteHouseholdResult.Ok();
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return new DeleteHouseholdResult.Failed(); }
+    }
 }

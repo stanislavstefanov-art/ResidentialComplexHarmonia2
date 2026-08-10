@@ -7,6 +7,7 @@ public interface IHouseholdStore
 {
     Task<IReadOnlyList<Household>> ListAsync(CancellationToken ct = default);
     Task<UpsertHouseholdResult> UpsertAsync(HouseholdRef householdRef, decimal sqMeters, CancellationToken ct = default);
+    Task<DeleteHouseholdResult> DeleteAsync(HouseholdRef householdRef, CancellationToken ct = default);
 }
 
 public abstract record UpsertHouseholdResult
@@ -23,4 +24,13 @@ public abstract record GetHouseholdsResult
     public sealed record Ok(IReadOnlyList<Household> Households) : GetHouseholdsResult;
     public sealed record Refused                                  : GetHouseholdsResult;
     public sealed record Failed                                   : GetHouseholdsResult;
+}
+
+public abstract record DeleteHouseholdResult
+{
+    private DeleteHouseholdResult() { }
+    public sealed record Ok       : DeleteHouseholdResult;
+    public sealed record NotFound : DeleteHouseholdResult;
+    public sealed record Refused  : DeleteHouseholdResult;
+    public sealed record Failed   : DeleteHouseholdResult;
 }

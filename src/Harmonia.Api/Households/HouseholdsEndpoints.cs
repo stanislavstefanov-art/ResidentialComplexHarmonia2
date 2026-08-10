@@ -34,4 +34,19 @@ public static class HouseholdsEndpoints
             _                              => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
+
+    // householdRef as query param — refs can contain '/' which ASP.NET Core leaves undecoded in path segments.
+    public static async Task<IResult> DeleteHouseholdEndpoint(
+        DeleteHousehold useCase, string householdRef, CancellationToken ct)
+    {
+        var result = await useCase.ExecuteAsync(householdRef, ct);
+        return result switch
+        {
+            DeleteHouseholdResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            DeleteHouseholdResult.NotFound => TypedResults.NotFound(),
+            DeleteHouseholdResult.Ok       => TypedResults.NoContent(),
+            DeleteHouseholdResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                              => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+        };
+    }
 }

@@ -1,21 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Paper, Table, TableBody, TableCell, TableHead,
   TableRow, TextField, Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
-import { getHouseholds, upsertHousehold, HouseholdDto } from '../api/households';
+import { getHouseholds, upsertHousehold, deleteHousehold, HouseholdDto } from '../api/households';
+import { getAdminDirectory } from '../api/directory';
+import { DirectoryEntryAdmin } from '../types';
 import HouseholdRefPicker from './HouseholdRefPicker';
 
 export default function HouseholdsScreen() {
   const { t } = useTranslation();
-  const [rows, setRows]       = useState<HouseholdDto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const [toast, setToast]     = useState('');
+  const [rows, setRows]         = useState<HouseholdDto[]>([]);
+  const [directory, setDirectory] = useState<DirectoryEntryAdmin[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [toast, setToast]       = useState('');
 
   const [addOpen, setAddOpen]   = useState(false);
   const [addRef, setAddRef]     = useState('');
@@ -29,16 +33,35 @@ export default function HouseholdsScreen() {
   const [editing, setEditing]   = useState(false);
   const [editErr, setEditErr]   = useState('');
 
+  const [deleteOpen, setDeleteOpen]   = useState(false);
+  const [deleteRef, setDeleteRef]     = useState('');
+  const [deleting, setDeleting]       = useState(false);
+
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000); };
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
-    try { setRows(await getHouseholds()); }
-    catch { setError(t('households.errLoad')); }
+    try {
+      const [h, d] = await Promise.all([getHouseholds(), getAdminDirectory()]);
+      setRows(h);
+      setDirectory(d);
+    } catch { setError(t('households.errLoad')); }
     finally { setLoading(false); }
   }, [t]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Pick the primary resident name for each householdRef (Owner first, then Renter).
+  const residentNameByRef = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const e of directory) {
+      const existing = map.get(e.householdRef);
+      if (!existing || e.role === 'Owner') {
+        if (e.displayName) map.set(e.householdRef, e.displayName);
+      }
+    }
+    return map;
+  }, [directory]);
 
   const openAdd = () => { setAddRef(''); setAddSqm(''); setAddErr(''); setAddOpen(true); };
 
@@ -72,6 +95,19 @@ export default function HouseholdsScreen() {
     finally { setEditing(false); }
   };
 
+  const openDelete = (ref: string) => { setDeleteRef(ref); setDeleteOpen(true); };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteHousehold(deleteRef);
+      setDeleteOpen(false);
+      showToast(t('households.deleted'));
+      load();
+    } catch { setError(t('households.errDelete')); setDeleteOpen(false); }
+    finally { setDeleting(false); }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -97,7 +133,8 @@ export default function HouseholdsScreen() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>{t('common.householdRef')}</TableCell>
+                <TableCell>{t('households.apartment')}</TableCell>
+                <TableCell>{t('households.residentName')}</TableCell>
                 <TableCell align="right">{t('households.sqMeters')}</TableCell>
                 <TableCell />
               </TableRow>
@@ -105,18 +142,24 @@ export default function HouseholdsScreen() {
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                  <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 4 }}>
                     {t('households.none')}
                   </TableCell>
                 </TableRow>
               ) : rows.map(r => (
                 <TableRow key={r.householdRef}>
                   <TableCell sx={{ fontFamily: 'monospace' }}>{r.householdRef}</TableCell>
+                  <TableCell>{residentNameByRef.get(r.householdRef) ?? '—'}</TableCell>
                   <TableCell align="right">{r.sqMeters.toFixed(2)}</TableCell>
                   <TableCell>
-                    <IconButton size="small" onClick={() => openEdit(r)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 0.25 }}>
+                      <IconButton size="small" onClick={() => openEdit(r)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => openDelete(r.householdRef)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -183,6 +226,28 @@ export default function HouseholdsScreen() {
             startIcon={editing ? <CircularProgress size={16} color="inherit" /> : undefined}
           >
             {editing ? t('common.saving') : t('common.save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete dialog */}
+      <Dialog open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('households.deleteTitle')}</DialogTitle>
+        <DialogContent>
+          <Typography
+            dangerouslySetInnerHTML={{ __html: t('households.deleteConfirm', { ref: deleteRef }) }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)} color="inherit" disabled={deleting}>{t('common.cancel')}</Button>
+          <Button
+            onClick={handleDelete}
+            variant="contained"
+            color="error"
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {deleting ? t('common.saving') : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

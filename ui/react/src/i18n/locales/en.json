@@ -30,7 +30,7 @@
     "privacy": "Privacy",
     "contactEdit": "My Details",
     "adminPending": "Pending Users",
-    "households": "Households"
+    "households": "Apartments"
   },
   "app": {
     "brand": "Harmonia",
@@ -327,20 +327,25 @@
     "errEmpty": "Please select a file."
   },
   "households": {
-    "title": "Households",
-    "subtitle": "Manage household records and square metres for fee calculation.",
-    "addHousehold": "Add Household",
-    "loading": "Loading households…",
-    "none": "No households on record.",
+    "title": "Apartments",
+    "subtitle": "Manage apartment records and square metres for fee calculation.",
+    "addHousehold": "Add Apartment",
+    "loading": "Loading apartments…",
+    "none": "No apartments on record.",
     "sqMeters": "Sq.m.",
-    "addTitle": "Add Household",
+    "residentName": "Resident",
+    "addTitle": "Add Apartment",
     "pickerLabel": "Select apartment(s)",
     "sqMetersLabel": "Square metres",
     "errRefRequired": "Please select at least one apartment.",
     "errSave": "Could not save. Please try again.",
-    "saved": "Household saved.",
+    "saved": "Apartment saved.",
     "editTitle": "Edit — {{ref}}",
-    "errLoad": "Could not load households. Please try again.",
+    "errLoad": "Could not load apartments. Please try again.",
+    "deleteTitle": "Delete apartment?",
+    "deleteConfirm": "Apartment <b>{{ref}}</b> will be permanently deleted.",
+    "deleted": "Apartment deleted.",
+    "errDelete": "Could not delete. Please try again.",
     "building": "Building",
     "apartment": "Apartment",
     "addApartment": "Add apartment"

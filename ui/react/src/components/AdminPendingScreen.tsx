@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogContentText, DialogTitle, FormControl,
-  FormControlLabel, FormLabel, IconButton, Radio, RadioGroup, Table,
+  FormControlLabel, IconButton, Radio, RadioGroup, Table,
   TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
@@ -166,7 +166,6 @@ export default function AdminPendingScreen({ role }: Props) {
           {activateError && <Alert severity="error" sx={{ mb: 2 }}>{activateError}</Alert>}
           <HouseholdRefPicker onChange={setHouseholdRef} />
           <FormControl sx={{ mt: 2 }}>
-            <FormLabel>{t('adminPending.roleLabel')}</FormLabel>
             <RadioGroup
               row
               value={selectedRole}

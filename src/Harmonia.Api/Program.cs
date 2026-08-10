@@ -185,6 +185,7 @@ builder.Services.AddScoped<ActivatePendingSignIn>();
 builder.Services.AddScoped<PurgeExpiredPendingSignIns>();
 builder.Services.AddScoped<GetHouseholds>();
 builder.Services.AddScoped<UpsertHousehold>();
+builder.Services.AddScoped<DeleteHousehold>();
 
 var app = builder.Build();
 
@@ -432,6 +433,12 @@ app.MapPut(
     "/households/{householdRef}",
     (UpsertHousehold uc, string householdRef, UpsertHouseholdRequest body, CancellationToken ct) =>
         HouseholdsEndpoints.UpsertHouseholdEndpoint(uc, householdRef, body, ct));
+
+// householdRef as query param — refs can contain '/' which ASP.NET Core leaves undecoded in path segments.
+app.MapDelete(
+    "/households/item",
+    (DeleteHousehold uc, string householdRef, CancellationToken ct) =>
+        HouseholdsEndpoints.DeleteHouseholdEndpoint(uc, householdRef, ct));
 
 app.MapGet("/healthz", () => Results.Ok()).AllowAnonymous();
 

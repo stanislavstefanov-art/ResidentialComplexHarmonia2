@@ -320,7 +320,6 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <TableHead>
               <TableRow>
                 <TableCell>{t('directory.name')}</TableCell>
-                <TableCell>{t('directory.apartment')}</TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('common.phone')}</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{t('common.email')}</TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('adminPending.roleLabel')}</TableCell>
@@ -332,16 +331,13 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <TableBody>
               {filteredAdminRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ color: 'text.secondary', py: 4 }}>
                     {t('directory.noResidents')}
                   </TableCell>
                 </TableRow>
               ) : filteredAdminRows.map(r => (
                 <TableRow key={`${r.householdRef}-${r.role ?? 'Owner'}`}>
                   <TableCell>{r.displayName ?? '—'}</TableCell>
-                  <TableCell>
-                    <Chip label={r.householdRef} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
-                  </TableCell>
                   <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{r.phone ?? '—'}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{r.email ?? '—'}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
@@ -385,22 +381,18 @@ const DirectoryList: React.FC<Props> = ({ role }) => {
             <TableHead>
               <TableRow>
                 <TableCell>{t('directory.name')}</TableCell>
-                <TableCell sx={{ width: 160 }}>{t('directory.apartment')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2} align="center" sx={{ color: 'text.secondary', py: 4 }}>
+                  <TableCell align="center" sx={{ color: 'text.secondary', py: 4 }}>
                     {t('directory.noResidents')}
                   </TableCell>
                 </TableRow>
               ) : filteredRows.map(r => (
                 <TableRow key={r.householdRef}>
                   <TableCell>{r.displayName ?? '—'}</TableCell>
-                  <TableCell>
-                    <Chip label={r.householdRef} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

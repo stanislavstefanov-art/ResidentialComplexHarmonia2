@@ -67,54 +67,49 @@ const HouseholdRefPicker: React.FC<Props> = ({ onChange }) => {
   const ref = buildRef(rows);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-      <Box>
-        {rows.map((row, idx) => (
-          <Box key={idx} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-            <FormControl size="small" sx={{ minWidth: 80 }}>
-              <InputLabel>{t('households.building')}</InputLabel>
-              <Select
-                value={row.building}
-                label={t('households.building')}
-                onChange={e => setBuilding(idx, e.target.value as Building | '')}
-              >
-                <MenuItem value=""><em>—</em></MenuItem>
-                <MenuItem value="X3">X3</MenuItem>
-                <MenuItem value="X4">X4</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 90 }} disabled={!row.building}>
-              <InputLabel>{t('households.apartment')}</InputLabel>
-              <Select
-                value={row.number === 0 ? '0' : String(row.number)}
-                label={t('households.apartment')}
-                onChange={e => setNumber(idx, Number(e.target.value))}
-              >
-                <MenuItem value="0"><em>—</em></MenuItem>
-                {row.building && APTS[row.building as Building].map(n => (
-                  <MenuItem key={n} value={String(n)}>АП{n}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {rows.length > 1 && (
-              <IconButton size="small" onClick={() => removeRow(idx)}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            )}
-          </Box>
-        ))}
-        <IconButton size="small" onClick={addRow} title={t('households.addApartment')}>
-          <AddIcon fontSize="small" />
-        </IconButton>
-      </Box>
-      {ref && (
-        <Typography
-          variant="body2"
-          sx={{ fontFamily: 'monospace', alignSelf: 'center', color: 'text.secondary' }}
-        >
-          {ref}
-        </Typography>
-      )}
+    <Box>
+      {rows.map((row, idx) => (
+        <Box key={idx} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 80 }}>
+            <InputLabel>{t('households.building')}</InputLabel>
+            <Select
+              value={row.building}
+              label={t('households.building')}
+              onChange={e => setBuilding(idx, e.target.value as Building | '')}
+            >
+              <MenuItem value=""><em>—</em></MenuItem>
+              <MenuItem value="X3">X3</MenuItem>
+              <MenuItem value="X4">X4</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 90 }} disabled={!row.building}>
+            <InputLabel>{t('households.apartment')}</InputLabel>
+            <Select
+              value={row.number === 0 ? '0' : String(row.number)}
+              label={t('households.apartment')}
+              onChange={e => setNumber(idx, Number(e.target.value))}
+            >
+              <MenuItem value="0"><em>—</em></MenuItem>
+              {row.building && APTS[row.building as Building].map(n => (
+                <MenuItem key={n} value={String(n)}>АП{n}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {rows.length > 1 && (
+            <IconButton size="small" onClick={() => removeRow(idx)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          )}
+          {idx === 0 && ref && (
+            <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary', ml: 1 }}>
+              {ref}
+            </Typography>
+          )}
+        </Box>
+      ))}
+      <IconButton size="small" onClick={addRow} title={t('households.addApartment')}>
+        <AddIcon fontSize="small" />
+      </IconButton>
     </Box>
   );
 };
