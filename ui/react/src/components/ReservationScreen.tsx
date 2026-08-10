@@ -422,6 +422,7 @@ export default function ReservationScreen() {
                   slot={slot}
                   onClaim={handleClaim}
                   loading={claimInFlight === slot.slotKey}
+                  isPast={day === todayString() && parseHour(slot.slotKey) <= sofiaHourNow()}
                   t={t}
                 />
               ))}
@@ -677,29 +678,36 @@ function stateColor(state: SlotState): 'success' | 'primary' | 'default' {
   return state === 'free' ? 'success' : state === 'taken-mine' ? 'primary' : 'default';
 }
 
-function SlotCard({ slot, onClaim, loading, t }: {
+function SlotCard({ slot, onClaim, loading, isPast, t }: {
   slot: Slot;
   onClaim: (key: string) => void;
   loading: boolean;
+  isPast: boolean;
   t: TFunction;
 }) {
-  const stateLabel = (state: SlotState): string =>
-    state === 'free' ? t('reservation.free') : state === 'taken-mine' ? t('reservation.yours') : t('reservation.taken');
+  const effectivelyFree = slot.state === 'free' && !isPast;
+  const chipLabel =
+    isPast && slot.state === 'free' ? t('reservation.legendPast')
+    : slot.state === 'free' ? t('reservation.free')
+    : slot.state === 'taken-mine' ? t('reservation.yours')
+    : t('reservation.taken');
+  const chipColor = effectivelyFree ? 'success' : stateColor(slot.state);
 
   return (
     <Card
       variant="outlined"
       sx={{
         borderLeft: 4,
-        borderLeftColor: slot.state === 'free' ? 'success.main' : slot.state === 'taken-mine' ? 'primary.main' : 'grey.400',
+        borderLeftColor: effectivelyFree ? 'success.main' : slot.state === 'taken-mine' ? 'primary.main' : 'grey.400',
+        opacity: isPast && slot.state === 'free' ? 0.6 : 1,
       }}
     >
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: '12px !important' }}>
         <Typography variant="subtitle2" sx={{ textTransform: 'capitalize', fontWeight: 600 }}>
           {slot.slotKey}
         </Typography>
-        <Chip label={stateLabel(slot.state)} color={stateColor(slot.state)} size="small" />
-        {slot.state === 'free' && (
+        <Chip label={chipLabel} color={chipColor} size="small" />
+        {effectivelyFree && (
           <Button
             variant="contained"
             size="small"
