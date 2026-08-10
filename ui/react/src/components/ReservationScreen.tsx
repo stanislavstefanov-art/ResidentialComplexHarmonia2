@@ -352,19 +352,19 @@ export default function ReservationScreen() {
       <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <Button
           size="small"
-          variant={viewMode === 'timeline' ? 'contained' : 'outlined'}
-          onClick={() => setViewMode('timeline')}
-          sx={{ borderRadius: 4, textTransform: 'none' }}
-        >
-          {t('reservation.viewTimeline')}
-        </Button>
-        <Button
-          size="small"
           variant={viewMode === 'cards' ? 'contained' : 'outlined'}
           onClick={() => setViewMode('cards')}
           sx={{ borderRadius: 4, textTransform: 'none' }}
         >
           {t('reservation.viewCards')}
+        </Button>
+        <Button
+          size="small"
+          variant={viewMode === 'timeline' ? 'contained' : 'outlined'}
+          onClick={() => setViewMode('timeline')}
+          sx={{ borderRadius: 4, textTransform: 'none' }}
+        >
+          {t('reservation.viewTimeline')}
         </Button>
       </Box>
 

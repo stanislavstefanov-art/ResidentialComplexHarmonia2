@@ -140,11 +140,11 @@ function fmtDate(d: Date): string {
 
             <!-- View mode toggle -->
             <div class="view-toggle">
-              <button class="vt-btn" [class.vt-active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
-                {{ 'reservation.viewTimeline' | translate }}
-              </button>
               <button class="vt-btn" [class.vt-active]="viewMode() === 'cards'" (click)="setViewMode('cards')">
                 {{ 'reservation.viewCards' | translate }}
+              </button>
+              <button class="vt-btn" [class.vt-active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
+                {{ 'reservation.viewTimeline' | translate }}
               </button>
             </div>
 
@@ -535,7 +535,7 @@ export class ReservationsComponent implements OnInit {
 
   // ── View mode ─────────────────────────────────────────────────────────────
   readonly viewMode = signal<'timeline' | 'cards'>(
-    (localStorage.getItem('harmonia-reservation-view') as 'timeline' | 'cards') ?? 'timeline'
+    (localStorage.getItem('harmonia-reservation-view') as 'timeline' | 'cards') ?? 'cards'
   );
   readonly claimingSlot = signal<string>('');
 
