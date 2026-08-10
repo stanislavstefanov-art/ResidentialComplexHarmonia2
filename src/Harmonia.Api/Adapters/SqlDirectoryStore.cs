@@ -225,6 +225,16 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             linkCmd.Parameters.Add(new SqlParameter("@Role", SqlDbType.NVarChar, 10) { Value = role });
             var linkRows = await linkCmd.ExecuteNonQueryAsync(ct);
 
+            // If no residents remain in this household, delete any leftover contact rows.
+            await using var cleanupCmd = conn.CreateCommand();
+            cleanupCmd.Transaction = tx;
+            cleanupCmd.CommandText = """
+                IF NOT EXISTS (SELECT 1 FROM dbo.HouseholdLinks WHERE HouseholdRef = @HouseholdRef)
+                    DELETE FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef;
+                """;
+            cleanupCmd.Parameters.AddWithValue("@HouseholdRef", householdRef.Value);
+            await cleanupCmd.ExecuteNonQueryAsync(ct);
+
             await tx.CommitAsync(ct);
 
             // Ok when either table had a matching row — a directory (contact) row

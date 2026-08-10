@@ -128,19 +128,19 @@ import { RoleService } from '../role.service';
 
               <ng-template #header>
                 <tr>
-                  <th pSortableColumn="householdRef" style="width:12rem">
-                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
-                  </th>
                   <th pSortableColumn="displayName">
                     {{ 'directory.name' | translate }} <p-sort-icon field="displayName" />
+                  </th>
+                  <th pSortableColumn="householdRef" style="width:12rem">
+                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
                   </th>
                 </tr>
               </ng-template>
 
               <ng-template #body let-entry>
                 <tr>
-                  <td><p-tag [value]="entry.householdRef" severity="secondary" /></td>
                   <td>{{ entry.displayName ?? '—' }}</td>
+                  <td><p-tag [value]="entry.householdRef" severity="secondary" /></td>
                 </tr>
               </ng-template>
 
@@ -177,11 +177,11 @@ import { RoleService } from '../role.service';
 
               <ng-template #header>
                 <tr>
-                  <th pSortableColumn="householdRef" style="width:10rem">
-                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
-                  </th>
                   <th pSortableColumn="displayName" style="width:14rem">
                     {{ 'directory.name' | translate }} <p-sort-icon field="displayName" />
+                  </th>
+                  <th pSortableColumn="householdRef" style="width:10rem">
+                    {{ 'directory.apartment' | translate }} <p-sort-icon field="householdRef" />
                   </th>
                   <th pSortableColumn="phone" style="width:12rem">
                     {{ 'common.phone' | translate }} <p-sort-icon field="phone" />
@@ -202,8 +202,8 @@ import { RoleService } from '../role.service';
 
               <ng-template #body let-entry>
                 <tr>
-                  <td><p-tag [value]="entry.householdRef" severity="secondary" /></td>
                   <td>{{ entry.displayName ?? '—' }}</td>
+                  <td><p-tag [value]="entry.householdRef" severity="secondary" /></td>
                   <td>{{ entry.phone ?? '—' }}</td>
                   <td>{{ entry.email ?? '—' }}</td>
                   <td>
