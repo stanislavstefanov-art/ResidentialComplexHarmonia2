@@ -44,15 +44,26 @@ public sealed class VapidPushDispatcher(
 
     public async Task BroadcastAsync(string title, string body, CancellationToken ct = default)
     {
-        var subs = await store.ListAllSubscriptionsAsync(ct);
-        foreach (var sub in subs)
+        var subs      = await store.ListAllSubscriptionsAsync(ct);
+        var subByRef  = subs.ToDictionary(s => s.HouseholdRef.Value);
+        var allRefs   = await store.GetAllHouseholdRefsAsync(ct);
+
+        foreach (var householdRef in allRefs)
         {
-            var channel = await TrySendPushAsync(sub, title, body) ? "push" : "skipped";
-            if (channel == "skipped" && sub.FallbackEmail is not null)
-                channel = await TrySendEmailAsync(sub.FallbackEmail, title, body, ct) ? "email" : "skipped";
+            string channel;
+            if (subByRef.TryGetValue(householdRef.Value, out var sub))
+            {
+                channel = await TrySendPushAsync(sub, title, body) ? "push" : "skipped";
+                if (channel == "skipped" && sub.FallbackEmail is not null)
+                    channel = await TrySendEmailAsync(sub.FallbackEmail, title, body, ct) ? "email" : "skipped";
+            }
+            else
+            {
+                channel = "skipped";
+            }
 
             await store.AppendHistoryAsync(
-                new NotificationRecord(Guid.NewGuid(), sub.HouseholdRef, title, DateTimeOffset.UtcNow, channel), ct);
+                new NotificationRecord(Guid.NewGuid(), householdRef, title, DateTimeOffset.UtcNow, channel), ct);
         }
     }
 

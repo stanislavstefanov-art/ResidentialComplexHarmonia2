@@ -46,6 +46,7 @@ public interface INotificationStore
 
     Task AppendHistoryAsync(NotificationRecord record, CancellationToken ct = default);
     Task<IReadOnlyList<NotificationRecord>> GetHistoryAsync(HouseholdRef householdRef, CancellationToken ct = default);
+    Task<IReadOnlyList<HouseholdRef>> GetAllHouseholdRefsAsync(CancellationToken ct = default);
 }
 
 public enum NotificationKind { ChargePosted, PaymentRecorded, BbqReminder, Announcement }
