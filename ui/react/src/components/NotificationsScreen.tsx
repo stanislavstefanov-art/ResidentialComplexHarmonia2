@@ -65,7 +65,11 @@ export default function NotificationsScreen({ role }: Props) {
       await subscribeToPush();
       setPushStatus('subscribed');
     } catch {
-      setPushError(t('notifications.errSubscribe'));
+      if (Notification.permission === 'denied') {
+        setPushStatus('denied');
+      } else {
+        setPushError(t('notifications.errSubscribe'));
+      }
     } finally {
       setPushBusy(false);
     }

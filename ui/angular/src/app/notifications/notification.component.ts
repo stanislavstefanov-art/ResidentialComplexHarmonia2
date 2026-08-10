@@ -245,7 +245,11 @@ export class NotificationComponent implements OnInit {
       await this.svc.saveSubscription(sub.endpoint, toBase64(p256dh), toBase64(auth)).toPromise();
       this.pushStatus.set('subscribed');
     } catch {
-      this.pushError.set(this.t.instant('notifications.errSubscribe'));
+      if (Notification.permission === 'denied') {
+        this.pushStatus.set('denied');
+      } else {
+        this.pushError.set(this.t.instant('notifications.errSubscribe'));
+      }
     } finally {
       this.pushBusy.set(false);
     }
