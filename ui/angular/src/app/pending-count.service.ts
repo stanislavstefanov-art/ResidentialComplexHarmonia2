@@ -15,6 +15,8 @@ export class PendingCountService {
     this.intervalId = setInterval(() => this.poll(), 60_000);
   }
 
+  refresh(): void { this.poll(); }
+
   private poll(): void {
     this.svc.listPending().subscribe({
       next: rows => this.count.set(rows.length),

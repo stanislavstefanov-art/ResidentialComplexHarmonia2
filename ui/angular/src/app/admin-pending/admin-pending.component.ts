@@ -14,6 +14,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AdminPendingService } from './admin-pending.service';
 import { PendingSignInDto } from './models';
 import { RoleService } from '../role.service';
+import { PendingCountService } from '../pending-count.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { UserMenuComponent } from '../user-menu/user-menu.component';
 import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
@@ -236,6 +237,7 @@ export class AdminPendingComponent implements OnInit {
   private readonly svc = inject(AdminPendingService);
   private readonly msg = inject(MessageService);
   private readonly t = inject(TranslateService);
+  private readonly pendingCount = inject(PendingCountService);
   readonly isAdmin = inject(RoleService).isAdmin;
 
   role: 'resident' | 'admin' = 'resident';
@@ -294,6 +296,7 @@ export class AdminPendingComponent implements OnInit {
         this.activateVisible = false;
         this.msg.add({ severity: 'success', summary: this.t.instant('adminPending.linked'), detail: this.t.instant('adminPending.linked') });
         this.load();
+        this.pendingCount.refresh();
       },
       error: (err: { status?: number }) => {
         this.activating.set(false);
@@ -315,6 +318,7 @@ export class AdminPendingComponent implements OnInit {
           ? this.t.instant('adminPending.purged', { count: result.deleted })
           : this.t.instant('adminPending.noneExpired');
         this.msg.add({ severity: 'success', summary: 'Done', detail });
+        this.pendingCount.refresh();
       },
       error: () => {
         this.purging.set(false);
