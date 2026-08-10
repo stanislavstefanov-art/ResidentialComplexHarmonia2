@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { InteractionStatus } from '@azure/msal-browser';
@@ -7,6 +7,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { registerLocaleData } from '@angular/common';
 import localeBg from '@angular/common/locales/bg';
 import { ProgressSpinner } from 'primeng/progressspinner';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MeService } from './me.service';
 import { RoleService } from './role.service';
 import { ResidentPendingComponent } from './resident-pending/resident-pending.component';
@@ -17,11 +18,14 @@ registerLocaleData(localeBg);
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ProgressSpinner, ResidentPendingComponent, IosSafariInstallBannerComponent],
+  imports: [RouterOutlet, ProgressSpinner, ResidentPendingComponent, IosSafariInstallBannerComponent, TranslatePipe],
   template: `
     @if (meStatus() === 'loading') {
-      <div style="display:flex;justify-content:center;margin-top:4rem">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:4rem;gap:1rem">
         <p-progress-spinner />
+        @if (slowLoad()) {
+          <p style="color:#6b7280;font-size:0.875rem;margin:0">{{ 'app.slowLoad' | translate }}</p>
+        }
       </div>
     } @else if (meStatus() === 'pending') {
       <app-resident-pending (activated)="meStatus.set('ok')" />
@@ -34,6 +38,8 @@ registerLocaleData(localeBg);
 export class App implements OnInit, OnDestroy {
   private readonly _destroying$ = new Subject<void>();
   meStatus = signal<'loading' | 'pending' | 'ok'>('loading');
+  slowLoad = signal(false);
+  private slowTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private readonly authService: MsalService,
@@ -60,8 +66,10 @@ export class App implements OnInit, OnDestroy {
           this.authService.instance.setActiveAccount(accounts[0]);
         }
         if (accounts.length > 0) {
+          this.slowTimer = setTimeout(() => this.slowLoad.set(true), 5000);
           this.meService.getStatus().subscribe({
             next: (res) => {
+              clearTimeout(this.slowTimer); this.slowLoad.set(false);
               if (res.status === 'pending') { this.meStatus.set('pending'); return; }
               this.meStatus.set('ok');
               if (this.roleService.isAdmin) {
@@ -73,13 +81,14 @@ export class App implements OnInit, OnDestroy {
                 this.router.navigate(['/notifications']);
               }
             },
-            error: () => this.meStatus.set('ok'),
+            error: () => { clearTimeout(this.slowTimer); this.slowLoad.set(false); this.meStatus.set('ok'); },
           });
         }
       });
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.slowTimer);
     this._destroying$.next(undefined);
     this._destroying$.complete();
   }

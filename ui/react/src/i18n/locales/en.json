@@ -39,7 +39,8 @@
     "roleAdmin": "Admin",
     "signOut": "Sign out",
     "user": "User",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "slowLoad": "The service is waking up, please wait a moment…"
   },
   "signIn": {
     "title": "Residence Harmonia",

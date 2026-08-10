@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import {
-  AppBar, Avatar, Box, Button, CircularProgress, Divider, IconButton,
+  AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, IconButton,
   ListItemIcon, Menu, MenuItem, Tab, Tabs, Toolbar, Typography
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
@@ -25,6 +25,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import IosSafariInstallBanner from './components/IosSafariInstallBanner';
 import { Role } from './types';
+import { useSlowLoad } from './hooks/useSlowLoad';
+import { usePendingCount } from './hooks/usePendingCount';
 
 type Screen = 'directory' | 'reservations' | 'financial' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending' | 'households';
 
@@ -60,6 +62,7 @@ function MainApp() {
   const roles = claims?.['roles'] as string[] | undefined;
   const initialRole: Role = roles?.includes('admin') ? 'admin' : 'resident';
   const role = initialRole;
+  const pendingCount = usePendingCount(initialRole === 'admin');
 
   const firstLogin = initialRole === 'resident' && !localStorage.getItem('harmonia-welcomed');
   const [screen, setScreen] = useState<Screen>(
@@ -148,7 +151,17 @@ function MainApp() {
             <Tab label={t('nav.notifications')} value="notifications" />
             <Tab label={t('nav.finance')} value="financial" />
             {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
-            {initialRole === 'admin' && <Tab label={t('nav.adminPending')} value="admin-pending" />}
+            {initialRole === 'admin' && (
+              <Tab
+                value="admin-pending"
+                label={
+                  <Badge badgeContent={pendingCount} color="error" max={99} invisible={pendingCount === 0}
+                    sx={{ '& .MuiBadge-badge': { right: -10, top: 6 } }}>
+                    <span>{t('nav.adminPending')}</span>
+                  </Badge>
+                }
+              />
+            )}
             {initialRole === 'admin' && <Tab label={t('nav.households')} value="households" />}
             <Tab label={t('nav.directory')} value="directory" />
             <Tab label={t('nav.privacy')} value="privacy" />
@@ -179,11 +192,13 @@ function MainApp() {
 
 function AppStatusGate() {
   const { instance, accounts } = useMsal();
+  const { t } = useTranslation();
   const claims = accounts[0]?.idTokenClaims as Record<string, unknown> | undefined;
   const roles = claims?.['roles'] as string[] | undefined;
   const isAdmin = roles?.includes('admin') ?? false;
 
   const [status, setStatus] = useState<'loading' | 'pending' | 'ok'>(isAdmin ? 'ok' : 'loading');
+  const slowLoad = useSlowLoad(status === 'loading');
 
   useEffect(() => {
     if (isAdmin) return;
@@ -193,7 +208,12 @@ function AppStatusGate() {
   }, [isAdmin]);
 
   if (status === 'loading') {
-    return <CircularProgress sx={{ mt: 8, display: 'block', mx: 'auto' }} />;
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8, gap: 2 }}>
+        <CircularProgress />
+        {slowLoad && <Typography variant="body2" color="text.secondary">{t('app.slowLoad')}</Typography>}
+      </Box>
+    );
   }
   if (status === 'pending') {
     return (

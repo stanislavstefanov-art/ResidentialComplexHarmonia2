@@ -10,6 +10,7 @@ import { MessageService } from 'primeng/api';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { UserMenuComponent } from '../user-menu/user-menu.component';
+import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
 import { ReservationsService } from './reservations.service';
 import { Slot } from './models';
 import { RoleService } from '../role.service';
@@ -110,6 +111,7 @@ function fmtDate(d: Date): string {
     TranslatePipe,
     LanguageSwitcherComponent,
     UserMenuComponent,
+    PendingBadgeComponent,
   ],
   providers: [MessageService],
   template: `
@@ -124,7 +126,7 @@ function fmtDate(d: Date): string {
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link nav-active">{{ 'nav.reservations' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }
         <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
         <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
         <app-language-switcher />

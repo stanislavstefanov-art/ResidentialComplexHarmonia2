@@ -9,12 +9,13 @@ import { ContactEditService } from './contact-edit.service';
 import { RoleService } from '../role.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { UserMenuComponent } from '../user-menu/user-menu.component';
+import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
 import type { MyContactDto } from './models';
 
 @Component({
   selector: 'app-contact-edit',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent, PendingBadgeComponent],
   template: `
     <div class="harmonia-shell">
       <header class="harmonia-header">
@@ -24,7 +25,7 @@ import type { MyContactDto } from './models';
         <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
         <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
         <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}</a> }
+        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }
         <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a>
         <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
         @if (isAdmin) {
