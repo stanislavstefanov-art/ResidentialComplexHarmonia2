@@ -7,6 +7,7 @@ public abstract record ActivatePendingSignInResult
     public sealed record Failed           : ActivatePendingSignInResult;
     public sealed record NotFound         : ActivatePendingSignInResult;
     public sealed record AlreadyActivated : ActivatePendingSignInResult;
+    public sealed record RoleConflict     : ActivatePendingSignInResult;
     public sealed record Ok               : ActivatePendingSignInResult;
 }
 
@@ -24,6 +25,7 @@ public sealed class ActivatePendingSignIn(ISession session, IPendingSignInStore 
                 ActivateResult.Ok               => new ActivatePendingSignInResult.Ok(),
                 ActivateResult.NotFound         => new ActivatePendingSignInResult.NotFound(),
                 ActivateResult.AlreadyActivated => new ActivatePendingSignInResult.AlreadyActivated(),
+                ActivateResult.RoleConflict     => new ActivatePendingSignInResult.RoleConflict(),
                 _                               => new ActivatePendingSignInResult.Failed()
             };
         }

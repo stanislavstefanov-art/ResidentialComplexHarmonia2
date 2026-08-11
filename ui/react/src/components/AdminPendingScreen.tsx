@@ -76,7 +76,8 @@ export default function AdminPendingScreen({ role }: Props) {
       showToast(t('adminPending.linked'));
       load();
     } catch (e: any) {
-      if (e?.status === 409) setActivateError(t('adminPending.alreadyLinked'));
+      if (e?.status === 422) setActivateError(t('adminPending.roleConflict'));
+      else if (e?.status === 409) setActivateError(t('adminPending.alreadyLinked'));
       else if (e?.status === 404) setActivateError(t('adminPending.gone'));
       else if (e?.status === 403) setActivateError(t('adminPending.accessDenied'));
       else setActivateError(t('adminPending.failed'));

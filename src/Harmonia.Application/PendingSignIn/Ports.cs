@@ -35,7 +35,7 @@ public interface IPendingSignInStore
     Task<DirectLinkResult> DirectLinkAsync(string oid, string householdRef, string role, CancellationToken ct = default);
 }
 
-public enum ActivateResult { Ok, NotFound, AlreadyActivated }
+public enum ActivateResult { Ok, NotFound, AlreadyActivated, RoleConflict }
 public enum DirectLinkResult { Ok, AlreadyLinked }
 
 /// <summary>Household link resolved from an Entra OID.</summary>

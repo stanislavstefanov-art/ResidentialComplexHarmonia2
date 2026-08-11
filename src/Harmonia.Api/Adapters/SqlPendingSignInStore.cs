@@ -59,13 +59,16 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
             BEGIN TRANSACTION;
                 DECLARE @pendingExists bit = 0;
                 DECLARE @alreadyLinked bit = 0;
+                DECLARE @roleConflict  bit = 0;
 
-                IF EXISTS (SELECT 1 FROM dbo.PendingSignIns  WHERE EntraObjectId = @Oid)
+                IF EXISTS (SELECT 1 FROM dbo.PendingSignIns WHERE EntraObjectId = @Oid)
                     SET @pendingExists = 1;
-                IF EXISTS (SELECT 1 FROM dbo.HouseholdLinks  WHERE EntraObjectId = @Oid)
+                IF EXISTS (SELECT 1 FROM dbo.HouseholdLinks WHERE EntraObjectId = @Oid)
                     SET @alreadyLinked = 1;
+                IF EXISTS (SELECT 1 FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef AND Role = @Role)
+                    SET @roleConflict = 1;
 
-                IF @pendingExists = 1 AND @alreadyLinked = 0
+                IF @pendingExists = 1 AND @alreadyLinked = 0 AND @roleConflict = 0
                 BEGIN
                     INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
                     VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
@@ -73,11 +76,7 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
                     INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt)
                     SELECT @HouseholdRef, @Role, ps.DisplayName, ps.Email, 0, SYSUTCDATETIME()
                     FROM dbo.PendingSignIns ps
-                    WHERE ps.EntraObjectId = @Oid
-                      AND NOT EXISTS (
-                          SELECT 1 FROM dbo.HouseholdContacts hc
-                          WHERE hc.HouseholdRef = @HouseholdRef AND hc.Role = @Role
-                      );
+                    WHERE ps.EntraObjectId = @Oid;
 
                     IF NOT EXISTS (SELECT 1 FROM dbo.Households WHERE HouseholdRef = @HouseholdRef)
                         INSERT INTO dbo.Households (HouseholdRef, SqMeters) VALUES (@HouseholdRef, 0);
@@ -85,7 +84,7 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
                     DELETE FROM dbo.PendingSignIns WHERE EntraObjectId = @Oid;
                 END
             COMMIT;
-            SELECT @pendingExists AS PendingExists, @alreadyLinked AS AlreadyLinked;
+            SELECT @pendingExists AS PendingExists, @alreadyLinked AS AlreadyLinked, @roleConflict AS RoleConflict;
             """;
         cmd.Parameters.Add(new SqlParameter("@Oid",          SqlDbType.NVarChar, 36)  { Value = oid });
         cmd.Parameters.Add(new SqlParameter("@HouseholdRef", SqlDbType.NVarChar, 256) { Value = householdRef });
@@ -94,11 +93,13 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
         await reader.ReadAsync(ct);
         var pendingExists = reader.GetBoolean(0);
         var alreadyLinked = reader.GetBoolean(1);
-        return (pendingExists, alreadyLinked) switch
+        var roleConflict  = reader.GetBoolean(2);
+        return (pendingExists, alreadyLinked, roleConflict) switch
         {
-            (_,     true)  => ActivateResult.AlreadyActivated,
-            (false, false) => ActivateResult.NotFound,
-            _              => ActivateResult.Ok
+            (_,     true,  _)    => ActivateResult.AlreadyActivated,
+            (false, false, _)    => ActivateResult.NotFound,
+            (_,     _,     true) => ActivateResult.RoleConflict,
+            _                    => ActivateResult.Ok
         };
     }
 
@@ -116,6 +117,11 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
             BEGIN
                 INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
                 VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
+
+                IF NOT EXISTS (SELECT 1 FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef AND Role = @Role)
+                    INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, IsOptedOut, UpdatedAt)
+                    VALUES (@HouseholdRef, @Role, 0, SYSUTCDATETIME());
+
                 IF NOT EXISTS (SELECT 1 FROM dbo.Households WHERE HouseholdRef = @HouseholdRef)
                     INSERT INTO dbo.Households (HouseholdRef, SqMeters) VALUES (@HouseholdRef, 0);
             END

@@ -45,6 +45,7 @@ public static class AdminPendingEndpoints
             ActivatePendingSignInResult.Refused          => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
             ActivatePendingSignInResult.NotFound         => TypedResults.StatusCode(StatusCodes.Status404NotFound),
             ActivatePendingSignInResult.AlreadyActivated => TypedResults.StatusCode(StatusCodes.Status409Conflict),
+            ActivatePendingSignInResult.RoleConflict     => TypedResults.UnprocessableEntity(new { error = "RoleConflict" }),
             ActivatePendingSignInResult.Failed           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
             ActivatePendingSignInResult.Ok               => TypedResults.StatusCode(StatusCodes.Status200OK),
             _                                            => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)

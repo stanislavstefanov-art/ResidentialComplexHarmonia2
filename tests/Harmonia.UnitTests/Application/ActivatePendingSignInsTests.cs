@@ -83,4 +83,29 @@ public class ActivatePendingSignInsTests
 
         Assert.IsType<ActivatePendingSignInResult.Failed>(result);
     }
+
+    [Fact]
+    public async Task Role_already_taken_returns_RoleConflict_and_leaves_pending()
+    {
+        var pending = new List<PendingSignIn>
+        {
+            new("oid-1", "a@x.com", "Alice", DateTimeOffset.UtcNow.AddDays(-1)),
+            new("oid-2", "b@x.com", "Bob",   DateTimeOffset.UtcNow.AddDays(-1))
+        };
+        var store = new FakePendingSignInStoreV2 { Pending = pending };
+
+        // First resident approved as Owner — succeeds
+        var r1 = await new ActivatePendingSignIn(new FakeSession(AdminSession()), store)
+            .ExecuteAsync("oid-1", "HH-1", "Owner");
+        Assert.IsType<ActivatePendingSignInResult.Ok>(r1);
+
+        // Second resident approved with same role — must be rejected
+        var r2 = await new ActivatePendingSignIn(new FakeSession(AdminSession()), store)
+            .ExecuteAsync("oid-2", "HH-1", "Owner");
+        Assert.IsType<ActivatePendingSignInResult.RoleConflict>(r2);
+
+        // Bob must still be in pending (link was NOT created)
+        Assert.Single(store.Pending);
+        Assert.Equal("oid-2", store.Pending[0].EntraObjectId);
+    }
 }

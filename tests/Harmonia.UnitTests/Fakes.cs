@@ -495,6 +495,7 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
 {
     public List<PendingSignIn> Pending { get; init; } = [];
     public HashSet<string> AlreadyActivated { get; } = [];
+    public HashSet<(string HouseholdRef, string Role)> TakenRoles { get; } = [];
     public List<(string Oid, string HouseholdRef, string Role)> ActivateCalls { get; } = [];
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
     public int PurgeCalls { get; private set; }
@@ -514,8 +515,11 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
             return Task.FromResult(ActivateResult.AlreadyActivated);
         var pending = Pending.FirstOrDefault(p => p.EntraObjectId == oid);
         if (pending is null) return Task.FromResult(ActivateResult.NotFound);
+        if (TakenRoles.Contains((householdRef, role)))
+            return Task.FromResult(ActivateResult.RoleConflict);
         ActivateCalls.Add((oid, householdRef, role));
         Pending.Remove(pending);
+        TakenRoles.Add((householdRef, role));
         return Task.FromResult(ActivateResult.Ok);
     }
 

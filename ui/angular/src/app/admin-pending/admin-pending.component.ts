@@ -300,7 +300,8 @@ export class AdminPendingComponent implements OnInit {
       },
       error: (err: { status?: number }) => {
         this.activating.set(false);
-        if (err?.status === 409) this.activateError = this.t.instant('adminPending.alreadyLinked');
+        if (err?.status === 422) this.activateError = this.t.instant('adminPending.roleConflict');
+        else if (err?.status === 409) this.activateError = this.t.instant('adminPending.alreadyLinked');
         else if (err?.status === 404) this.activateError = this.t.instant('adminPending.gone');
         else if (err?.status === 403) this.activateError = this.t.instant('adminPending.accessDenied');
         else this.msg.add({ severity: 'error', summary: 'Error', detail: this.t.instant('adminPending.failed') });

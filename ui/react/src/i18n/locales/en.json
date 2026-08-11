@@ -255,6 +255,7 @@
     "errLoad": "Could not load pending sign-ins. Please try again.",
     "linked": "Linked successfully.",
     "alreadyLinked": "Already linked to a household.",
+    "roleConflict": "The selected role is already taken for this apartment. Please choose a different role (e.g. Renter).",
     "gone": "Pending entry no longer exists — it may have been removed.",
     "accessDenied": "Admin access required.",
     "failed": "Failed — please try again.",
