@@ -78,7 +78,7 @@ module docIntelligence 'modules/document-intelligence.bicep' = {
   }
 }
 
-// location intentionally omitted — api.bicep defaults to northeurope to co-locate with SQL. Both are EU/GDPR compliant (R3).
+// location intentionally omitted — api.bicep defaults to westeurope to match the live App Service Plan. Both regions are EU/GDPR compliant (R3).
 // dependsOn acs + docIntelligence: both write secrets into Key Vault; App Service reads them via Key Vault references at startup.
 module api 'modules/api.bicep' = {
   name: 'api'
