@@ -71,11 +71,20 @@ module frontend 'modules/frontend.bicep' = {
   }
 }
 
+module docIntelligence 'modules/document-intelligence.bicep' = {
+  name: 'docIntelligence'
+  params: {
+    namePrefix: namePrefix
+    location: location
+    keyVaultName: keyvault.outputs.keyVaultName
+  }
+}
+
 // location intentionally omitted — api.bicep defaults to northeurope to co-locate with SQL. Both are EU/GDPR compliant (R3).
-// dependsOn acs: acs.bicep writes Acs--ConnectionString + Acs--SenderAddress into Key Vault; App Service reads them via Key Vault references at startup.
+// dependsOn acs + docIntelligence: both write secrets into Key Vault; App Service reads them via Key Vault references at startup.
 module api 'modules/api.bicep' = {
   name: 'api'
-  dependsOn: [acs]
+  dependsOn: [acs, docIntelligence]
   params: {
     namePrefix: namePrefix
     identityId: identity.outputs.identityId

@@ -121,6 +121,25 @@ if (Test-Path $LocalConfig) {
         throw 'Could not parse VAPID keys from web-push output.'
     }
 
+    # Try to load Document Intelligence credentials from Key Vault (requires az login + prior deploy.ps1).
+    # Falls back to empty strings — the scan endpoint returns 503 gracefully when unconfigured.
+    $DiEndpoint = ''
+    $DiKey      = ''
+    $kvName     = 'residenceharmoniakv'
+    $subId      = '592c2975-9876-4ef5-a889-50b18b6f7137'
+    try {
+        $diEndpointRaw = az keyvault secret show --vault-name $kvName --name 'DocumentIntelligence--Endpoint' --subscription $subId --query value -o tsv 2>$null
+        if ($LASTEXITCODE -eq 0 -and $diEndpointRaw) {
+            $DiEndpoint = $diEndpointRaw.Trim()
+            $DiKey      = (az keyvault secret show --vault-name $kvName --name 'DocumentIntelligence--Key' --subscription $subId --query value -o tsv 2>$null).Trim()
+            Write-Host '  Document Intelligence credentials loaded from Key Vault.'
+        } else {
+            Write-Host '  Document Intelligence not yet deployed — invoice scan disabled locally.' -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host '  Document Intelligence credentials unavailable (run deploy.ps1 first) — invoice scan disabled locally.' -ForegroundColor Yellow
+    }
+
     $cs = "Server=127.0.0.1,$SQL_PORT;Database=$DB_NAME;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True;"
 
     @{
@@ -141,6 +160,10 @@ if (Test-Path $LocalConfig) {
         Acs = @{
             ConnectionString = 'placeholder'
             SenderAddress    = 'noreply@example.com'
+        }
+        DocumentIntelligence = @{
+            Endpoint = $DiEndpoint
+            Key      = $DiKey
         }
     } | ConvertTo-Json -Depth 4 | Set-Content $LocalConfig -Encoding UTF8
 

@@ -91,6 +91,14 @@ resource webApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'AzureAd__TenantId'
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/AzureAd--TenantId)'
         }
+        {
+          name: 'DocumentIntelligence__Endpoint'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/DocumentIntelligence--Endpoint)'
+        }
+        {
+          name: 'DocumentIntelligence__Key'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/DocumentIntelligence--Key)'
+        }
       ]
     }
   }
