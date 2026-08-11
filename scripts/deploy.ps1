@@ -6,6 +6,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Resolve paths relative to the repo root, not the caller's working directory,
+# so the script works whether run from repo root or from scripts/.
+$RepoRoot = Split-Path $PSScriptRoot -Parent
+Set-Location $RepoRoot
+
 # ── Constants ────────────────────────────────────────────────────────────────
 $ResourceGroup   = 'rg-residence-harmonia-prod'
 $Location        = 'westeurope'
