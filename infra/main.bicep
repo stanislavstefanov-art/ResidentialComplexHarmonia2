@@ -74,8 +74,6 @@ module frontend 'modules/frontend.bicep' = {
 module docIntelligence 'modules/document-intelligence.bicep' = {
   name: 'docIntelligence'
   params: {
-    namePrefix: namePrefix
-    location: location
     keyVaultName: keyvault.outputs.keyVaultName
   }
 }
