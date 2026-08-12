@@ -4,6 +4,7 @@ import {
   Dialog, DialogActions, DialogContent, DialogTitle,
   Divider, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
+import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getPeriodSummary } from '../../api/financial';
 import { getMyCharges } from '../../api/maintenanceFees';
@@ -114,7 +115,10 @@ export default function ResidentFinancial() {
       {feesLoad ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
       ) : feesErr ? (
-        <Alert severity="error">{feesErr}</Alert>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Alert severity="error">{feesErr}</Alert>
+          <Button variant="outlined" startIcon={<Refresh />} onClick={loadFees} size="small">{t('common.retry')}</Button>
+        </Box>
       ) : (
         <Box sx={{ overflowX: 'auto' }}>
           <Table size="small">
@@ -181,7 +185,10 @@ export default function ResidentFinancial() {
       {payLoad ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
       ) : payErr ? (
-        <Alert severity="error">{payErr}</Alert>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Alert severity="error">{payErr}</Alert>
+          <Button variant="outlined" startIcon={<Refresh />} onClick={loadPayments} size="small">{t('common.retry')}</Button>
+        </Box>
       ) : (
         <Box sx={{ overflowX: 'auto' }}>
           <Table size="small">
