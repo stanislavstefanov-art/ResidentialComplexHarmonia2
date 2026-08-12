@@ -71,14 +71,42 @@ try {
 # ── Phase 1: Collect inputs ───────────────────────────────────────────────────
 Write-Phase 'Phase 1: Collecting inputs'
 
+# Read an existing Key Vault secret; returns $null when absent or unreadable (best-effort).
+function Get-ExistingSecret([string]$name) {
+    $val = az keyvault secret show --vault-name $KeyVaultName --name $name --subscription $SubscriptionId --query value -o tsv 2>$null
+    if ($LASTEXITCODE -ne 0) { return $null }
+    return $val
+}
+
+# Prompt, but keep the existing Key Vault value when the user just presses Enter.
+# A blank param overwrites the AzureAd secret with an empty value, which makes
+# Microsoft.Identity.Web throw IDW10106 on every request (all endpoints 500).
+# This exact accidental blank once took the API down — never let Enter wipe auth.
+function Read-OrKeep([string]$prompt, [string]$existing) {
+    $suffix  = if ([string]::IsNullOrWhiteSpace($existing)) { '' } else { ' [Enter = keep existing]' }
+    $entered = Read-Host ($prompt + $suffix)
+    if ([string]::IsNullOrWhiteSpace($entered)) { return $existing }
+    return $entered
+}
+
 try {
     $SqlAdminPasswordSecure  = Read-Host 'SQL admin password' -AsSecureString
     $VapidSubject            = Read-Host 'VAPID subject (e.g. mailto:ops@harmonia.example)'
 
     Write-Host "`n  Entra External ID config (from Azure Portal app registration):" -ForegroundColor Gray
-    $EntraInstance           = Read-Host '  Entra instance URL (e.g. https://<tenant>.ciamlogin.com/)'
-    $EntraClientId           = Read-Host '  Entra client ID (app registration GUID)'
-    $EntraTenantId           = Read-Host '  Entra tenant ID (GUID)'
+    $existingInstance = Get-ExistingSecret 'AzureAd--Instance'
+    $existingClientId = Get-ExistingSecret 'AzureAd--ClientId'
+    $existingTenantId = Get-ExistingSecret 'AzureAd--TenantId'
+
+    $EntraInstance           = Read-OrKeep '  Entra instance URL (e.g. https://<tenant>.ciamlogin.com/)' $existingInstance
+    $EntraClientId           = Read-OrKeep '  Entra client ID (app registration GUID)' $existingClientId
+    $EntraTenantId           = Read-OrKeep '  Entra tenant ID (GUID)' $existingTenantId
+
+    if ([string]::IsNullOrWhiteSpace($EntraInstance) -or
+        [string]::IsNullOrWhiteSpace($EntraClientId) -or
+        [string]::IsNullOrWhiteSpace($EntraTenantId)) {
+        throw 'Entra instance/client/tenant must not be blank — a blank value wipes the AzureAd secrets in Key Vault and breaks API auth (every request returns 500).'
+    }
 } catch {
     Write-Error "Phase 1 (collect inputs) failed: $_"
     throw
