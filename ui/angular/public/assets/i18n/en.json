@@ -116,7 +116,15 @@
     "noCharges": "No charges on record.",
     "noPayments": "No payments on record.",
     "contactOffice": "Please contact the office to register a payment.",
-    "errLoad": "Could not load financial data. Please try again."
+    "errLoad": "Could not load financial data. Please try again.",
+    "tabBills": "Bills",
+    "tabFees": "Fees",
+    "tabPayments": "Payments",
+    "tabReport": "Report",
+    "addBill": "Add a bill",
+    "scanInvoice": "Scan invoice",
+    "orEnterManually": "or enter manually",
+    "clearForm": "Clear"
   },
   "expenses": {
     "cardTitle": "Building Expenses",
