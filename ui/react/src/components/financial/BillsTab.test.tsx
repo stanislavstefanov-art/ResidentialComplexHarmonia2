@@ -33,6 +33,9 @@ test('manual entry records an expense', async () => {
   fireEvent.submit(screen.getByTestId('bill-form'));
   await waitFor(() => expect(mockRecordExpense).toHaveBeenCalledTimes(1));
   expect(mockRecordExpense.mock.calls[0][0]).toMatchObject({ amountEur: 42.5, description: 'Cleaning' });
+  // on success the form resets and the success banner shows
+  await waitFor(() => expect(screen.getByTestId('bill-success')).toBeInTheDocument());
+  expect((screen.getByTestId('bill-amount') as HTMLInputElement).value).toBe('');
 });
 
 test('scanning an invoice prefills the same form and shows confidence', async () => {

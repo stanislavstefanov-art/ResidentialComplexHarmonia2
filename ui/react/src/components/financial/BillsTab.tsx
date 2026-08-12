@@ -47,7 +47,7 @@ export default function BillsTab() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) { setScanErr(t('invoiceScan.errEmpty')); return; }
-    setScanErr(''); setScanning(true);
+    setScanErr(''); setOk(false); setScanning(true);
     try {
       const dto = await scanInvoice(file);
       setAmount(dto.amount != null ? String(dto.amount) : '');
@@ -67,7 +67,7 @@ export default function BillsTab() {
     setSaving(true);
     try {
       await recordExpense({ amountEur: parsed, description: desc, category: cat, parentCategory: parent, expenseDate: date, idempotencyKey: crypto.randomUUID() });
-      setOk(true); resetForm(); await loadExpenses();
+      resetForm(); setOk(true); await loadExpenses();
     } catch { setFormErr(t('expenses.errRecord')); }
     finally { setSaving(false); }
   };
@@ -102,7 +102,7 @@ export default function BillsTab() {
             <Box sx={{ gridColumn: '1 / -1', display: 'flex', gap: 1.5, alignItems: 'center' }}>
               <Button data-testid="bill-submit" type="submit" variant="contained" size="small" disabled={saving}>{t('expenses.record')}</Button>
               <Button variant="outlined" size="small" onClick={resetForm} disabled={saving}>{t('finance.clearForm')}</Button>
-              {ok && <Alert severity="success" sx={{ py: 0 }}>{t('expenses.recorded')}</Alert>}
+              {ok && <Alert data-testid="bill-success" severity="success" sx={{ py: 0 }}>{t('expenses.recorded')}</Alert>}
               {formErr && <Alert severity="error" sx={{ py: 0 }}>{formErr}</Alert>}
             </Box>
           </Box>
