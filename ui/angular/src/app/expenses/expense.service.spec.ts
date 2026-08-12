@@ -32,6 +32,7 @@ describe('ExpenseService', () => {
   it('recordExpense calls POST /expenses with body', () => {
     const body = {
       amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+      parentCategory: 'Other',
       expenseDate: '2026-07-10', idempotencyKey: 'ik-test',
     };
     let result: ExpenseDto | undefined;
@@ -41,6 +42,7 @@ describe('ExpenseService', () => {
     expect(req.request.body).toEqual(body);
     const dto: ExpenseDto = {
       id: 'e1', amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+      parentCategory: 'Other',
       expenseDate: '2026-07-10', recordedAt: '2026-07-10T09:00:00Z', idempotencyKey: 'ik-test',
     };
     req.flush(dto, { status: 201, statusText: 'Created' });
@@ -50,6 +52,7 @@ describe('ExpenseService', () => {
   it('recordExpense handles 200 (duplicate idempotent)', () => {
     const body = {
       amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+      parentCategory: 'Other',
       expenseDate: '2026-07-10', idempotencyKey: 'ik-test',
     };
     let result: ExpenseDto | undefined;
@@ -57,6 +60,7 @@ describe('ExpenseService', () => {
     const req = ctrl.expectOne(`${API}/expenses`);
     const dto: ExpenseDto = {
       id: 'e1', amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+      parentCategory: 'Other',
       expenseDate: '2026-07-10', recordedAt: '2026-07-10T09:00:00Z', idempotencyKey: 'ik-test',
     };
     req.flush(dto, { status: 200, statusText: 'OK' });
