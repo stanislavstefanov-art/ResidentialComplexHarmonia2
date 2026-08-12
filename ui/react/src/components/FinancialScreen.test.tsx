@@ -2,14 +2,23 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createTheme, ThemeProvider } from '@mui/material';
 import FinancialScreen from './FinancialScreen';
-import * as api from '../api/financial';
+import { getPeriodSummary } from '../api/financial';
+import { getMyCharges, getAllCharges } from '../api/maintenanceFees';
+import { getMyPayments, getAllPayments, getBalance } from '../api/payments';
+import { getExpenses } from '../api/expenses';
 
 jest.mock('../api/financial');
 jest.mock('../api/maintenanceFees');
 jest.mock('../api/payments');
-const mockGetPeriodSummary = api.getPeriodSummary as jest.Mock;
-const mockGetMyCharges     = api.getMyCharges as jest.Mock;
-const mockGetMyPayments    = api.getMyPayments as jest.Mock;
+jest.mock('../api/expenses');
+
+const mockGetPeriodSummary = getPeriodSummary as jest.Mock;
+const mockGetMyCharges     = getMyCharges as jest.Mock;
+const mockGetMyPayments    = getMyPayments as jest.Mock;
+const mockGetAllCharges    = getAllCharges as jest.Mock;
+const mockGetAllPayments   = getAllPayments as jest.Mock;
+const mockGetBalance       = getBalance as jest.Mock;
+const mockGetExpenses      = getExpenses as jest.Mock;
 
 const theme = createTheme();
 const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -23,38 +32,54 @@ beforeEach(() => {
   mockGetPeriodSummary.mockResolvedValue({ period: '2026-07', totalChargesEur: 450, totalExpensesEur: 120 });
   mockGetMyCharges.mockResolvedValue([]);
   mockGetMyPayments.mockResolvedValue([]);
+  mockGetAllCharges.mockResolvedValue([]);
+  mockGetAllPayments.mockResolvedValue([]);
+  mockGetBalance.mockResolvedValue({ label: 'x', lines: [] });
+  mockGetExpenses.mockResolvedValue([]);
 });
 
-test('renders period summary amounts', async () => {
-  renderScreen();
+test('renders period summary amounts (resident)', async () => {
+  renderScreen('resident');
   await waitFor(() => screen.getByTestId('summary-charges'));
   expect(screen.getByTestId('summary-charges').textContent).toContain('450');
   expect(screen.getByTestId('summary-expenses').textContent).toContain('120');
 });
 
-test('renders charge rows from API', async () => {
+test('renders charge rows from API (resident)', async () => {
   mockGetMyCharges.mockResolvedValue([
     { id: 'c1', householdRef: 'h1', amountEur: 150, description: 'July fee',
       period: '2026-07', chargedAt: '2026-07-01T00:00:00Z', idempotencyKey: 'ik1' },
   ]);
-  renderScreen();
+  renderScreen('resident');
   await waitFor(() => screen.getByTestId('charge-row-c1'));
   expect(screen.getByTestId('charge-row-c1').textContent).toContain('July fee');
 });
 
-test('renders payment rows from API', async () => {
+test('renders payment rows from API (resident)', async () => {
   mockGetMyPayments.mockResolvedValue([
     { id: 'p1', householdRef: 'h1', amountEur: 300, period: '2026-06',
       dateReceived: '2026-06-15', recordedAt: '2026-06-15T09:00:00Z', idempotencyKey: 'ik2' },
   ]);
-  renderScreen();
+  renderScreen('resident');
   await waitFor(() => screen.getByTestId('payment-row-p1'));
   expect(screen.getByTestId('payment-row-p1').textContent).toContain('300');
 });
 
-test('pay button opens stub dialog', async () => {
-  renderScreen();
+test('pay button opens stub dialog (resident)', async () => {
+  renderScreen('resident');
   await waitFor(() => screen.getByTestId('pay-btn'));
   fireEvent.click(screen.getByTestId('pay-btn'));
   expect(screen.getByTestId('pay-dialog')).toBeInTheDocument();
+});
+
+test('admin sees Bills as the default active tab', async () => {
+  renderScreen('admin');
+  await waitFor(() => screen.getByTestId('bill-form'));
+  expect(screen.getByRole('tab', { selected: true }).textContent).toMatch(/bill/i);
+});
+
+test('resident view has no tabs', async () => {
+  renderScreen('resident');
+  await waitFor(() => screen.getByTestId('summary-charges'));
+  expect(screen.queryByRole('tab')).toBeNull();
 });
