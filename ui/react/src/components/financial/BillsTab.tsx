@@ -40,6 +40,7 @@ export default function BillsTab() {
   const resetForm = () => {
     setAmount(''); setDesc(''); setCat(EXPENSE_CATEGORIES[0]);
     setParent(PARENT_CATEGORIES[3]); setDate(today()); setConf(null);
+    setOk(false); setScanErr('');
   };
 
   const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
