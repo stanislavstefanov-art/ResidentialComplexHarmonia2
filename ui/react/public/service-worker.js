@@ -1,4 +1,4 @@
-const CACHE = 'harmonia-v2';
+const CACHE = 'harmonia-v3';
 
 const APP_SHELL = [
   '/manifest.json',
@@ -55,7 +55,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match('/index.html').then(r => r ?? fetch(request)))
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
@@ -70,7 +70,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(request, clone));
         }
         return response;
-      }).catch(() => caches.match('/index.html').then(r => r ?? fetch(request)));
+      }).catch(() => caches.match('/index.html'));
     })
   );
 });
