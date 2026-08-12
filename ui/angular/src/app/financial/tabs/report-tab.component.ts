@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ExpenseService } from '../../expenses/expense.service';
-import { AnnualReportDto, EXPENSE_CATEGORIES } from '../../expenses/models';
+import { AnnualReportDto } from '../../expenses/models';
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -28,9 +28,7 @@ function formatEur(n: number): string {
       <div class="form-grid">
         <div class="form-row">
           <label>{{ 'annualReport.incomeCategory' | translate }}</label>
-          <select [(ngModel)]="incForm.category" name="incCat" class="form-input">
-            @for (cat of incCategories; track cat) { <option [value]="cat">{{ cat }}</option> }
-          </select>
+          <input type="text" [(ngModel)]="incForm.category" name="incCat" class="form-input" required />
         </div>
         <div class="form-row">
           <label>{{ 'common.description' | translate }}</label>
@@ -184,8 +182,7 @@ export class ReportTabComponent implements OnInit {
   readonly incSaving = signal(false);
   readonly incOk     = signal(false);
   readonly incErr    = signal<string | null>(null);
-  readonly incCategories = EXPENSE_CATEGORIES;
-  incForm = { category: EXPENSE_CATEGORIES[0], description: '', amountEurStr: '', incomeDate: today() };
+  incForm = { category: '', description: '', amountEurStr: '', incomeDate: today() };
 
   ngOnInit(): void {
     // Report is loaded on demand via the year picker button; no auto-load needed.
@@ -226,7 +223,7 @@ export class ReportTabComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.incOk.set(true);
-        this.incForm = { category: EXPENSE_CATEGORIES[0], description: '', amountEurStr: '', incomeDate: today() };
+        this.incForm = { category: '', description: '', amountEurStr: '', incomeDate: today() };
         this.incSaving.set(false);
       },
       error: () => { this.incErr.set(this.t.instant('annualReport.errRecord')); this.incSaving.set(false); },

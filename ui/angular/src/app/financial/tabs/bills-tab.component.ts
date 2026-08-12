@@ -257,7 +257,7 @@ export class BillsTabComponent implements OnInit {
       expenseDate: this.billForm.expenseDate, idempotencyKey: crypto.randomUUID(),
     }).subscribe({
       next: () => { this.resetForm(); this.ok.set(true); this.saving.set(false); this.loadExpenses(); },
-      error: () => { this.formErr.set(this.t.instant('invoiceScan.errSave')); this.saving.set(false); },
+      error: () => { this.formErr.set(this.t.instant('expenses.errRecord')); this.saving.set(false); },
     });
   }
 }
