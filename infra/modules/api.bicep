@@ -1,7 +1,10 @@
 @minLength(2)
 param namePrefix string
-// North Europe — co-locates with SQL and is EU/GDPR compliant (R3).
-param location string = 'northeurope'
+// West Europe — matches the live App Service Plan, which has always run here.
+// (The old 'northeurope' default was a leftover from the Container Apps era, when
+// westeurope AKS was at capacity; App Service F1 has no such constraint. An existing
+// resource cannot be moved regions, so this must match reality.) EU/GDPR compliant (R3).
+param location string = 'westeurope'
 param identityId string
 param keyVaultUri string
 param angularSwaUrl string

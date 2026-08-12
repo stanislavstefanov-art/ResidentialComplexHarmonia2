@@ -13,6 +13,7 @@ import { LanguageService } from '../language.service';
 
 const EXPENSE: ExpenseDto = {
   id: 'e1', amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+  parentCategory: 'Other',
   expenseDate: '2026-07-10', recordedAt: '2026-07-10T09:00:00Z', idempotencyKey: 'ik1',
 };
 

@@ -150,7 +150,7 @@ function MainApp() {
           >
             <Tab label={t('nav.notifications')} value="notifications" />
             <Tab label={t('nav.finance')} value="financial" />
-            {role !== 'admin' && <Tab label={t('nav.reservations')} value="reservations" />}
+            <Tab label={t('nav.reservations')} value="reservations" />
             {initialRole === 'admin' && (
               <Tab
                 value="admin-pending"

@@ -74,13 +74,11 @@ module frontend 'modules/frontend.bicep' = {
 module docIntelligence 'modules/document-intelligence.bicep' = {
   name: 'docIntelligence'
   params: {
-    namePrefix: namePrefix
-    location: location
     keyVaultName: keyvault.outputs.keyVaultName
   }
 }
 
-// location intentionally omitted — api.bicep defaults to northeurope to co-locate with SQL. Both are EU/GDPR compliant (R3).
+// location intentionally omitted — api.bicep defaults to westeurope to match the live App Service Plan. Both regions are EU/GDPR compliant (R3).
 // dependsOn acs + docIntelligence: both write secrets into Key Vault; App Service reads them via Key Vault references at startup.
 module api 'modules/api.bicep' = {
   name: 'api'

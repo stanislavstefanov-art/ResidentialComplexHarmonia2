@@ -1,23 +1,20 @@
-param namePrefix string
-param location string
 param keyVaultName string
+
+// C1: The one free (F0) Document Intelligence slot this subscription allows is
+// already used by the RecipesApp project — Azure permits only one F0 FormRecognizer
+// account per subscription. Rather than pay for an S0 tier, Harmonia reuses that
+// existing free account cross-resource-group. Trade-off: Harmonia's invoice scan
+// depends on that resource continuing to exist in the RecipesApp resource group.
+param docIntAccountName string = 'recipesapp-ss-0101-docint'
+param docIntResourceGroup string = 'RecipesApp'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
-// C1: F0 free tier — 500 pages/month, no charge. One F0 allowed per subscription per region.
-resource docIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: '${namePrefix}-di'
-  location: location
-  kind: 'FormRecognizer'
-  sku: {
-    name: 'F0'
-  }
-  properties: {
-    customSubDomainName: '${namePrefix}-di'
-    publicNetworkAccess: 'Enabled'
-  }
+resource docIntelligence 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+  name: docIntAccountName
+  scope: resourceGroup(docIntResourceGroup)
 }
 
 resource diEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {

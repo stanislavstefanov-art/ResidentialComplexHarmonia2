@@ -34,11 +34,11 @@ describe('AdminPendingService', () => {
 
   it('POST /admin/pending/{oid}/activate sends householdRef', () => {
     let completed = false;
-    svc.activatePending('oid-1', { householdRef: 'AP-101' })
+    svc.activatePending('oid-1', { householdRef: 'AP-101', role: 'resident' })
       .subscribe({ complete: () => (completed = true) });
     const req = http.expectOne('http://localhost:5000/admin/pending/oid-1/activate');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ householdRef: 'AP-101' });
+    expect(req.request.body).toEqual({ householdRef: 'AP-101', role: 'resident' });
     req.flush(null, { status: 200, statusText: 'OK' });
     expect(completed).toBe(true);
   });
