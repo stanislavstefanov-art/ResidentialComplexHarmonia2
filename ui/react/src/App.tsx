@@ -19,6 +19,7 @@ import AdminPendingScreen from './components/AdminPendingScreen';
 import ContactEditScreen from './components/ContactEditScreen';
 import ReservationScreen from './components/ReservationScreen';
 import HouseholdsScreen from './components/HouseholdsScreen';
+import CounterpartiesScreen from './components/CounterpartiesScreen';
 import { getMyStatus } from './api/me';
 import ResidentPendingScreen from './components/ResidentPendingScreen';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -28,7 +29,7 @@ import { Role } from './types';
 import { useSlowLoad } from './hooks/useSlowLoad';
 import { usePendingCount } from './hooks/usePendingCount';
 
-type Screen = 'directory' | 'reservations' | 'financial' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending' | 'households';
+type Screen = 'directory' | 'reservations' | 'financial' | 'notifications' | 'privacy' | 'contact-edit' | 'admin-pending' | 'households' | 'counterparties';
 
 function SignInPage() {
   const { instance, inProgress } = useMsal();
@@ -77,7 +78,11 @@ function MainApp() {
   const displayName = accounts[0]?.name ?? accounts[0]?.username ?? t('app.user');
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
 
-  const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending', 'households'];
+  const ADMIN_SCREENS: Screen[] = ['counterparties', 'households', 'admin-pending'];
+  const [adminAnchor, setAdminAnchor] = useState<null | HTMLElement>(null);
+  const adminActive = ADMIN_SCREENS.includes(screen);
+
+  const roleScreens: Screen[] = ['directory', 'financial', 'notifications', 'privacy', 'contact-edit', 'admin-pending', 'households', 'counterparties'];
 
   return (
     <>
@@ -130,7 +135,7 @@ function MainApp() {
           scrollbarWidth: 'none',
         }}>
           <Tabs
-            value={screen}
+            value={adminActive ? false : screen}
             onChange={(_, v) => setScreen(v)}
             textColor="inherit"
             variant="scrollable"
@@ -151,22 +156,47 @@ function MainApp() {
             <Tab label={t('nav.notifications')} value="notifications" />
             <Tab label={t('nav.finance')} value="financial" />
             <Tab label={t('nav.reservations')} value="reservations" />
+            {initialRole === 'admin' && <Tab label={t('nav.directory')} value="directory" />}
             {initialRole === 'admin' && (
               <Tab
-                value="admin-pending"
+                value="__admin__"
                 label={
-                  <Badge badgeContent={pendingCount} color="error" max={99} invisible={pendingCount === 0}
-                    sx={{ '& .MuiBadge-badge': { right: -10, top: 6 } }}>
-                    <span>{t('nav.adminPending')}</span>
-                  </Badge>
+                  <Box
+                    component="span"
+                    onClick={(e: React.MouseEvent<HTMLElement>) => { e.stopPropagation(); setAdminAnchor(e.currentTarget); }}
+                    sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                  >
+                    <Badge badgeContent={pendingCount} color="error" max={99} invisible={pendingCount === 0}
+                      sx={{ '& .MuiBadge-badge': { right: -6, top: 4 } }}>
+                      <span>{t('nav.administration')}</span>
+                    </Badge>
+                    <span aria-hidden>▾</span>
+                  </Box>
                 }
               />
             )}
-            {initialRole === 'admin' && <Tab label={t('nav.households')} value="households" />}
-            {initialRole === 'admin' && <Tab label={t('nav.directory')} value="directory" />}
             <Tab label={t('nav.privacy')} value="privacy" />
           </Tabs>
         </Box>
+        <Menu
+          anchorEl={adminAnchor}
+          open={Boolean(adminAnchor)}
+          onClose={() => setAdminAnchor(null)}
+          slotProps={{ paper: { sx: { minWidth: 220 } } }}
+        >
+          <MenuItem onClick={() => { setScreen('counterparties'); setAdminAnchor(null); }}>
+            {t('nav.counterparties')}
+          </MenuItem>
+          <MenuItem onClick={() => { setScreen('households'); setAdminAnchor(null); }}>
+            {t('nav.households')}
+          </MenuItem>
+          <MenuItem onClick={() => { setScreen('admin-pending'); setAdminAnchor(null); }}>
+            <Badge badgeContent={pendingCount} color="error" max={99} invisible={pendingCount === 0}
+              sx={{ '& .MuiBadge-badge': { right: -12, top: 8 } }}>
+              <span>{t('nav.adminPending')}</span>
+            </Badge>
+          </MenuItem>
+        </Menu>
       </AppBar>
       <Box
         sx={{
@@ -185,6 +215,7 @@ function MainApp() {
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
         {screen === 'admin-pending' && initialRole === 'admin' && <AdminPendingScreen role={role} />}
         {screen === 'households' && initialRole === 'admin' && <HouseholdsScreen />}
+        {screen === 'counterparties' && initialRole === 'admin' && <CounterpartiesScreen />}
       </Box>
     </>
   );
