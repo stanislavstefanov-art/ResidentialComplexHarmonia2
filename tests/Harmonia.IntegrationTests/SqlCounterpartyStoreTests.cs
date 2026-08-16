@@ -1,5 +1,7 @@
 using Harmonia.Api.Adapters;
+using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application.Counterparties;
+using Harmonia.Domain.Expenses;
 using Xunit;
 
 namespace Harmonia.IntegrationTests;
@@ -65,4 +67,17 @@ public sealed class SqlCounterpartyStoreTests(SqlServerFixture db)
     [Fact]
     public async Task Delete_missing_returns_not_found()
         => Assert.IsType<DeleteCounterpartyStoreResult.NotFound>(await Store().DeleteAsync(Guid.NewGuid()));
+
+    [Fact]
+    public async Task Delete_with_referencing_expense_returns_has_bills()
+    {
+        var store = Store();
+        var cp = await store.CreateAsync($"rel-cp-{Guid.NewGuid():N}", "Electricity", "Utilities", null, null, null);
+
+        var expenseStore = new SqlExpenseStore(db.ConnectionString);
+        await expenseStore.RecordExpenseAsync(new AssociationExpense(
+            Guid.NewGuid(), 10m, "Test bill", cp.Id, new DateOnly(2026, 1, 1), DateTimeOffset.UtcNow, $"rel-{Guid.NewGuid():N}"));
+
+        Assert.IsType<DeleteCounterpartyStoreResult.HasBills>(await store.DeleteAsync(cp.Id));
+    }
 }
