@@ -209,3 +209,17 @@ CREATE TABLE dbo.Counterparties (
     UpdatedAt      datetimeoffset(3)  NOT NULL,
     CONSTRAINT PK_Counterparties PRIMARY KEY (Id)
 );
+
+-- Phase 2: expenses reference a counterparty instead of typing a free-text category.
+-- No production data to preserve — truncate first so the required FK can be added.
+-- Self-guarding on CounterpartyId so this runs exactly once even though schema.sql
+-- re-executes on every test/deploy run.
+IF COL_LENGTH('dbo.AssociationExpenses', 'CounterpartyId') IS NULL
+BEGIN
+    TRUNCATE TABLE dbo.AssociationExpenses;
+    ALTER TABLE dbo.AssociationExpenses DROP COLUMN Category;
+    ALTER TABLE dbo.AssociationExpenses DROP COLUMN ParentCategory;
+    ALTER TABLE dbo.AssociationExpenses
+        ADD CounterpartyId uniqueidentifier NOT NULL
+        REFERENCES dbo.Counterparties(Id);
+END
