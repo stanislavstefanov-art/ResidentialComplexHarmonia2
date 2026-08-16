@@ -17,7 +17,9 @@
     "email": "Email",
     "notes": "Notes",
     "errRefRequired": "Household ref is required.",
-    "edit": "Edit"
+    "edit": "Edit",
+    "delete": "Delete",
+    "loading": "Loading…"
   },
   "nav": {
     "directory": "Directory",
@@ -29,7 +31,10 @@
     "notifications": "Notifications",
     "privacy": "Privacy",
     "contactEdit": "My Details",
-    "adminPending": "Pending Users"
+    "adminPending": "Pending Users",
+    "administration": "Administration",
+    "counterparties": "Counterparties",
+    "households": "Apartments"
   },
   "app": {
     "brand": "Harmonia",
@@ -341,5 +346,51 @@
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",
     "dismiss": "Dismiss"
+  },
+  "households": {
+    "title": "Apartments",
+    "subtitle": "Manage apartment records and square metres for fee calculation.",
+    "addHousehold": "Add Apartment",
+    "loading": "Loading apartments…",
+    "none": "No apartments on record.",
+    "sqMeters": "Sq.m.",
+    "residentName": "Resident",
+    "addTitle": "Add Apartment",
+    "pickerLabel": "Select apartment(s)",
+    "sqMetersLabel": "Square metres",
+    "errRefRequired": "Please select at least one apartment.",
+    "errSave": "Could not save. Please try again.",
+    "saved": "Apartment saved.",
+    "editTitle": "Edit — {{ref}}",
+    "errLoad": "Could not load apartments. Please try again.",
+    "deleteTitle": "Delete apartment?",
+    "deleteConfirm": "Apartment <b>{{ref}}</b> will be permanently deleted.",
+    "deleted": "Apartment deleted.",
+    "errDelete": "Could not delete. Please try again.",
+    "building": "Building",
+    "apartment": "Apartment",
+    "addApartment": "Add apartment"
+  },
+  "counterparties": {
+    "title": "Counterparties",
+    "add": "Add counterparty",
+    "addTitle": "Add counterparty",
+    "editTitle": "Edit counterparty",
+    "name": "Name",
+    "category": "Category",
+    "parentCategory": "Parent category",
+    "vatNumber": "VAT number",
+    "phone": "Phone",
+    "email": "Email",
+    "empty": "No counterparties yet.",
+    "created": "Counterparty added",
+    "updated": "Counterparty updated",
+    "deleted": "Counterparty deleted",
+    "deleteTitle": "Delete counterparty",
+    "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
+    "deleteHasBills": "Cannot delete — this counterparty has bills attached",
+    "loadError": "Could not load counterparties.",
+    "saveError": "Could not save counterparty.",
+    "deleteError": "Could not delete counterparty."
   }
 }

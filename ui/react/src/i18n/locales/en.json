@@ -17,6 +17,7 @@
     "email": "Email",
     "notes": "Notes",
     "edit": "Edit",
+    "delete": "Delete",
     "emailInvalid": "Enter a valid email address."
   },
   "nav": {
@@ -30,7 +31,9 @@
     "privacy": "Privacy",
     "contactEdit": "My Details",
     "adminPending": "Pending Users",
-    "households": "Apartments"
+    "households": "Apartments",
+    "administration": "Administration",
+    "counterparties": "Counterparties"
   },
   "app": {
     "brand": "Harmonia",
@@ -371,5 +374,27 @@
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",
     "dismiss": "Dismiss"
+  },
+  "counterparties": {
+    "title": "Counterparties",
+    "add": "Add counterparty",
+    "addTitle": "Add counterparty",
+    "editTitle": "Edit counterparty",
+    "name": "Name",
+    "category": "Category",
+    "parentCategory": "Parent category",
+    "vatNumber": "VAT number",
+    "phone": "Phone",
+    "email": "Email",
+    "empty": "No counterparties yet.",
+    "created": "Counterparty added",
+    "updated": "Counterparty updated",
+    "deleted": "Counterparty deleted",
+    "deleteTitle": "Delete counterparty",
+    "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
+    "deleteHasBills": "Cannot delete — this counterparty has bills attached",
+    "loadError": "Could not load counterparties.",
+    "saveError": "Could not save counterparty.",
+    "deleteError": "Could not delete counterparty."
   }
 }
