@@ -15,7 +15,7 @@ const APTS: Record<Building, number[]> = {
   X4: Array.from({ length: 16 }, (_, i) => i + 1),
 };
 
-function buildRef(rows: ApartmentRow[]): string {
+export function buildRef(rows: ApartmentRow[]): string {
   const valid = rows.filter(r => r.building !== '' && r.number !== 0);
   if (valid.length === 0) return '';
   const grouped = new Map<Building, number[]>();
