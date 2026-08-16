@@ -195,3 +195,17 @@ CREATE TABLE dbo.Households
         CONSTRAINT DF_Households_SqMeters DEFAULT 0,
     CONSTRAINT PK_Households PRIMARY KEY (HouseholdRef)
 );
+
+IF OBJECT_ID(N'dbo.Counterparties', N'U') IS NULL
+CREATE TABLE dbo.Counterparties (
+    Id             uniqueidentifier   NOT NULL,
+    Name           nvarchar(256)      NOT NULL,
+    Category       nvarchar(100)      NOT NULL,
+    ParentCategory nvarchar(100)      NOT NULL,
+    VatNumber      nvarchar(64)       NULL,
+    Phone          nvarchar(32)       NULL,
+    Email          nvarchar(320)      NULL,
+    CreatedAt      datetimeoffset(3)  NOT NULL,
+    UpdatedAt      datetimeoffset(3)  NOT NULL,
+    CONSTRAINT PK_Counterparties PRIMARY KEY (Id)
+);
