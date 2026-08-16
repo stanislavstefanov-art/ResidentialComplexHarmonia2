@@ -7,9 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SwPush } from '@angular/service-worker';
-import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
-import { UserMenuComponent } from '../user-menu/user-menu.component';
-import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
+import { NavComponent } from '../nav/nav.component';
 import { NotificationService } from './notification.service';
 import { NotificationRecordDto } from './models';
 import { RoleService } from '../role.service';
@@ -19,28 +17,10 @@ type PushStatus = 'checking' | 'subscribed' | 'not-subscribed' | 'unsupported' |
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent, PendingBadgeComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, NavComponent],
   template: `
     <div class="harmonia-shell">
-      <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
-        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
-        <div class="flex-spacer"></div>
-        <a routerLink="/notifications" class="nav-link nav-active">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
-        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }
-        @if (isAdmin) { <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a> }
-        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
-        @if (isAdmin) {
-        <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="role = 'resident'; reload()" class="role-btn">{{ 'app.roleResident' | translate }}</button>
-          <button [class.role-active]="role === 'admin'" (click)="role = 'admin'; reload()" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
-        </span>
-        }
-        <app-language-switcher />
-        <app-user-menu />
-      </header>
+      <app-nav [role]="role" (roleChange)="role = $event; reload()" />
 
       <main class="harmonia-content">
 
@@ -143,19 +123,6 @@ type PushStatus = 'checking' | 'subscribed' | 'not-subscribed' | 'unsupported' |
   `,
   styles: [`
     .harmonia-shell { min-height: 100vh; background: #f5f5f0; }
-    .harmonia-header {
-      display: flex; align-items: center; gap: 12px; padding: 12px 24px;
-      background: #2e6b4f; color: white;
-    }
-    .harmonia-logo { font-size: 1.25rem; font-weight: 700; }
-    .harmonia-subtitle { opacity: .7; font-size: .875rem; }
-    .flex-spacer { flex: 1; }
-    .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; }
-    .nav-link:hover { background: rgba(255,255,255,.1); }
-    .nav-active { background: rgba(255,255,255,.18); color: white; font-weight: 600; }
-    .role-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); margin-left: 8px; }
-    .role-btn { background: transparent; color: rgba(255,255,255,.75); border: none; padding: 4px 12px; cursor: pointer; font-size: .8125rem; }
-    .role-btn.role-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
     .harmonia-content { max-width: 900px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; }
     ::ng-deep .mb-card { margin-bottom: 0 !important; }
     .record-form {}
