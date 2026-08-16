@@ -138,7 +138,7 @@ function buildNameByRef(entries: DirectoryEntryAdmin[]): Map<string, string> {
       @if (deleteError()) { <p class="error-row">{{ deleteError() }}</p> }
       <ng-template #footer>
         <p-button [label]="'common.cancel' | translate" icon="pi pi-times" severity="secondary" [outlined]="true" [disabled]="deleting()" (onClick)="deleteVisible = false" />
-        <p-button [label]="'common.save' | translate" icon="pi pi-trash" severity="danger" [loading]="deleting()" (onClick)="confirmDelete()" />
+        <p-button [label]="'common.delete' | translate" icon="pi pi-trash" severity="danger" [loading]="deleting()" (onClick)="confirmDelete()" />
       </ng-template>
     </p-dialog>
   `,
