@@ -19,7 +19,9 @@ import { RoleService } from '../role.service';
       <a routerLink="/notifications" routerLinkActive="nav-active" class="nav-link">{{ 'nav.notifications' | translate }}</a>
       <a routerLink="/financial" routerLinkActive="nav-active" class="nav-link">{{ 'nav.finance' | translate }}</a>
       <a routerLink="/reservations" routerLinkActive="nav-active" class="nav-link">{{ 'nav.reservations' | translate }}</a>
-      <a routerLink="/directory" routerLinkActive="nav-active" class="nav-link">{{ 'nav.directory' | translate }}</a>
+      @if (isAdmin) {
+        <a routerLink="/directory" routerLinkActive="nav-active" class="nav-link">{{ 'nav.directory' | translate }}</a>
+      }
       @if (isAdmin) {
         <span class="admin-menu" (mouseleave)="adminOpen = false">
           <a class="nav-link" (click)="adminOpen = !adminOpen">{{ 'nav.administration' | translate }} ▾<app-pending-badge /></a>
@@ -33,7 +35,7 @@ import { RoleService } from '../role.service';
         </span>
       }
       <a routerLink="/privacy" routerLinkActive="nav-active" class="nav-link">{{ 'nav.privacy' | translate }}</a>
-      @if (isAdmin) {
+      @if (isAdmin && showRoleToggle) {
         <span class="role-toggle">
           <button [class.role-active]="role === 'resident'" (click)="setRole('resident')" class="role-btn">{{ 'app.roleResident' | translate }}</button>
           <button [class.role-active]="role === 'admin'" (click)="setRole('admin')" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
@@ -79,6 +81,7 @@ import { RoleService } from '../role.service';
 export class NavComponent {
   readonly isAdmin = inject(RoleService).isAdmin;
   @Input() role: 'resident' | 'admin' = 'resident';
+  @Input() showRoleToggle = true;
   @Output() roleChange = new EventEmitter<'resident' | 'admin'>();
   adminOpen = false;
 

@@ -115,7 +115,7 @@ function fmtDate(d: Date): string {
     <div class="harmonia-shell">
 
       <!-- Header -->
-      <app-nav />
+      <app-nav [showRoleToggle]="false" />
 
       <main class="harmonia-content">
         <p-card>
