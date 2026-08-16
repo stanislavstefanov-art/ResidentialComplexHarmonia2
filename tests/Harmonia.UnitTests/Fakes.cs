@@ -91,6 +91,10 @@ public sealed class FakeExpenseStore : IExpenseStore
 {
     private readonly Dictionary<string, AssociationExpense> _byKey = [];
 
+    // Optional seam: tests can register counterparty display fields for a given
+    // CounterpartyId to assert exact joined output; unseeded ids get placeholders.
+    public Dictionary<Guid, (string Name, string Category, string ParentCategory)> Counterparties { get; } = [];
+
     public Task<RecordExpenseResult> RecordExpenseAsync(
         AssociationExpense expense, CancellationToken ct = default)
     {
@@ -100,10 +104,21 @@ public sealed class FakeExpenseStore : IExpenseStore
         return Task.FromResult<RecordExpenseResult>(new RecordExpenseResult.Created(expense));
     }
 
-    public Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(CancellationToken ct = default)
+    public Task<IReadOnlyList<ExpenseListItem>> ListExpensesAsync(CancellationToken ct = default)
     {
-        var list = _byKey.Values.OrderByDescending(e => e.RecordedAt).ToList();
-        return Task.FromResult<IReadOnlyList<AssociationExpense>>(list);
+        var list = _byKey.Values
+            .OrderByDescending(e => e.RecordedAt)
+            .Select(e =>
+            {
+                var (name, category, parentCategory) = Counterparties.TryGetValue(e.CounterpartyId, out var cp)
+                    ? cp
+                    : ("Unknown Counterparty", "Unknown", "Unknown");
+                return new ExpenseListItem(
+                    e.Id, e.AmountEur, e.Description, e.CounterpartyId,
+                    name, category, parentCategory, e.ExpenseDate, e.RecordedAt, e.IdempotencyKey);
+            })
+            .ToList();
+        return Task.FromResult<IReadOnlyList<ExpenseListItem>>(list);
     }
 
     public Task<AnnualExpenseData> GetAnnualExpensesAsync(int year, CancellationToken ct = default)
@@ -116,7 +131,7 @@ public sealed class FailingExpenseStore : IExpenseStore
         AssociationExpense expense, CancellationToken ct = default)
         => Task.FromResult<RecordExpenseResult>(new RecordExpenseResult.Failed());
 
-    public Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(CancellationToken ct = default)
+    public Task<IReadOnlyList<ExpenseListItem>> ListExpensesAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<AnnualExpenseData> GetAnnualExpensesAsync(int year, CancellationToken ct = default)
