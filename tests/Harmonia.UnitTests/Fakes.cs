@@ -1,4 +1,5 @@
 using Harmonia.Application;
+using Harmonia.Application.Counterparties;
 using Harmonia.Application.Directory;
 using Harmonia.Application.Expenses;
 using Harmonia.Application.MaintenanceFees;
@@ -7,6 +8,7 @@ using Harmonia.Application.Payments;
 using Harmonia.Application.PendingSignIn;
 using Harmonia.Application.Reservations;
 using Harmonia.Domain;
+using Harmonia.Domain.Counterparties;
 using Harmonia.Domain.Directory;
 using Harmonia.Domain.Expenses;
 using Harmonia.Domain.MaintenanceFees;
@@ -118,6 +120,82 @@ public sealed class FailingExpenseStore : IExpenseStore
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<AnnualExpenseData> GetAnnualExpensesAsync(int year, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+}
+
+public sealed class FakeCounterpartyStore : ICounterpartyStore
+{
+    private readonly Dictionary<Guid, Counterparty> _byId = [];
+
+    // Phase 1: no bills FK exists yet, so nothing is ever "in use". Flip to true in a
+    // specific test to exercise the HasBills path without a real FK.
+    public HashSet<Guid> WithBills { get; } = [];
+
+    public Task<IReadOnlyList<Counterparty>> ListAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<Counterparty>>(
+            _byId.Values.OrderBy(c => c.Name).ToList());
+
+    public Task<Counterparty?> GetAsync(Guid id, CancellationToken ct = default)
+    {
+        _byId.TryGetValue(id, out var cp);
+        return Task.FromResult(cp);
+    }
+
+    public Task<Counterparty> CreateAsync(
+        string name, string category, string parentCategory,
+        string? vatNumber, string? phone, string? email, CancellationToken ct = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var cp = new Counterparty(Guid.NewGuid(), name, category, parentCategory, vatNumber, phone, email, now, now);
+        _byId[cp.Id] = cp;
+        return Task.FromResult(cp);
+    }
+
+    public Task<UpdateCounterpartyStoreResult> UpdateAsync(
+        Guid id, string name, string category, string parentCategory,
+        string? vatNumber, string? phone, string? email, CancellationToken ct = default)
+    {
+        if (!_byId.TryGetValue(id, out var existing))
+            return Task.FromResult<UpdateCounterpartyStoreResult>(new UpdateCounterpartyStoreResult.NotFound());
+        var updated = existing with
+        {
+            Name = name, Category = category, ParentCategory = parentCategory,
+            VatNumber = vatNumber, Phone = phone, Email = email, UpdatedAt = DateTimeOffset.UtcNow
+        };
+        _byId[id] = updated;
+        return Task.FromResult<UpdateCounterpartyStoreResult>(new UpdateCounterpartyStoreResult.Ok(updated));
+    }
+
+    public Task<DeleteCounterpartyStoreResult> DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        if (!_byId.ContainsKey(id))
+            return Task.FromResult<DeleteCounterpartyStoreResult>(new DeleteCounterpartyStoreResult.NotFound());
+        if (WithBills.Contains(id))
+            return Task.FromResult<DeleteCounterpartyStoreResult>(new DeleteCounterpartyStoreResult.HasBills());
+        _byId.Remove(id);
+        return Task.FromResult<DeleteCounterpartyStoreResult>(new DeleteCounterpartyStoreResult.Ok());
+    }
+}
+
+public sealed class FailingCounterpartyStore : ICounterpartyStore
+{
+    public Task<IReadOnlyList<Counterparty>> ListAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<Counterparty?> GetAsync(Guid id, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<Counterparty> CreateAsync(
+        string name, string category, string parentCategory,
+        string? vatNumber, string? phone, string? email, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<UpdateCounterpartyStoreResult> UpdateAsync(
+        Guid id, string name, string category, string parentCategory,
+        string? vatNumber, string? phone, string? email, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<DeleteCounterpartyStoreResult> DeleteAsync(Guid id, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
