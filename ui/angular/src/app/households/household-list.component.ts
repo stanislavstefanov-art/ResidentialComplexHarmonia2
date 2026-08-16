@@ -118,7 +118,7 @@ function buildNameByRef(entries: DirectoryEntryAdmin[]): Map<string, string> {
       </ng-template>
     </p-dialog>
 
-    <p-dialog [(visible)]="editDialogVisible" [header]="(editTarget?.householdRef ?? '') + ' — ' + (t.instant('households.editTitle'))"
+    <p-dialog [(visible)]="editDialogVisible" [header]="t.instant('households.editTitle', { ref: editTarget?.householdRef })"
               [modal]="true" [style]="{ width: '28rem' }" [draggable]="false" [resizable]="false">
       <div class="edit-form">
         <div class="field">
@@ -134,7 +134,7 @@ function buildNameByRef(entries: DirectoryEntryAdmin[]): Map<string, string> {
 
     <p-dialog [(visible)]="deleteVisible" [header]="'households.deleteTitle' | translate"
               [modal]="true" [style]="{ width: '28rem' }" [draggable]="false" [resizable]="false" [closable]="!deleting()">
-      <p class="depart-message">{{ t.instant('households.deleteConfirm', { ref: deleteTarget?.householdRef }) }}</p>
+      <p class="depart-message" [innerHTML]="t.instant('households.deleteConfirm', { ref: deleteTarget?.householdRef })"></p>
       @if (deleteError()) { <p class="error-row">{{ deleteError() }}</p> }
       <ng-template #footer>
         <p-button [label]="'common.cancel' | translate" icon="pi pi-times" severity="secondary" [outlined]="true" [disabled]="deleting()" (onClick)="deleteVisible = false" />

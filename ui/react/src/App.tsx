@@ -136,7 +136,7 @@ function MainApp() {
         }}>
           <Tabs
             value={adminActive ? false : screen}
-            onChange={(_, v) => setScreen(v)}
+            onChange={(_, v) => { if (v !== '__admin__') setScreen(v); }}
             textColor="inherit"
             variant="scrollable"
             scrollButtons={false}
@@ -160,12 +160,9 @@ function MainApp() {
             {initialRole === 'admin' && (
               <Tab
                 value="__admin__"
+                onClick={(e: React.MouseEvent<HTMLElement>) => setAdminAnchor(e.currentTarget)}
                 label={
-                  <Box
-                    component="span"
-                    onClick={(e: React.MouseEvent<HTMLElement>) => { e.stopPropagation(); setAdminAnchor(e.currentTarget); }}
-                    sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-                  >
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
                     <Badge badgeContent={pendingCount} color="error" max={99} invisible={pendingCount === 0}
                       sx={{ '& .MuiBadge-badge': { right: -6, top: 4 } }}>
                       <span>{t('nav.administration')}</span>
