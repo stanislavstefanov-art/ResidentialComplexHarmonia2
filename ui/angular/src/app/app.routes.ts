@@ -12,6 +12,7 @@ import { NotificationComponent } from './notifications/notification.component';
 import { PrivacyComponent } from './privacy/privacy.component';
 import { ContactEditComponent } from './contact-edit/contact-edit.component';
 import { CounterpartyListComponent } from './counterparties/counterparty-list.component';
+import { HouseholdListComponent } from './households/household-list.component';
 
 const guard = [MsalGuard];
 
@@ -19,6 +20,11 @@ export const routes: Routes = [
   { path: '', redirectTo: 'notifications', pathMatch: 'full' },
   { path: 'directory', component: DirectoryListComponent, canActivate: [...guard, adminGuard] },
   { path: 'counterparties', component: CounterpartyListComponent, canActivate: [...guard, adminGuard] },
+  {
+    path: 'households',
+    component: HouseholdListComponent,
+    canActivate: [...guard, adminGuard],
+  },
   { path: 'reservations', component: ReservationsComponent, canActivate: guard },
   { path: 'financial', component: FinancialComponent, canActivate: guard },
   { path: 'expenses', component: ExpenseComponent, canActivate: guard },
