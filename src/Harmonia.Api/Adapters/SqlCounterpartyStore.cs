@@ -83,12 +83,20 @@ public sealed class SqlCounterpartyStore(string connectionString) : ICounterpart
             : new UpdateCounterpartyStoreResult.NotFound();
     }
 
-    // Phase 1: no CounterpartyId FK on AssociationExpenses yet, so nothing can reference a counterparty.
-    // Delete is unconditional here. Phase 2 adds a "has bills" pre-check that returns HasBills.
     public async Task<DeleteCounterpartyStoreResult> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         await using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync(ct);
+
+        await using (var checkCmd = conn.CreateCommand())
+        {
+            checkCmd.CommandText = "SELECT COUNT(1) FROM dbo.AssociationExpenses WHERE CounterpartyId = @Id;";
+            checkCmd.Parameters.AddWithValue("@Id", id);
+            var billCount = (int)await checkCmd.ExecuteScalarAsync(ct);
+            if (billCount > 0)
+                return new DeleteCounterpartyStoreResult.HasBills();
+        }
+
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = "DELETE FROM dbo.Counterparties WHERE Id = @Id;";
         cmd.Parameters.AddWithValue("@Id", id);
