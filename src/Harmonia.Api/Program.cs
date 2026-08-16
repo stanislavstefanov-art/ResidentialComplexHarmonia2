@@ -3,6 +3,8 @@ using Harmonia.Api.Adapters;
 using Harmonia.Api.Admin;
 using Harmonia.Api.Households;
 using Harmonia.Application.Households;
+using Harmonia.Api.Counterparties;
+using Harmonia.Application.Counterparties;
 using Harmonia.Api.Directory;
 using Harmonia.Api.Expenses;
 using Harmonia.Api.Financial;
@@ -50,6 +52,7 @@ builder.Services.AddSingleton<IPaymentStore>(new SqlPaymentStore(defaultConn));
 builder.Services.AddSingleton<INotificationStore>(new SqlNotificationStore(defaultConn));
 builder.Services.AddSingleton<IDirectoryStore>(new SqlDirectoryStore(defaultConn));
 builder.Services.AddSingleton<IHouseholdStore>(new SqlHouseholdStore(defaultConn));
+builder.Services.AddSingleton<ICounterpartyStore>(new SqlCounterpartyStore(defaultConn));
 builder.Services.AddSingleton<IPendingSignInStore>(new SqlPendingSignInStore(defaultConn));
 builder.Services.AddSingleton<IHouseholdByOidLookup>(new SqlHouseholdByOidLookup(defaultConn));
 
@@ -186,6 +189,11 @@ builder.Services.AddScoped<PurgeExpiredPendingSignIns>();
 builder.Services.AddScoped<GetHouseholds>();
 builder.Services.AddScoped<UpsertHousehold>();
 builder.Services.AddScoped<DeleteHousehold>();
+builder.Services.AddScoped<ListCounterparties>();
+builder.Services.AddScoped<CreateCounterparty>();
+builder.Services.AddScoped<GetCounterparty>();
+builder.Services.AddScoped<UpdateCounterparty>();
+builder.Services.AddScoped<DeleteCounterparty>();
 
 var app = builder.Build();
 
@@ -444,6 +452,31 @@ app.MapDelete(
     "/households/item",
     (DeleteHousehold uc, string householdRef, CancellationToken ct) =>
         HouseholdsEndpoints.DeleteHouseholdEndpoint(uc, householdRef, ct));
+
+app.MapGet(
+    "/counterparties",
+    (ListCounterparties uc, CancellationToken ct) =>
+        CounterpartyEndpoints.ListCounterpartiesEndpoint(uc, ct));
+
+app.MapPost(
+    "/counterparties",
+    (CreateCounterparty uc, CounterpartyRequest body, CancellationToken ct) =>
+        CounterpartyEndpoints.CreateCounterpartyEndpoint(uc, body, ct));
+
+app.MapGet(
+    "/counterparties/{id:guid}",
+    (GetCounterparty uc, Guid id, CancellationToken ct) =>
+        CounterpartyEndpoints.GetCounterpartyEndpoint(uc, id, ct));
+
+app.MapPut(
+    "/counterparties/{id:guid}",
+    (UpdateCounterparty uc, Guid id, CounterpartyRequest body, CancellationToken ct) =>
+        CounterpartyEndpoints.UpdateCounterpartyEndpoint(uc, id, body, ct));
+
+app.MapDelete(
+    "/counterparties/{id:guid}",
+    (DeleteCounterparty uc, Guid id, CancellationToken ct) =>
+        CounterpartyEndpoints.DeleteCounterpartyEndpoint(uc, id, ct));
 
 app.MapGet("/healthz", () => Results.Ok()).AllowAnonymous();
 
