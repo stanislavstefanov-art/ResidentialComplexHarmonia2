@@ -136,7 +136,9 @@
     "orEnterManually": "or enter manually",
     "clearForm": "Clear",
     "counterpartyLabel": "Counterparty",
-    "errCounterpartyRequired": "Please select a counterparty."
+    "errCounterpartyRequired": "Please select a counterparty.",
+    "residentTabFees": "Fees",
+    "residentTabPayments": "Payments"
   },
   "expenses": {
     "cardTitle": "Building Expenses",
