@@ -61,25 +61,32 @@ test('renders payment rows from API (resident)', async () => {
       dateReceived: '2026-06-15', recordedAt: '2026-06-15T09:00:00Z', idempotencyKey: 'ik2' },
   ]);
   renderScreen('resident');
+  await waitFor(() => screen.getByTestId('summary-charges'));
+  fireEvent.click(screen.getByRole('tab', { name: /payments/i }));
   await waitFor(() => screen.getByTestId('payment-row-p1'));
   expect(screen.getByTestId('payment-row-p1').textContent).toContain('300');
 });
 
 test('pay button opens stub dialog (resident)', async () => {
   renderScreen('resident');
+  await waitFor(() => screen.getByTestId('summary-charges'));
+  fireEvent.click(screen.getByRole('tab', { name: /payments/i }));
   await waitFor(() => screen.getByTestId('pay-btn'));
   fireEvent.click(screen.getByTestId('pay-btn'));
   expect(screen.getByTestId('pay-dialog')).toBeInTheDocument();
 });
 
-test('admin sees Bills as the default active tab', async () => {
+test('admin sees Income as the default active tab', async () => {
   renderScreen('admin');
-  await waitFor(() => screen.getByTestId('bill-form'));
-  expect(screen.getByRole('tab', { selected: true }).textContent).toMatch(/bill/i);
+  await waitFor(() => screen.getByTestId('fee-form'));
+  expect(screen.getAllByRole('tab', { selected: true })[0].textContent).toMatch(/income/i);
 });
 
-test('resident view has no tabs', async () => {
+test('resident view has Fees and Payments tabs', async () => {
   renderScreen('resident');
   await waitFor(() => screen.getByTestId('summary-charges'));
-  expect(screen.queryByRole('tab')).toBeNull();
+  const tabs = screen.getAllByRole('tab');
+  expect(tabs).toHaveLength(2);
+  expect(tabs[0].textContent).toMatch(/fees/i);
+  expect(tabs[1].textContent).toMatch(/payments/i);
 });
