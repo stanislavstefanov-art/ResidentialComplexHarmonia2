@@ -6,6 +6,7 @@ import {
 import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getAllCharges, recordCharge } from '../../api/maintenanceFees';
+import { getBalance } from '../../api/payments';
 import { ChargeDto } from '../../types';
 import { formatEur, currentMonth } from './util';
 
@@ -23,6 +24,7 @@ export default function FeesTab() {
   const { t } = useTranslation();
 
   const [charges, setCharges]       = useState<ChargeDto[]>([]);
+  const [outstanding, setOutstanding] = useState<Map<string, number>>(new Map());
   const [feesLoad, setFeesLoad]     = useState(true);
   const [feesErr, setFeesErr]       = useState('');
   const [feeRef, setFeeRef]         = useState('');
@@ -35,7 +37,16 @@ export default function FeesTab() {
 
   const loadFees = useCallback(async () => {
     setFeesLoad(true); setFeesErr('');
-    try { setCharges(await getAllCharges()); }
+    try {
+      const [chargesData, balanceData] = await Promise.all([
+        getAllCharges(),
+        getBalance().catch(() => null),
+      ]);
+      setCharges(chargesData);
+      if (balanceData) {
+        setOutstanding(new Map(balanceData.lines.map(l => [l.householdRef, l.balance])));
+      }
+    }
     catch { setFeesErr(t('fees.errLoad')); }
     finally { setFeesLoad(false); }
   }, [t]);
@@ -93,11 +104,12 @@ export default function FeesTab() {
                 <TableCell>{t('common.description')}</TableCell>
                 <TableCell align="right">{t('common.amount')}</TableCell>
                 <TableCell>{t('fees.chargedAt')}</TableCell>
+                <TableCell align="right">{t('finance.outstanding')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {charges.length === 0 ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('fees.none')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('fees.none')}</TableCell></TableRow>
               ) : charges.map(c => (
                 <TableRow key={c.id} data-testid={`charge-row-${c.id}`}>
                   <TableCell>{c.period}</TableCell>
@@ -105,6 +117,9 @@ export default function FeesTab() {
                   <TableCell>{c.description}</TableCell>
                   <TableCell align="right">{formatEur(c.amountEur)}</TableCell>
                   <TableCell>{c.chargedAt.slice(0, 10)}</TableCell>
+                  <TableCell align="right" data-testid={`outstanding-${c.id}`}>
+                    {outstanding.has(c.householdRef) ? formatEur(outstanding.get(c.householdRef)!) : '—'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
