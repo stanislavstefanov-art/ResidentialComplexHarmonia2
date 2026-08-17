@@ -72,7 +72,7 @@ function formatEur(n: number): string {
                 <td>{{ c.description }}</td>
                 <td>{{ formatEur(c.amountEur) }}</td>
                 <td>{{ c.chargedAt | date:'yyyy-MM-dd' }}</td>
-                <td [attr.data-testid]="'charge-outstanding-' + c.id">{{ formatEur(outstandingFor(c.householdRef)) }}</td>
+                <td [attr.data-testid]="'charge-outstanding-' + c.id">{{ outstandingFor(c.householdRef) === null ? '—' : formatEur(outstandingFor(c.householdRef)!) }}</td>
               </tr>
             }
             @if (charges().length === 0) {
@@ -141,12 +141,14 @@ export class FeesTabComponent implements OnInit {
   loadBalance(): void {
     this.paySvc.getBalance().subscribe({
       next: b => this.balanceMap.set(new Map(b.lines.map(l => [l.householdRef, l.balance]))),
-      error: () => { /* non-blocking — Outstanding column just shows 0 */ },
+      // Non-blocking — Outstanding column just shows '—' for this household
+      // rather than defaulting to 0, which would misleadingly read as "fully paid".
+      error: () => {},
     });
   }
 
-  outstandingFor(householdRef: string): number {
-    return this.balanceMap().get(householdRef) ?? 0;
+  outstandingFor(householdRef: string): number | null {
+    return this.balanceMap().get(householdRef) ?? null;
   }
 
   onFeeSubmit(): void {
