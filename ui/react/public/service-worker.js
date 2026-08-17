@@ -1,4 +1,4 @@
-const CACHE = 'harmonia-v3';
+const CACHE = 'harmonia-v4';
 
 const APP_SHELL = [
   '/manifest.json',
@@ -31,6 +31,11 @@ self.addEventListener('push', event => {
   );
 });
 
+// caches.match() resolves to undefined on a miss (it doesn't reject). Passing undefined to
+// event.respondWith() throws "Failed to convert value to 'Response'" and kills the whole fetch —
+// so every fallback chain below must bottom out in a real Response, never a bare cache lookup.
+const OFFLINE_RESPONSE = () => new Response('', { status: 503, statusText: 'Offline' });
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
@@ -41,7 +46,9 @@ self.addEventListener('fetch', event => {
   // Network-first for API calls so data is always fresh
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request))
+      fetch(request).catch(() =>
+        caches.match(request).then(cached => cached || OFFLINE_RESPONSE())
+      )
     );
     return;
   }
@@ -55,7 +62,9 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() =>
+          caches.match('/index.html').then(cached => cached || OFFLINE_RESPONSE())
+        )
     );
     return;
   }
@@ -70,7 +79,9 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE).then(cache => cache.put(request, clone));
         }
         return response;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() =>
+        caches.match('/index.html').then(cached => cached || OFFLINE_RESPONSE())
+      );
     })
   );
 });
