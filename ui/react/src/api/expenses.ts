@@ -1,9 +1,9 @@
 import { API_BASE, apiFetch } from './config';
-import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto, ScannedInvoiceDto } from '../types';
+import { ExpenseDto, ExpenseListItemDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto, ScannedInvoiceDto } from '../types';
 
 const BASE = API_BASE;
 
-export async function getExpenses(): Promise<ExpenseDto[]> {
+export async function getExpenses(): Promise<ExpenseListItemDto[]> {
   const res = await apiFetch(`${BASE}/expenses`);
   if (!res.ok) throw new Error(`getExpenses failed: ${res.status}`);
   return res.json();
