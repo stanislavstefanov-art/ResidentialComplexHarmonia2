@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExpenseDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto, ScannedInvoiceDto } from './models';
+import { ExpenseDto, ExpenseListItemDto, RecordExpenseRequest, RecordIncomeRequest, AnnualReportDto, ScannedInvoiceDto } from './models';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiUrl;
@@ -10,8 +10,8 @@ const API = environment.apiUrl;
 export class ExpenseService {
   private readonly http = inject(HttpClient);
 
-  getExpenses(): Observable<ExpenseDto[]> {
-    return this.http.get<ExpenseDto[]>(`${API}/expenses`);
+  getExpenses(): Observable<ExpenseListItemDto[]> {
+    return this.http.get<ExpenseListItemDto[]>(`${API}/expenses`);
   }
 
   recordExpense(body: RecordExpenseRequest): Observable<ExpenseDto> {

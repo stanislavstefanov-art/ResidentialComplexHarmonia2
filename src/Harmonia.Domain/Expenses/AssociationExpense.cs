@@ -4,8 +4,7 @@ public sealed record AssociationExpense(
     Guid           Id,
     decimal        AmountEur,
     string         Description,
-    string         Category,
-    string?        ParentCategory,
+    Guid           CounterpartyId,
     DateOnly       ExpenseDate,
     DateTimeOffset RecordedAt,
     string         IdempotencyKey);

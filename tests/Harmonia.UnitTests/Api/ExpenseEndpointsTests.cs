@@ -13,7 +13,7 @@ public class ExpenseEndpointsTests
     private static readonly DateOnly TestDate = new(2026, 7, 1);
 
     private static RecordExpenseRequest TestRequest(string key = "k1") =>
-        new(150m, "Gardening", "Maintenance", null, TestDate, key);
+        new(150m, "Gardening", Guid.NewGuid(), TestDate, key);
 
     [Fact]
     public async Task Admin_record_returns_201()
@@ -33,7 +33,7 @@ public class ExpenseEndpointsTests
         var ctx = new SessionContext(IsResident: false, IsAdmin: true, HouseholdRef: null);
         var store = new FakeExpenseStore();
         var useCase = new RecordExpense(new FakeSession(ctx), store);
-        await useCase.ExecuteAsync(100m, "X", "Y", null, TestDate, "dup");
+        await useCase.ExecuteAsync(100m, "X", Guid.NewGuid(), TestDate, "dup");
 
         var result = await ExpenseEndpoints.RecordExpenseEndpoint(useCase, TestRequest("dup"), NullLogger.Instance, default);
 
@@ -70,7 +70,7 @@ public class ExpenseEndpointsTests
         var ctx = new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: null);
         var store = new FakeExpenseStore();
         await store.RecordExpenseAsync(
-            new AssociationExpense(Guid.NewGuid(), 100m, "X", "Y", null, TestDate, DateTimeOffset.UtcNow, "k1"), default);
+            new AssociationExpense(Guid.NewGuid(), 100m, "X", Guid.NewGuid(), TestDate, DateTimeOffset.UtcNow, "k1"), default);
         var useCase = new ListExpenses(new FakeSession(ctx), store);
 
         var result = await ExpenseEndpoints.ListExpensesEndpoint(useCase, NullLogger.Instance, default);

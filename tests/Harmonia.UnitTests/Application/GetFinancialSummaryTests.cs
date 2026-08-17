@@ -92,5 +92,5 @@ public class GetFinancialSummaryTests
         new(Guid.NewGuid(), new HouseholdRef("HH-1"), amount, "Test", period, DateTimeOffset.UtcNow, key);
 
     private static AssociationExpense MakeExpense(decimal amount, DateOnly date, string key) =>
-        new(Guid.NewGuid(), amount, "Test", "Maintenance", null, date, DateTimeOffset.UtcNow, key);
+        new(Guid.NewGuid(), amount, "Test", Guid.NewGuid(), date, DateTimeOffset.UtcNow, key);
 }

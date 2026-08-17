@@ -5,13 +5,10 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
 import { TranslatePipe } from '@ngx-translate/core';
-import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
-import { UserMenuComponent } from '../user-menu/user-menu.component';
-import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
+import { NavComponent } from '../nav/nav.component';
 import { RoleService } from '../role.service';
-import { BillsTabComponent } from './tabs/bills-tab.component';
-import { FeesTabComponent } from './tabs/fees-tab.component';
-import { PaymentsTabComponent } from './tabs/payments-tab.component';
+import { IncomeTabComponent } from './tabs/income-tab.component';
+import { OutcomeTabComponent } from './tabs/outcome-tab.component';
 import { ReportTabComponent } from './tabs/report-tab.component';
 import { ResidentFinancialComponent } from './tabs/resident-financial.component';
 
@@ -21,48 +18,28 @@ import { ResidentFinancialComponent } from './tabs/resident-financial.component'
   imports: [
     CommonModule, RouterModule,
     CardModule, ButtonModule, TabsModule,
-    TranslatePipe, LanguageSwitcherComponent, UserMenuComponent, PendingBadgeComponent,
-    BillsTabComponent, FeesTabComponent, PaymentsTabComponent, ReportTabComponent,
+    TranslatePipe, NavComponent,
+    IncomeTabComponent, OutcomeTabComponent, ReportTabComponent,
     ResidentFinancialComponent,
   ],
   template: `
     <div class="harmonia-shell">
-      <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
-        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
-        <div class="flex-spacer"></div>
-        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a> }
-        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
-        <a routerLink="/financial" class="nav-link nav-active">{{ 'nav.finance' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }
-        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
-        @if (isAdmin) {
-          <span class="role-toggle">
-            <button [class.role-active]="role === 'resident'" (click)="role = 'resident'" class="role-btn">{{ 'app.roleResident' | translate }}</button>
-            <button [class.role-active]="role === 'admin'" (click)="role = 'admin'" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
-          </span>
-        }
-        <app-language-switcher />
-        <app-user-menu />
-      </header>
+      <app-nav [role]="role" (roleChange)="role = $event" />
 
       <main class="harmonia-content">
         <p-card>
           <ng-template #content>
 
             @if (role === 'admin') {
-              <p-tabs value="bills">
+              <p-tabs value="income">
                 <p-tablist>
-                  <p-tab value="bills">{{ 'finance.tabBills' | translate }}</p-tab>
-                  <p-tab value="fees">{{ 'finance.tabFees' | translate }}</p-tab>
-                  <p-tab value="payments">{{ 'finance.tabPayments' | translate }}</p-tab>
+                  <p-tab value="income">{{ 'finance.tabIncome' | translate }}</p-tab>
+                  <p-tab value="outcome">{{ 'finance.tabOutcome' | translate }}</p-tab>
                   <p-tab value="report">{{ 'finance.tabReport' | translate }}</p-tab>
                 </p-tablist>
                 <p-tabpanels>
-                  <p-tabpanel value="bills"><app-bills-tab /></p-tabpanel>
-                  <p-tabpanel value="fees"><app-fees-tab /></p-tabpanel>
-                  <p-tabpanel value="payments"><app-payments-tab /></p-tabpanel>
+                  <p-tabpanel value="income"><app-income-tab /></p-tabpanel>
+                  <p-tabpanel value="outcome"><app-outcome-tab /></p-tabpanel>
                   <p-tabpanel value="report"><app-report-tab /></p-tabpanel>
                 </p-tabpanels>
               </p-tabs>

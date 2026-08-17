@@ -195,3 +195,31 @@ CREATE TABLE dbo.Households
         CONSTRAINT DF_Households_SqMeters DEFAULT 0,
     CONSTRAINT PK_Households PRIMARY KEY (HouseholdRef)
 );
+
+IF OBJECT_ID(N'dbo.Counterparties', N'U') IS NULL
+CREATE TABLE dbo.Counterparties (
+    Id             uniqueidentifier   NOT NULL,
+    Name           nvarchar(256)      NOT NULL,
+    Category       nvarchar(100)      NOT NULL,
+    ParentCategory nvarchar(100)      NOT NULL,
+    VatNumber      nvarchar(64)       NULL,
+    Phone          nvarchar(32)       NULL,
+    Email          nvarchar(320)      NULL,
+    CreatedAt      datetimeoffset(3)  NOT NULL,
+    UpdatedAt      datetimeoffset(3)  NOT NULL,
+    CONSTRAINT PK_Counterparties PRIMARY KEY (Id)
+);
+
+-- Phase 2: expenses reference a counterparty instead of typing a free-text category.
+-- No production data to preserve — truncate first so the required FK can be added.
+-- Self-guarding on CounterpartyId so this runs exactly once even though schema.sql
+-- re-executes on every test/deploy run.
+IF COL_LENGTH('dbo.AssociationExpenses', 'CounterpartyId') IS NULL
+BEGIN
+    TRUNCATE TABLE dbo.AssociationExpenses;
+    ALTER TABLE dbo.AssociationExpenses DROP COLUMN Category;
+    ALTER TABLE dbo.AssociationExpenses DROP COLUMN ParentCategory;
+    ALTER TABLE dbo.AssociationExpenses
+        ADD CounterpartyId uniqueidentifier NOT NULL
+        REFERENCES dbo.Counterparties(Id);
+END

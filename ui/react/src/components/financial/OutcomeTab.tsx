@@ -1,31 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider,
-  MenuItem, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography,
+  Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getExpenses, recordExpense, scanInvoice } from '../../api/expenses';
-import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES } from '../../types';
+import { ExpenseListItemDto } from '../../types';
+import { CounterpartyDto } from '../../api/counterparties';
+import CounterpartyPicker from './CounterpartyPicker';
 import { formatEur, today } from './util';
 
-export default function BillsTab() {
+export default function OutcomeTab() {
   const { t } = useTranslation();
 
   // Single shared bill form (manual + scan target)
-  const [amount, setAmount]     = useState('');
-  const [desc, setDesc]         = useState('');
-  const [cat, setCat]           = useState<string>(EXPENSE_CATEGORIES[0]);
-  const [parent, setParent]     = useState<string>(PARENT_CATEGORIES[3]); // 'Other'
-  const [date, setDate]         = useState(today());
-  const [confidence, setConf]   = useState<number | null>(null); // null = manual
-  const [scanning, setScanning] = useState(false);
-  const [scanErr, setScanErr]   = useState('');
-  const [saving, setSaving]     = useState(false);
-  const [ok, setOk]             = useState(false);
-  const [formErr, setFormErr]   = useState('');
+  const [amount, setAmount]           = useState('');
+  const [desc, setDesc]               = useState('');
+  const [counterparty, setCounterparty] = useState<CounterpartyDto | null>(null);
+  const [date, setDate]               = useState(today());
+  const [confidence, setConf]         = useState<number | null>(null); // null = manual
+  const [scanning, setScanning]       = useState(false);
+  const [scanErr, setScanErr]         = useState('');
+  const [saving, setSaving]           = useState(false);
+  const [ok, setOk]                   = useState(false);
+  const [formErr, setFormErr]         = useState('');
 
-  const [expenses, setExpenses] = useState<ExpenseDto[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseListItemDto[]>([]);
   const [expLoad, setExpLoad]   = useState(true);
   const [expErr, setExpErr]     = useState('');
 
@@ -38,8 +39,8 @@ export default function BillsTab() {
   useEffect(() => { loadExpenses(); }, [loadExpenses]);
 
   const resetForm = () => {
-    setAmount(''); setDesc(''); setCat(EXPENSE_CATEGORIES[0]);
-    setParent(PARENT_CATEGORIES[3]); setDate(today()); setConf(null);
+    setAmount(''); setDesc(''); setCounterparty(null);
+    setDate(today()); setConf(null);
     setOk(false); setScanErr('');
   };
 
@@ -53,9 +54,8 @@ export default function BillsTab() {
       setAmount(dto.amount != null ? String(dto.amount) : '');
       setDate(dto.date ?? today());
       setDesc(dto.vendor ?? '');
-      setCat(EXPENSE_CATEGORIES[0]);
-      setParent(PARENT_CATEGORIES[3]);
       setConf(dto.confidence);
+      // Scanning never auto-selects a counterparty — the user always picks it manually.
     } catch { setScanErr(t('invoiceScan.errScan')); }
     finally { setScanning(false); }
   };
@@ -64,9 +64,10 @@ export default function BillsTab() {
     e.preventDefault(); setOk(false); setFormErr('');
     const parsed = parseFloat(amount);
     if (!amount || isNaN(parsed) || parsed <= 0) { setFormErr(t('expenses.errAmount')); return; }
+    if (!counterparty) { setFormErr(t('finance.errCounterpartyRequired')); return; }
     setSaving(true);
     try {
-      await recordExpense({ amountEur: parsed, description: desc, category: cat, parentCategory: parent, expenseDate: date, idempotencyKey: crypto.randomUUID() });
+      await recordExpense({ amountEur: parsed, description: desc, counterpartyId: counterparty.id, expenseDate: date, idempotencyKey: crypto.randomUUID() });
       resetForm(); setOk(true); await loadExpenses();
     } catch { setFormErr(t('expenses.errRecord')); }
     finally { setSaving(false); }
@@ -93,14 +94,9 @@ export default function BillsTab() {
             <TextField label={t('expenses.amountEuro')} type="number" slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'data-testid': 'bill-amount' } }} value={amount} onChange={e => setAmount(e.target.value)} required size="small" />
             <TextField label={t('expenses.expenseDate')} type="date" value={date} onChange={e => setDate(e.target.value)} required size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label={t('common.description')} value={desc} onChange={e => setDesc(e.target.value)} required size="small" slotProps={{ htmlInput: { 'data-testid': 'bill-desc' } }} />
-            <TextField label={t('expenses.category')} select value={cat} onChange={e => setCat(e.target.value)} size="small">
-              {EXPENSE_CATEGORIES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </TextField>
-            <TextField label={t('expenses.parentCategory')} select value={parent} onChange={e => setParent(e.target.value)} size="small">
-              {PARENT_CATEGORIES.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
-            </TextField>
+            <CounterpartyPicker value={counterparty} onChange={setCounterparty} />
             <Box sx={{ gridColumn: '1 / -1', display: 'flex', gap: 1.5, alignItems: 'center' }}>
-              <Button data-testid="bill-submit" type="submit" variant="contained" size="small" disabled={saving}>{t('expenses.record')}</Button>
+              <Button data-testid="bill-submit" type="submit" variant="contained" size="small" disabled={saving || !counterparty}>{t('expenses.record')}</Button>
               <Button variant="outlined" size="small" onClick={resetForm} disabled={saving}>{t('finance.clearForm')}</Button>
               {ok && <Alert data-testid="bill-success" severity="success" sx={{ py: 0 }}>{t('expenses.recorded')}</Alert>}
               {formErr && <Alert severity="error" sx={{ py: 0 }}>{formErr}</Alert>}
@@ -124,6 +120,7 @@ export default function BillsTab() {
             <TableHead>
               <TableRow>
                 <TableCell>{t('common.date')}</TableCell>
+                <TableCell>{t('finance.counterpartyLabel')}</TableCell>
                 <TableCell>{t('expenses.category')}</TableCell>
                 <TableCell>{t('common.description')}</TableCell>
                 <TableCell align="right">{t('common.amount')}</TableCell>
@@ -131,11 +128,12 @@ export default function BillsTab() {
             </TableHead>
             <TableBody>
               {expenses.length === 0 ? (
-                <TableRow><TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('expenses.none')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('expenses.none')}</TableCell></TableRow>
               ) : expenses.map(e => (
                 <TableRow key={e.id} data-testid={`expense-row-${e.id}`}>
                   <TableCell>{e.expenseDate}</TableCell>
-                  <TableCell>{e.category}</TableCell>
+                  <TableCell>{e.counterpartyName}</TableCell>
+                  <TableCell>{e.counterpartyCategory}</TableCell>
                   <TableCell>{e.description}</TableCell>
                   <TableCell align="right">{formatEur(e.amountEur)}</TableCell>
                 </TableRow>

@@ -7,36 +7,16 @@ import { ButtonModule } from 'primeng/button';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ContactEditService } from './contact-edit.service';
 import { RoleService } from '../role.service';
-import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
-import { UserMenuComponent } from '../user-menu/user-menu.component';
-import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
+import { NavComponent } from '../nav/nav.component';
 import type { MyContactDto } from './models';
 
 @Component({
   selector: 'app-contact-edit',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, LanguageSwitcherComponent, UserMenuComponent, PendingBadgeComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CardModule, ButtonModule, TranslatePipe, NavComponent],
   template: `
     <div class="harmonia-shell">
-      <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
-        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
-        <div class="flex-spacer"></div>
-        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
-        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }
-        @if (isAdmin) { <a routerLink="/directory" class="nav-link">{{ 'nav.directory' | translate }}</a> }
-        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
-        @if (isAdmin) {
-        <span class="role-toggle">
-          <button [class.role-active]="role === 'resident'" (click)="switchRole('resident')" class="role-btn">{{ 'app.roleResident' | translate }}</button>
-          <button [class.role-active]="role === 'admin'" (click)="switchRole('admin')" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
-        </span>
-        }
-        <app-language-switcher />
-        <app-user-menu />
-      </header>
+      <app-nav [role]="role" (roleChange)="switchRole($event)" />
 
       <main class="harmonia-content">
 

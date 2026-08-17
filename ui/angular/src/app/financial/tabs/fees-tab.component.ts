@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MaintenanceFeeService } from '../../maintenance-fees/maintenance-fee.service';
+import { PaymentService } from '../../payments/payment.service';
 import { ChargeDto } from '../models';
 
 function currentMonth(): string {
@@ -61,6 +62,7 @@ function formatEur(n: number): string {
             <th>{{ 'common.description' | translate }}</th>
             <th>{{ 'common.amount' | translate }}</th>
             <th>{{ 'fees.chargedAt' | translate }}</th>
+            <th>{{ 'finance.outstanding' | translate }}</th>
           </tr></thead>
           <tbody>
             @for (c of charges(); track c.id) {
@@ -70,10 +72,11 @@ function formatEur(n: number): string {
                 <td>{{ c.description }}</td>
                 <td>{{ formatEur(c.amountEur) }}</td>
                 <td>{{ c.chargedAt | date:'yyyy-MM-dd' }}</td>
+                <td [attr.data-testid]="'charge-outstanding-' + c.id">{{ outstandingFor(c.householdRef) === null ? '—' : formatEur(outstandingFor(c.householdRef)!) }}</td>
               </tr>
             }
             @if (charges().length === 0) {
-              <tr><td colspan="5" class="empty-cell">{{ 'fees.none' | translate }}</td></tr>
+              <tr><td colspan="6" class="empty-cell">{{ 'fees.none' | translate }}</td></tr>
             }
           </tbody>
         </table>
@@ -107,6 +110,7 @@ function formatEur(n: number): string {
 })
 export class FeesTabComponent implements OnInit {
   private readonly feeSvc = inject(MaintenanceFeeService);
+  private readonly paySvc = inject(PaymentService);
   private readonly t = inject(TranslateService);
 
   readonly formatEur = formatEur;
@@ -118,10 +122,12 @@ export class FeesTabComponent implements OnInit {
   readonly feeSaving   = signal(false);
   readonly feeOk       = signal(false);
   readonly feeErr      = signal<string | null>(null);
+  readonly balanceMap  = signal<Map<string, number>>(new Map());
   feeForm = { householdRef: '', amountEurStr: '', description: '', period: currentMonth() };
 
   ngOnInit(): void {
     this.loadFees();
+    this.loadBalance();
   }
 
   loadFees(): void {
@@ -130,6 +136,19 @@ export class FeesTabComponent implements OnInit {
       next: list => { this.charges.set(list); this.feesLoading.set(false); },
       error: () => { this.feesError.set(this.t.instant('fees.errLoad')); this.feesLoading.set(false); },
     });
+  }
+
+  loadBalance(): void {
+    this.paySvc.getBalance().subscribe({
+      next: b => this.balanceMap.set(new Map(b.lines.map(l => [l.householdRef, l.balance]))),
+      // Non-blocking — Outstanding column just shows '—' for this household
+      // rather than defaulting to 0, which would misleadingly read as "fully paid".
+      error: () => {},
+    });
+  }
+
+  outstandingFor(householdRef: string): number | null {
+    return this.balanceMap().get(householdRef) ?? null;
   }
 
   onFeeSubmit(): void {

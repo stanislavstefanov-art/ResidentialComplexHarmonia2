@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, CircularProgress,
   Dialog, DialogActions, DialogContent, DialogTitle,
-  Divider, Table, TableBody, TableCell, TableHead, TableRow, Typography,
+  Divider, Tab, Tabs, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -22,8 +22,11 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
+type ResidentTab = 'fees' | 'payments';
+
 export default function ResidentFinancial() {
   const { t } = useTranslation();
+  const [tab, setTab] = useState<ResidentTab>('fees');
 
   // ── Period summary ──────────────────────────────────────────────────────────
   const [period, setPeriod]       = useState(currentMonth());
@@ -109,127 +112,141 @@ export default function ResidentFinancial() {
         </Card>
       )}
 
-      {/* ── Maintenance fees ── */}
-      <SectionDivider label={t('nav.fees')} />
+      {/* ── Tabs ── */}
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mt: 2, mb: 2 }}>
+        <Tab label={t('finance.residentTabFees')} value="fees" />
+        <Tab label={t('finance.residentTabPayments')} value="payments" />
+      </Tabs>
 
-      {feesLoad ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
-      ) : feesErr ? (
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Alert severity="error">{feesErr}</Alert>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={loadFees} size="small">{t('common.retry')}</Button>
-        </Box>
-      ) : (
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('common.period')}</TableCell>
-                <TableCell>{t('common.description')}</TableCell>
-                <TableCell align="right">{t('common.amount')}</TableCell>
-                <TableCell>{t('fees.chargedAt')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {charges.length === 0 ? (
-                <TableRow><TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('fees.none')}</TableCell></TableRow>
-              ) : charges.map(c => (
-                <TableRow key={c.id} data-testid={`charge-row-${c.id}`}>
-                  <TableCell>{c.period}</TableCell>
-                  <TableCell>{c.description}</TableCell>
-                  <TableCell align="right">{formatEur(c.amountEur)}</TableCell>
-                  <TableCell>{c.chargedAt.slice(0, 10)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
-      )}
+      {tab === 'fees' && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* ── Maintenance fees ── */}
+          <SectionDivider label={t('nav.fees')} />
 
-      {/* ── Balance ── */}
-      <SectionDivider label={t('nav.payments')} />
-
-      {balance && (
-        <Card variant="outlined">
-          <CardContent sx={{ py: '12px !important' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-              {t('payments.balanceLabel', { label: balance.label })}
-            </Typography>
+          {feesLoad ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+          ) : feesErr ? (
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Alert severity="error">{feesErr}</Alert>
+              <Button variant="outlined" startIcon={<Refresh />} onClick={loadFees} size="small">{t('common.retry')}</Button>
+            </Box>
+          ) : (
             <Box sx={{ overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell align="right">{t('payments.charged')}</TableCell>
-                    <TableCell align="right">{t('payments.paid')}</TableCell>
-                    <TableCell align="right">{t('payments.balance')}</TableCell>
+                    <TableCell>{t('common.period')}</TableCell>
+                    <TableCell>{t('common.description')}</TableCell>
+                    <TableCell align="right">{t('common.amount')}</TableCell>
+                    <TableCell>{t('fees.chargedAt')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {balance.lines.map(l => (
-                    <TableRow key={l.householdRef} data-testid={`balance-row-${l.householdRef}`}>
-                      <TableCell align="right">{formatEur(l.totalCharged)}</TableCell>
-                      <TableCell align="right">{formatEur(l.totalPaid)}</TableCell>
-                      <TableCell align="right" sx={{ color: l.balance > 0 ? 'error.main' : 'success.main', fontWeight: 600 }}>
-                        {formatEur(l.balance)}
-                      </TableCell>
+                  {charges.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('fees.none')}</TableCell></TableRow>
+                  ) : charges.map(c => (
+                    <TableRow key={c.id} data-testid={`charge-row-${c.id}`}>
+                      <TableCell>{c.period}</TableCell>
+                      <TableCell>{c.description}</TableCell>
+                      <TableCell align="right">{formatEur(c.amountEur)}</TableCell>
+                      <TableCell>{c.chargedAt.slice(0, 10)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </Box>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Payments table ── */}
-      {payLoad ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
-      ) : payErr ? (
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Alert severity="error">{payErr}</Alert>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={loadPayments} size="small">{t('common.retry')}</Button>
-        </Box>
-      ) : (
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('common.period')}</TableCell>
-                <TableCell align="right">{t('common.amount')}</TableCell>
-                <TableCell>{t('payments.dateReceived')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {payments.length === 0 ? (
-                <TableRow><TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('payments.none')}</TableCell></TableRow>
-              ) : payments.map(p => (
-                <TableRow key={p.id} data-testid={`payment-row-${p.id}`}>
-                  <TableCell>{p.period}</TableCell>
-                  <TableCell align="right">{formatEur(p.amountEur)}</TableCell>
-                  <TableCell>{p.dateReceived}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          )}
         </Box>
       )}
 
-      {/* ── Request payment ── */}
-      <Button data-testid="pay-btn" variant="contained" onClick={() => setShowPayDlg(true)} sx={{ alignSelf: 'flex-start' }}>
-        {t('finance.requestPayment')}
-      </Button>
-      <Dialog open={showPayDlg} onClose={() => setShowPayDlg(false)}>
-        <DialogTitle>{t('finance.requestPayment')}</DialogTitle>
-        <DialogContent>
-          <Box data-testid="pay-dialog">
-            <Typography>{t('finance.requestInfo')}</Typography>
-            <Typography sx={{ mt: 1 }}>{t('finance.contactOffice')}</Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowPayDlg(false)}>{t('common.close')}</Button>
-        </DialogActions>
-      </Dialog>
+      {tab === 'payments' && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* ── Balance ── */}
+          <SectionDivider label={t('nav.payments')} />
+
+          {balance && (
+            <Card variant="outlined">
+              <CardContent sx={{ py: '12px !important' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  {t('payments.balanceLabel', { label: balance.label })}
+                </Typography>
+                <Box sx={{ overflowX: 'auto' }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell align="right">{t('payments.charged')}</TableCell>
+                        <TableCell align="right">{t('payments.paid')}</TableCell>
+                        <TableCell align="right">{t('payments.balance')}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {balance.lines.map(l => (
+                        <TableRow key={l.householdRef} data-testid={`balance-row-${l.householdRef}`}>
+                          <TableCell align="right">{formatEur(l.totalCharged)}</TableCell>
+                          <TableCell align="right">{formatEur(l.totalPaid)}</TableCell>
+                          <TableCell align="right" sx={{ color: l.balance > 0 ? 'error.main' : 'success.main', fontWeight: 600 }}>
+                            {formatEur(l.balance)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Payments table ── */}
+          {payLoad ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+          ) : payErr ? (
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Alert severity="error">{payErr}</Alert>
+              <Button variant="outlined" startIcon={<Refresh />} onClick={loadPayments} size="small">{t('common.retry')}</Button>
+            </Box>
+          ) : (
+            <Box sx={{ overflowX: 'auto' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('common.period')}</TableCell>
+                    <TableCell align="right">{t('common.amount')}</TableCell>
+                    <TableCell>{t('payments.dateReceived')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {payments.length === 0 ? (
+                    <TableRow><TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('payments.none')}</TableCell></TableRow>
+                  ) : payments.map(p => (
+                    <TableRow key={p.id} data-testid={`payment-row-${p.id}`}>
+                      <TableCell>{p.period}</TableCell>
+                      <TableCell align="right">{formatEur(p.amountEur)}</TableCell>
+                      <TableCell>{p.dateReceived}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+
+          {/* ── Request payment ── */}
+          <Button data-testid="pay-btn" variant="contained" onClick={() => setShowPayDlg(true)} sx={{ alignSelf: 'flex-start' }}>
+            {t('finance.requestPayment')}
+          </Button>
+          <Dialog open={showPayDlg} onClose={() => setShowPayDlg(false)}>
+            <DialogTitle>{t('finance.requestPayment')}</DialogTitle>
+            <DialogContent>
+              <Box data-testid="pay-dialog">
+                <Typography>{t('finance.requestInfo')}</Typography>
+                <Typography sx={{ mt: 1 }}>{t('finance.contactOffice')}</Typography>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowPayDlg(false)}>{t('common.close')}</Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
+      )}
     </Box>
   );
 }

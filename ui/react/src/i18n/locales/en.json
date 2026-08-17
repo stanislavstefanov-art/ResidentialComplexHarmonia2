@@ -17,6 +17,7 @@
     "email": "Email",
     "notes": "Notes",
     "edit": "Edit",
+    "delete": "Delete",
     "emailInvalid": "Enter a valid email address."
   },
   "nav": {
@@ -30,7 +31,9 @@
     "privacy": "Privacy",
     "contactEdit": "My Details",
     "adminPending": "Pending Users",
-    "households": "Apartments"
+    "households": "Apartments",
+    "administration": "Administration",
+    "counterparties": "Counterparties"
   },
   "app": {
     "brand": "Harmonia",
@@ -110,10 +113,14 @@
   },
   "errorBoundary": { "title": "Something went wrong", "reload": "Reload" },
   "finance": {
-    "tabBills": "Bills",
-    "tabFees": "Fees",
-    "tabPayments": "Payments",
+    "tabIncome": "Income",
+    "tabOutcome": "Outcome",
     "tabReport": "Report",
+    "residentTabFees": "Fees",
+    "residentTabPayments": "Payments",
+    "subTabCharged": "Charged",
+    "subTabReceived": "Received",
+    "outstanding": "Outstanding",
     "addBill": "Add a bill",
     "scanInvoice": "Scan invoice",
     "orEnterManually": "or enter manually",
@@ -121,21 +128,18 @@
     "periodLabel": "Period:",
     "totalCharges": "Total charges this period",
     "totalExpenses": "Total expenses this period",
-    "myCharges": "My Charges",
-    "myPayments": "My Payments",
     "dateReceived": "Date received",
     "requestPayment": "Request Payment",
     "requestInfo": "Payments are recorded by the building administrator.",
-    "noCharges": "No charges on record.",
-    "noPayments": "No payments on record.",
     "contactOffice": "Please contact the office to register a payment.",
-    "errLoad": "Could not load financial data. Please try again."
+    "errLoad": "Could not load financial data. Please try again.",
+    "counterpartyLabel": "Counterparty",
+    "errCounterpartyRequired": "Please select a counterparty."
   },
   "expenses": {
     "record": "Record Expense",
     "amountEuro": "Amount (€)",
     "expenseDate": "Expense date",
-    "ledger": "Expense Ledger",
     "category": "Category",
     "parentCategory": "Group",
     "recorded": "Expense recorded.",
@@ -150,8 +154,6 @@
     "amountEuro": "Amount (€)",
     "periodYm": "Period (YYYY-MM)",
     "recorded": "Charge recorded.",
-    "allCharges": "All Charges",
-    "myCharges": "My Charges",
     "chargedAt": "Charged At",
     "none": "No charges on record.",
     "errLoad": "Could not load charges. Please try again.",
@@ -371,5 +373,27 @@
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",
     "dismiss": "Dismiss"
+  },
+  "counterparties": {
+    "title": "Counterparties",
+    "add": "Add counterparty",
+    "addTitle": "Add counterparty",
+    "editTitle": "Edit counterparty",
+    "name": "Name",
+    "category": "Category",
+    "parentCategory": "Parent category",
+    "vatNumber": "VAT number",
+    "phone": "Phone",
+    "email": "Email",
+    "empty": "No counterparties yet.",
+    "created": "Counterparty added",
+    "updated": "Counterparty updated",
+    "deleted": "Counterparty deleted",
+    "deleteTitle": "Delete counterparty",
+    "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
+    "deleteHasBills": "Cannot delete — this counterparty has bills attached",
+    "loadError": "Could not load counterparties.",
+    "saveError": "Could not save counterparty.",
+    "deleteError": "Could not delete counterparty."
   }
 }

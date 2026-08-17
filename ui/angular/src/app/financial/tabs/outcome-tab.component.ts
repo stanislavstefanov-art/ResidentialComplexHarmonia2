@@ -6,15 +6,17 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ExpenseService } from '../../expenses/expense.service';
-import { ExpenseDto, EXPENSE_CATEGORIES, PARENT_CATEGORIES, ScannedInvoiceDto } from '../../expenses/models';
+import { ExpenseListItemDto, ScannedInvoiceDto } from '../../expenses/models';
+import { CounterpartyPickerComponent } from '../counterparty-picker.component';
+import { Counterparty } from '../../counterparties/counterparty.models';
 
 function today(): string { return new Date().toISOString().slice(0, 10); }
 function formatEur(n: number): string { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n); }
 
 @Component({
-  selector: 'app-bills-tab',
+  selector: 'app-outcome-tab',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, CardModule, ButtonModule, ProgressSpinnerModule, TranslatePipe, CounterpartyPickerComponent],
   template: `
     <p-card>
       <ng-template #content>
@@ -88,16 +90,8 @@ function formatEur(n: number): string { return new Intl.NumberFormat('de-DE', { 
                 />
               </div>
               <div class="form-row">
-                <label>{{ 'expenses.category' | translate }}</label>
-                <select name="billCat" [(ngModel)]="billForm.category" class="form-input">
-                  @for (cat of expCategories; track cat) { <option [value]="cat">{{ cat }}</option> }
-                </select>
-              </div>
-              <div class="form-row">
-                <label>{{ 'expenses.parentCategory' | translate }}</label>
-                <select name="billParent" [(ngModel)]="billForm.parentCategory" class="form-input">
-                  @for (p of parentCategories; track p) { <option [value]="p">{{ p }}</option> }
-                </select>
+                <label>{{ 'finance.counterpartyLabel' | translate }}</label>
+                <app-counterparty-picker data-testid="bill-counterparty" (counterpartyChange)="onCounterpartyChange($event)" />
               </div>
             </div>
             <div class="scan-actions">
@@ -140,7 +134,7 @@ function formatEur(n: number): string { return new Intl.NumberFormat('de-DE', { 
                 @for (e of expenses(); track e.id) {
                   <tr [attr.data-testid]="'expense-row-' + e.id">
                     <td>{{ e.expenseDate }}</td>
-                    <td>{{ e.category }}</td>
+                    <td>{{ e.counterpartyName }} ({{ e.counterpartyCategory }})</td>
                     <td>{{ e.description }}</td>
                     <td>{{ formatEur(e.amountEur) }}</td>
                   </tr>
@@ -189,15 +183,14 @@ function formatEur(n: number): string { return new Intl.NumberFormat('de-DE', { 
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #888; white-space: nowrap; }
   `],
 })
-export class BillsTabComponent implements OnInit {
+export class OutcomeTabComponent implements OnInit {
   private readonly expSvc = inject(ExpenseService);
   private readonly t = inject(TranslateService);
 
-  readonly expCategories = EXPENSE_CATEGORIES;
-  readonly parentCategories = PARENT_CATEGORIES;
   readonly formatEur = formatEur;
 
-  billForm = { amountEurStr: '', expenseDate: today(), description: '', category: EXPENSE_CATEGORIES[0], parentCategory: PARENT_CATEGORIES[3] };
+  billForm = { amountEurStr: '', expenseDate: today(), description: '' };
+  selectedCounterparty: Counterparty | null = null;
   readonly confidence = signal<number | null>(null);
   readonly scanning = signal(false);
   readonly scanErr = signal<string | null>(null);
@@ -205,7 +198,7 @@ export class BillsTabComponent implements OnInit {
   readonly ok = signal(false);
   readonly formErr = signal<string | null>(null);
 
-  readonly expenses = signal<ExpenseDto[]>([]);
+  readonly expenses = signal<ExpenseListItemDto[]>([]);
   readonly expLoading = signal(true);
   readonly expError = signal<string | null>(null);
 
@@ -220,8 +213,13 @@ export class BillsTabComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.billForm = { amountEurStr: '', expenseDate: today(), description: '', category: EXPENSE_CATEGORIES[0], parentCategory: PARENT_CATEGORIES[3] };
+    this.billForm = { amountEurStr: '', expenseDate: today(), description: '' };
+    this.selectedCounterparty = null;
     this.confidence.set(null); this.ok.set(false); this.scanErr.set(null);
+  }
+
+  onCounterpartyChange(counterparty: Counterparty | null): void {
+    this.selectedCounterparty = counterparty;
   }
 
   onInvoiceSelected(event: Event): void {
@@ -236,9 +234,8 @@ export class BillsTabComponent implements OnInit {
           amountEurStr: dto.amount != null ? String(dto.amount) : '',
           expenseDate: dto.date ?? today(),
           description: dto.vendor ?? '',
-          category: EXPENSE_CATEGORIES[0],
-          parentCategory: PARENT_CATEGORIES[3],
         };
+        // Scanning never auto-selects a counterparty — manual selection is always required.
         this.confidence.set(dto.confidence);
         this.scanning.set(false);
       },
@@ -248,12 +245,13 @@ export class BillsTabComponent implements OnInit {
 
   onSubmit(): void {
     this.ok.set(false); this.formErr.set(null);
+    if (!this.selectedCounterparty) { this.formErr.set(this.t.instant('finance.errCounterpartyRequired')); return; }
     const parsed = parseFloat(this.billForm.amountEurStr);
     if (!this.billForm.amountEurStr || isNaN(parsed) || parsed <= 0) { this.formErr.set(this.t.instant('expenses.errAmount')); return; }
     this.saving.set(true);
     this.expSvc.recordExpense({
       amountEur: parsed, description: this.billForm.description,
-      category: this.billForm.category, parentCategory: this.billForm.parentCategory,
+      counterpartyId: this.selectedCounterparty.id,
       expenseDate: this.billForm.expenseDate, idempotencyKey: crypto.randomUUID(),
     }).subscribe({
       next: () => { this.resetForm(); this.ok.set(true); this.saving.set(false); this.loadExpenses(); },

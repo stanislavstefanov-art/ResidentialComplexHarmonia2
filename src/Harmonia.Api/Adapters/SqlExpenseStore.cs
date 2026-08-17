@@ -20,15 +20,13 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =
                 "INSERT INTO dbo.AssociationExpenses " +
-                "(Id, AmountEur, Description, Category, ParentCategory, ExpenseDate, RecordedAt, IdempotencyKey) " +
-                "VALUES (@Id, @AmountEur, @Description, @Category, @ParentCategory, @ExpenseDate, @RecordedAt, @IdempotencyKey);";
+                "(Id, AmountEur, Description, CounterpartyId, ExpenseDate, RecordedAt, IdempotencyKey) " +
+                "VALUES (@Id, @AmountEur, @Description, @CounterpartyId, @ExpenseDate, @RecordedAt, @IdempotencyKey);";
             cmd.Parameters.AddWithValue("@Id", expense.Id);
             cmd.Parameters.Add(new SqlParameter("@AmountEur", SqlDbType.Decimal)
                 { Value = expense.AmountEur, Precision = 18, Scale = 2 });
             cmd.Parameters.AddWithValue("@Description", expense.Description);
-            cmd.Parameters.AddWithValue("@Category", expense.Category);
-            cmd.Parameters.Add(new SqlParameter("@ParentCategory", SqlDbType.NVarChar, 100)
-                { Value = (object?)expense.ParentCategory ?? DBNull.Value });
+            cmd.Parameters.AddWithValue("@CounterpartyId", expense.CounterpartyId);
             cmd.Parameters.Add(new SqlParameter("@ExpenseDate", SqlDbType.Date)
                 { Value = expense.ExpenseDate.ToDateTime(TimeOnly.MinValue) });
             cmd.Parameters.Add(new SqlParameter("@RecordedAt", SqlDbType.DateTimeOffset)
@@ -48,20 +46,35 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
         }
     }
 
-    public async Task<IReadOnlyList<AssociationExpense>> ListExpensesAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<ExpenseListItem>> ListExpensesAsync(CancellationToken ct = default)
     {
         await using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT Id, AmountEur, Description, Category, ParentCategory, ExpenseDate, RecordedAt, IdempotencyKey " +
-            "FROM dbo.AssociationExpenses " +
-            "ORDER BY RecordedAt DESC;";
+            "SELECT e.Id, e.AmountEur, e.Description, e.CounterpartyId, " +
+            "       c.Name, c.Category, c.ParentCategory, " +
+            "       e.ExpenseDate, e.RecordedAt, e.IdempotencyKey " +
+            "FROM dbo.AssociationExpenses e " +
+            "JOIN dbo.Counterparties c ON c.Id = e.CounterpartyId " +
+            "ORDER BY e.RecordedAt DESC;";
 
-        var results = new List<AssociationExpense>();
+        var results = new List<ExpenseListItem>();
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
-            results.Add(ReadRow(reader));
+        {
+            results.Add(new ExpenseListItem(
+                Id:                         reader.GetGuid(0),
+                AmountEur:                  reader.GetDecimal(1),
+                Description:                reader.GetString(2),
+                CounterpartyId:             reader.GetGuid(3),
+                CounterpartyName:           reader.GetString(4),
+                CounterpartyCategory:       reader.GetString(5),
+                CounterpartyParentCategory: reader.GetString(6),
+                ExpenseDate:                DateOnly.FromDateTime(reader.GetDateTime(7)),
+                RecordedAt:                 reader.GetDateTimeOffset(8),
+                IdempotencyKey:             reader.GetString(9)));
+        }
         return results;
     }
 
@@ -71,13 +84,13 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT ISNULL(ParentCategory, 'Other') AS ParentCategory, " +
-            "       Category, " +
-            "       MONTH(ExpenseDate) AS MonthNum, " +
-            "       SUM(AmountEur) AS Total " +
-            "FROM dbo.AssociationExpenses " +
-            "WHERE YEAR(ExpenseDate) = @Year " +
-            "GROUP BY ISNULL(ParentCategory, 'Other'), Category, MONTH(ExpenseDate);";
+            "SELECT c.ParentCategory, c.Category, " +
+            "       MONTH(e.ExpenseDate) AS MonthNum, " +
+            "       SUM(e.AmountEur) AS Total " +
+            "FROM dbo.AssociationExpenses e " +
+            "JOIN dbo.Counterparties c ON c.Id = e.CounterpartyId " +
+            "WHERE YEAR(e.ExpenseDate) = @Year " +
+            "GROUP BY c.ParentCategory, c.Category, MONTH(e.ExpenseDate);";
         cmd.Parameters.AddWithValue("@Year", year);
 
         var rows = new List<ExpenseMonthRow>();
@@ -99,22 +112,18 @@ public sealed class SqlExpenseStore(string connectionString) : IExpenseStore
         await conn.OpenAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT Id, AmountEur, Description, Category, ParentCategory, ExpenseDate, RecordedAt, IdempotencyKey " +
+            "SELECT Id, AmountEur, Description, CounterpartyId, ExpenseDate, RecordedAt, IdempotencyKey " +
             "FROM dbo.AssociationExpenses WHERE IdempotencyKey = @IdempotencyKey;";
         cmd.Parameters.AddWithValue("@IdempotencyKey", idempotencyKey);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         await reader.ReadAsync(ct);
-        return ReadRow(reader);
+        return new AssociationExpense(
+            Id:             reader.GetGuid(0),
+            AmountEur:      reader.GetDecimal(1),
+            Description:    reader.GetString(2),
+            CounterpartyId: reader.GetGuid(3),
+            ExpenseDate:    DateOnly.FromDateTime(reader.GetDateTime(4)),
+            RecordedAt:     reader.GetDateTimeOffset(5),
+            IdempotencyKey: reader.GetString(6));
     }
-
-    private static AssociationExpense ReadRow(SqlDataReader r) =>
-        new(
-            Id:             r.GetGuid(0),
-            AmountEur:      r.GetDecimal(1),
-            Description:    r.GetString(2),
-            Category:       r.GetString(3),
-            ParentCategory: r.IsDBNull(4) ? null : r.GetString(4),
-            ExpenseDate:    DateOnly.FromDateTime(r.GetDateTime(5)),
-            RecordedAt:     r.GetDateTimeOffset(6),
-            IdempotencyKey: r.GetString(7));
 }

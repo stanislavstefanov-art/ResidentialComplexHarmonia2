@@ -20,13 +20,13 @@ test('getExpenses fetches GET /expenses', async () => {
 
 test('recordExpense posts to POST /expenses', async () => {
   const dto = {
-    id: 'e1', amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+    id: 'e1', amountEur: 200, description: 'Window cleaning', counterpartyId: 'cp1',
     expenseDate: '2026-07-10', recordedAt: '2026-07-10T09:00:00Z', idempotencyKey: 'ik1',
   };
   mockFetch(dto, 201);
   const body = {
-    amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
-    parentCategory: null, expenseDate: '2026-07-10', idempotencyKey: 'ik1',
+    amountEur: 200, description: 'Window cleaning', counterpartyId: 'cp1',
+    expenseDate: '2026-07-10', idempotencyKey: 'ik1',
   };
   const result = await recordExpense(body);
   expect(fetch).toHaveBeenCalledWith(`${BASE}/expenses`, expect.objectContaining({
@@ -37,13 +37,13 @@ test('recordExpense posts to POST /expenses', async () => {
 
 test('recordExpense handles 200 duplicate response', async () => {
   const dto = {
-    id: 'e1', amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
+    id: 'e1', amountEur: 200, description: 'Window cleaning', counterpartyId: 'cp1',
     expenseDate: '2026-07-10', recordedAt: '2026-07-10T09:00:00Z', idempotencyKey: 'ik1',
   };
   mockFetch(dto, 200);
   const result = await recordExpense({
-    amountEur: 200, description: 'Window cleaning', category: 'Cleaning',
-    parentCategory: null, expenseDate: '2026-07-10', idempotencyKey: 'ik1',
+    amountEur: 200, description: 'Window cleaning', counterpartyId: 'cp1',
+    expenseDate: '2026-07-10', idempotencyKey: 'ik1',
   });
   expect(result).toEqual(dto);
 });

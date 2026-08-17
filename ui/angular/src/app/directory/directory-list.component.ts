@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
-import { UserMenuComponent } from '../user-menu/user-menu.component';
-import { PendingBadgeComponent } from '../pending-badge/pending-badge.component';
+import { NavComponent } from '../nav/nav.component';
 
 import { TableModule, SortIcon } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -38,34 +36,14 @@ import { RoleService } from '../role.service';
     TagModule,
     CardModule,
     TranslatePipe,
-    LanguageSwitcherComponent,
-    UserMenuComponent,
-    PendingBadgeComponent,
+    NavComponent,
   ],
   providers: [MessageService],
   template: `
     <p-toast />
 
     <div class="harmonia-shell">
-      <header class="harmonia-header">
-        <span class="harmonia-logo">🏡 {{ 'app.brand' | translate }}</span>
-        <span class="harmonia-subtitle">{{ 'app.subtitle' | translate }}</span>
-        <div class="flex-spacer"></div>
-        <a routerLink="/notifications" class="nav-link">{{ 'nav.notifications' | translate }}</a>
-        <a routerLink="/financial" class="nav-link">{{ 'nav.finance' | translate }}</a>
-        <a routerLink="/reservations" class="nav-link">{{ 'nav.reservations' | translate }}</a>
-        @if (isAdmin) { <a routerLink="/admin-pending" class="nav-link">{{ 'nav.adminPending' | translate }}<app-pending-badge /></a> }
-        <a routerLink="/directory" class="nav-link nav-active">{{ 'nav.directory' | translate }}</a>
-        <a routerLink="/privacy" class="nav-link">{{ 'nav.privacy' | translate }}</a>
-        @if (isAdmin) {
-        <span class="role-toggle">
-          <button [class.role-active]="selectedRole === 'resident'" (click)="onRoleChange('resident')" class="role-btn">{{ 'app.roleResident' | translate }}</button>
-          <button [class.role-active]="selectedRole === 'admin'" (click)="onRoleChange('admin')" class="role-btn">{{ 'app.roleAdmin' | translate }}</button>
-        </span>
-        }
-        <app-language-switcher />
-        <app-user-menu />
-      </header>
+      <app-nav [role]="selectedRole" (roleChange)="onRoleChange($event)" />
 
       <main class="harmonia-content" [class.wide]="selectedRole === 'admin'">
         <p-card>
@@ -425,28 +403,6 @@ import { RoleService } from '../role.service';
   `,
   styles: [`
     .harmonia-shell { min-height: 100vh; background: var(--p-surface-ground); }
-
-    .harmonia-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 2rem;
-      background: var(--p-primary-color);
-      color: var(--p-primary-contrast-color);
-      box-shadow: 0 2px 8px rgba(0,0,0,.15);
-    }
-
-    .harmonia-logo   { font-size: 1.25rem; font-weight: 700; letter-spacing: -.5px; }
-    .harmonia-subtitle { font-size: 0.875rem; opacity: .8; }
-    .flex-spacer     { flex: 1; }
-    .nav-link { color: rgba(255,255,255,.75); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: .875rem; }
-    .nav-link:hover { background: rgba(255,255,255,.1); }
-    .nav-active { background: rgba(255,255,255,.22); color: white; font-weight: 600; }
-
-    .role-toggle { display: flex; gap: 0; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; overflow: hidden; }
-    .role-btn { background: transparent; color: rgba(255,255,255,0.8); border: none; padding: 0.375rem 1rem; font-size: 0.8125rem; cursor: pointer; }
-    .role-btn:hover { background: rgba(255,255,255,0.1); }
-    .role-active { background: rgba(255,255,255,0.22) !important; color: white !important; font-weight: 600; }
 
     .harmonia-content { max-width: 900px; margin: 2rem auto; padding: 0 1rem; transition: max-width 0.2s; }
     .harmonia-content.wide { max-width: 1200px; }

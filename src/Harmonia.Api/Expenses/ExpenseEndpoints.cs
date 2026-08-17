@@ -7,17 +7,29 @@ namespace Harmonia.Api.Expenses;
 public sealed record RecordExpenseRequest(
     decimal  AmountEur,
     string   Description,
-    string   Category,
-    string?  ParentCategory,
+    Guid     CounterpartyId,
     DateOnly ExpenseDate,
     string   IdempotencyKey);
 
+// POST response — no join; the client already knows the counterparty it picked.
 public sealed record ExpenseDto(
     Guid           Id,
     decimal        AmountEur,
     string         Description,
-    string         Category,
-    string?        ParentCategory,
+    Guid           CounterpartyId,
+    DateOnly       ExpenseDate,
+    DateTimeOffset RecordedAt,
+    string         IdempotencyKey);
+
+// GET list response — joined counterparty display fields.
+public sealed record ExpenseListItemDto(
+    Guid           Id,
+    decimal        AmountEur,
+    string         Description,
+    Guid           CounterpartyId,
+    string         CounterpartyName,
+    string         CounterpartyCategory,
+    string         CounterpartyParentCategory,
     DateOnly       ExpenseDate,
     DateTimeOffset RecordedAt,
     string         IdempotencyKey);
@@ -28,7 +40,7 @@ public static class ExpenseEndpoints
         RecordExpense useCase, RecordExpenseRequest body, ILogger logger, CancellationToken ct)
     {
         var result = await useCase.ExecuteAsync(
-            body.AmountEur, body.Description, body.Category, body.ParentCategory, body.ExpenseDate, body.IdempotencyKey, ct);
+            body.AmountEur, body.Description, body.CounterpartyId, body.ExpenseDate, body.IdempotencyKey, ct);
 
         switch (result)
         {
@@ -61,7 +73,7 @@ public static class ExpenseEndpoints
             case ListExpensesResult.Ok ok:
                 logger.LogInformation("Expenses listed: {Count}", ok.Expenses.Count);
                 return TypedResults.Json(
-                    ok.Expenses.Select(ToDto).ToList(),
+                    ok.Expenses.Select(ToListDto).ToList(),
                     statusCode: StatusCodes.Status200OK);
             default:
                 return TypedResults.StatusCode(StatusCodes.Status500InternalServerError);
@@ -69,5 +81,9 @@ public static class ExpenseEndpoints
     }
 
     private static ExpenseDto ToDto(AssociationExpense e) =>
-        new(e.Id, e.AmountEur, e.Description, e.Category, e.ParentCategory, e.ExpenseDate, e.RecordedAt, e.IdempotencyKey);
+        new(e.Id, e.AmountEur, e.Description, e.CounterpartyId, e.ExpenseDate, e.RecordedAt, e.IdempotencyKey);
+
+    private static ExpenseListItemDto ToListDto(ExpenseListItem e) =>
+        new(e.Id, e.AmountEur, e.Description, e.CounterpartyId, e.CounterpartyName,
+            e.CounterpartyCategory, e.CounterpartyParentCategory, e.ExpenseDate, e.RecordedAt, e.IdempotencyKey);
 }

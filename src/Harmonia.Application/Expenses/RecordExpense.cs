@@ -7,8 +7,7 @@ public sealed class RecordExpense(ISession session, IExpenseStore store)
     public async Task<RecordExpenseResult> ExecuteAsync(
         decimal amountEur,
         string description,
-        string category,
-        string? parentCategory,
+        Guid counterpartyId,
         DateOnly expenseDate,
         string idempotencyKey,
         CancellationToken ct = default)
@@ -21,8 +20,7 @@ public sealed class RecordExpense(ISession session, IExpenseStore store)
             Id:             Guid.NewGuid(),
             AmountEur:      amountEur,
             Description:    description,
-            Category:       category,
-            ParentCategory: parentCategory,
+            CounterpartyId: counterpartyId,
             ExpenseDate:    expenseDate,
             RecordedAt:     DateTimeOffset.UtcNow,
             IdempotencyKey: idempotencyKey);

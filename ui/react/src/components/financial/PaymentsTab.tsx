@@ -127,8 +127,8 @@ export default function PaymentsTab() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>{t('common.period')}</TableCell>
                 <TableCell>{t('common.household')}</TableCell>
+                <TableCell>{t('common.period')}</TableCell>
                 <TableCell align="right">{t('common.amount')}</TableCell>
                 <TableCell>{t('payments.dateReceived')}</TableCell>
               </TableRow>
@@ -138,8 +138,8 @@ export default function PaymentsTab() {
                 <TableRow><TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>{t('payments.none')}</TableCell></TableRow>
               ) : payments.map(p => (
                 <TableRow key={p.id} data-testid={`payment-row-${p.id}`}>
-                  <TableCell>{p.period}</TableCell>
                   <TableCell>{p.householdRef}</TableCell>
+                  <TableCell>{p.period}</TableCell>
                   <TableCell align="right">{formatEur(p.amountEur)}</TableCell>
                   <TableCell>{p.dateReceived}</TableCell>
                 </TableRow>

@@ -101,8 +101,20 @@ export interface ExpenseDto {
   id: string;
   amountEur: number;
   description: string;
-  category: string;
-  parentCategory: string | null;
+  counterpartyId: string;
+  expenseDate: string;
+  recordedAt: string;
+  idempotencyKey: string;
+}
+
+export interface ExpenseListItemDto {
+  id: string;
+  amountEur: number;
+  description: string;
+  counterpartyId: string;
+  counterpartyName: string;
+  counterpartyCategory: string;
+  counterpartyParentCategory: string;
   expenseDate: string;
   recordedAt: string;
   idempotencyKey: string;
@@ -111,19 +123,10 @@ export interface ExpenseDto {
 export interface RecordExpenseRequest {
   amountEur: number;
   description: string;
-  category: string;
-  parentCategory: string | null;
+  counterpartyId: string;
   expenseDate: string;
   idempotencyKey: string;
 }
-
-export const EXPENSE_CATEGORIES = [
-  'Maintenance', 'Cleaning', 'Utilities', 'Insurance', 'Repairs', 'Other',
-] as const;
-
-export const PARENT_CATEGORIES = [
-  'Materials', 'External Services', 'Personnel', 'Other',
-] as const;
 
 export interface RecordIncomeRequest {
   category: string;
