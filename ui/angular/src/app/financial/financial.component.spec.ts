@@ -73,27 +73,31 @@ describe('FinancialComponent shell', () => {
     return fixture;
   };
 
-  it('admin shows the tabbed bills view as default', async () => {
+  it('admin shows the tabbed Income view as default', async () => {
     const fixture = await setupComponent(true);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     // p-tabs must be present for admin
     expect(el.querySelector('p-tabs')).not.toBeNull();
-    // app-bills-tab should be in the DOM (inside the first tabpanel)
-    expect(el.querySelector('app-bills-tab')).not.toBeNull();
+    // app-income-tab should be in the DOM (default active top-level tab), with its
+    // default Charged sub-tab's fee-form rendered inside it
+    expect(el.querySelector('app-income-tab')).not.toBeNull();
+    expect(el.querySelector('[data-testid="fee-form"]')).not.toBeNull();
     // resident view must NOT render
     expect(el.querySelector('app-resident-financial')).toBeNull();
   });
 
-  it('resident shows the resident view, no tabs', async () => {
+  it('resident shows the resident view with Fees/Payments tabs', async () => {
     const fixture = await setupComponent(false);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     // resident component must be rendered
     expect(el.querySelector('app-resident-financial')).not.toBeNull();
-    // tab chrome must NOT be present
-    expect(el.querySelector('p-tabs')).toBeNull();
-    // bills tab must NOT be present
-    expect(el.querySelector('app-bills-tab')).toBeNull();
+    // admin income/outcome/report tab chrome must NOT be present
+    expect(el.querySelector('app-income-tab')).toBeNull();
+    expect(el.querySelector('app-outcome-tab')).toBeNull();
+    expect(el.querySelector('app-report-tab')).toBeNull();
+    // resident's own Fees/Payments tabs ARE present
+    expect(el.querySelector('p-tabs')).not.toBeNull();
   });
 });
