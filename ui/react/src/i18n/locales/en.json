@@ -119,6 +119,8 @@
     "tabFees": "Fees",
     "tabPayments": "Payments",
     "tabReport": "Report",
+    "residentTabFees": "Fees",
+    "residentTabPayments": "Payments",
     "subTabCharged": "Charged",
     "subTabReceived": "Received",
     "outstanding": "Outstanding",
