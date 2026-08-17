@@ -129,7 +129,9 @@
     "addBill": "Add a bill",
     "scanInvoice": "Scan invoice",
     "orEnterManually": "or enter manually",
-    "clearForm": "Clear"
+    "clearForm": "Clear",
+    "counterpartyLabel": "Counterparty",
+    "errCounterpartyRequired": "Please select a counterparty."
   },
   "expenses": {
     "cardTitle": "Building Expenses",
