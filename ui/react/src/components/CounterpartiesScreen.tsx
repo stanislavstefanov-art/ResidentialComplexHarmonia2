@@ -71,7 +71,8 @@ export default function CounterpartiesScreen() {
     }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
 
   function openAdd() { setEditing(null); setForm(EMPTY); setDialogOpen(true); }
   function openEdit(c: CounterpartyDto) { setEditing(c); setForm(toInput(c)); setDialogOpen(true); }
