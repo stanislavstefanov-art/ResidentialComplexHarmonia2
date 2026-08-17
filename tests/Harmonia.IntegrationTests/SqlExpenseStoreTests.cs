@@ -84,8 +84,15 @@ public class SqlExpenseStoreTests(SqlServerFixture db)
     [Fact]
     public async Task GetAnnualExpensesAsync_groups_by_counterparty_category()
     {
+        // The query groups by category NAME (not counterparty id), matching the real annual
+        // report's intent of aggregating across all counterparties in a category. The fixture's
+        // database is never rolled back between runs, so the category name must be unique per
+        // test run too — otherwise re-running the suite accumulates rows under the same
+        // "Water"/"Utilities" pair and the SUM assertion below drifts (e.g. 50 -> 100 -> 150).
+        var tag = Guid.NewGuid().ToString("N");
+        var category = $"Water-{tag}";
         var cpStore = new SqlCounterpartyStore(db.ConnectionString);
-        var cp = await cpStore.CreateAsync($"rel-vendor-{Guid.NewGuid():N}", "Water", "Utilities", null, null, null);
+        var cp = await cpStore.CreateAsync($"rel-vendor-{tag}", category, "Utilities", null, null, null);
 
         var store = new SqlExpenseStore(db.ConnectionString);
         var year = 2031; // far-future year avoids collisions with other tests' rows
@@ -93,7 +100,7 @@ public class SqlExpenseStoreTests(SqlServerFixture db)
             Guid.NewGuid(), 50m, "Test", cp.Id, new DateOnly(year, 5, 1), DateTimeOffset.UtcNow, $"rel-{Guid.NewGuid():N}"));
 
         var report = await store.GetAnnualExpensesAsync(year);
-        var row = Assert.Single(report.Rows, r => r.SubCategory == "Water" && r.MonthNum == 5);
+        var row = Assert.Single(report.Rows, r => r.SubCategory == category && r.MonthNum == 5);
         Assert.Equal("Utilities", row.ParentCategory);
         Assert.Equal(50m, row.Total);
     }
