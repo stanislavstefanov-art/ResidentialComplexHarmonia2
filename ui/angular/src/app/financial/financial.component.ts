@@ -7,9 +7,8 @@ import { TabsModule } from 'primeng/tabs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NavComponent } from '../nav/nav.component';
 import { RoleService } from '../role.service';
-import { BillsTabComponent } from './tabs/bills-tab.component';
-import { FeesTabComponent } from './tabs/fees-tab.component';
-import { PaymentsTabComponent } from './tabs/payments-tab.component';
+import { IncomeTabComponent } from './tabs/income-tab.component';
+import { OutcomeTabComponent } from './tabs/outcome-tab.component';
 import { ReportTabComponent } from './tabs/report-tab.component';
 import { ResidentFinancialComponent } from './tabs/resident-financial.component';
 
@@ -20,7 +19,7 @@ import { ResidentFinancialComponent } from './tabs/resident-financial.component'
     CommonModule, RouterModule,
     CardModule, ButtonModule, TabsModule,
     TranslatePipe, NavComponent,
-    BillsTabComponent, FeesTabComponent, PaymentsTabComponent, ReportTabComponent,
+    IncomeTabComponent, OutcomeTabComponent, ReportTabComponent,
     ResidentFinancialComponent,
   ],
   template: `
@@ -32,17 +31,15 @@ import { ResidentFinancialComponent } from './tabs/resident-financial.component'
           <ng-template #content>
 
             @if (role === 'admin') {
-              <p-tabs value="bills">
+              <p-tabs value="income">
                 <p-tablist>
-                  <p-tab value="bills">{{ 'finance.tabBills' | translate }}</p-tab>
-                  <p-tab value="fees">{{ 'finance.tabFees' | translate }}</p-tab>
-                  <p-tab value="payments">{{ 'finance.tabPayments' | translate }}</p-tab>
+                  <p-tab value="income">{{ 'finance.tabIncome' | translate }}</p-tab>
+                  <p-tab value="outcome">{{ 'finance.tabOutcome' | translate }}</p-tab>
                   <p-tab value="report">{{ 'finance.tabReport' | translate }}</p-tab>
                 </p-tablist>
                 <p-tabpanels>
-                  <p-tabpanel value="bills"><app-bills-tab /></p-tabpanel>
-                  <p-tabpanel value="fees"><app-fees-tab /></p-tabpanel>
-                  <p-tabpanel value="payments"><app-payments-tab /></p-tabpanel>
+                  <p-tabpanel value="income"><app-income-tab /></p-tabpanel>
+                  <p-tabpanel value="outcome"><app-outcome-tab /></p-tabpanel>
                   <p-tabpanel value="report"><app-report-tab /></p-tabpanel>
                 </p-tabpanels>
               </p-tabs>
