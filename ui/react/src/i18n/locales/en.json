@@ -132,7 +132,9 @@
     "noCharges": "No charges on record.",
     "noPayments": "No payments on record.",
     "contactOffice": "Please contact the office to register a payment.",
-    "errLoad": "Could not load financial data. Please try again."
+    "errLoad": "Could not load financial data. Please try again.",
+    "counterpartyLabel": "Counterparty",
+    "errCounterpartyRequired": "Please select a counterparty."
   },
   "expenses": {
     "record": "Record Expense",
