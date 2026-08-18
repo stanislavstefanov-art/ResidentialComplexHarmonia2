@@ -19,9 +19,10 @@ export default function OutcomeTab() {
   const [desc, setDesc]               = useState('');
   const [counterparty, setCounterparty] = useState<CounterpartyDto | null>(null);
   const [date, setDate]               = useState(today());
-  const [confidence, setConf]         = useState<number | null>(null); // null = manual
+  const [confidence, setConf]         = useState<number | null>(null); // null = manual / nothing extracted
   const [scanning, setScanning]       = useState(false);
   const [scanErr, setScanErr]         = useState('');
+  const [scanNote, setScanNote]       = useState('');
   const [saving, setSaving]           = useState(false);
   const [ok, setOk]                   = useState(false);
   const [formErr, setFormErr]         = useState('');
@@ -41,20 +42,26 @@ export default function OutcomeTab() {
   const resetForm = () => {
     setAmount(''); setDesc(''); setCounterparty(null);
     setDate(today()); setConf(null);
-    setOk(false); setScanErr('');
+    setOk(false); setScanErr(''); setScanNote('');
   };
 
   const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) { setScanErr(t('invoiceScan.errEmpty')); return; }
-    setScanErr(''); setOk(false); setScanning(true);
+    setScanErr(''); setScanNote(''); setOk(false); setScanning(true);
     try {
       const dto = await scanInvoice(file);
-      setAmount(dto.amount != null ? String(dto.amount) : '');
-      setDate(dto.date ?? today());
-      setDesc(dto.vendor ?? '');
+      // Only overwrite what the scan actually found. A field the model missed must not
+      // wipe out something the admin already typed, and a missed date must not silently
+      // reset the form to today.
+      if (dto.amount != null) setAmount(String(dto.amount));
+      if (dto.date) setDate(dto.date);
+      if (dto.vendor) setDesc(dto.vendor);
       setConf(dto.confidence);
+      // A null confidence means the document was analysed but no invoice fields matched —
+      // say so, instead of leaving a blank form next to a reassuring badge.
+      if (dto.confidence == null) setScanNote(t('invoiceScan.noFields'));
       // Scanning never auto-selects a counterparty — the user always picks it manually.
     } catch { setScanErr(t('invoiceScan.errScan')); }
     finally { setScanning(false); }
@@ -89,6 +96,7 @@ export default function OutcomeTab() {
             <Typography variant="caption" color="text.secondary">{t('finance.orEnterManually')}</Typography>
           </Box>
           {scanErr && <Alert severity="error" sx={{ mb: 1, py: 0 }}>{scanErr}</Alert>}
+          {scanNote && <Alert data-testid="bill-scan-note" severity="info" sx={{ mb: 1, py: 0 }}>{scanNote}</Alert>}
 
           <Box component="form" data-testid="bill-form" onSubmit={handleSubmit} sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
             <TextField label={t('expenses.amountEuro')} type="number" slotProps={{ htmlInput: { step: '0.01', min: '0.01', 'data-testid': 'bill-amount' } }} value={amount} onChange={e => setAmount(e.target.value)} required size="small" />
