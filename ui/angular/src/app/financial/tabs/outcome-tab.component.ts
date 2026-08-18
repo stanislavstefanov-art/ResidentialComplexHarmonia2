@@ -49,6 +49,10 @@ function formatEur(n: number): string { return new Intl.NumberFormat('de-DE', { 
             </span>
           }
 
+          @if (scanNote()) {
+            <p class="scan-note" data-testid="bill-scan-note">{{ scanNote() }}</p>
+          }
+
           <p class="scan-caption">{{ 'finance.orEnterManually' | translate }}</p>
 
           @if (scanErr()) {
@@ -175,6 +179,7 @@ function formatEur(n: number): string { return new Intl.NumberFormat('de-DE', { 
     .upload-btn { display: inline-block; background: #2e6b4f; color: white; padding: 7px 18px; border-radius: 6px; cursor: pointer; font-size: .875rem; }
     .upload-btn:hover { background: #245a40; }
     .confidence-chip { display: inline-block; background: #e8f0ec; color: #2e6b4f; border-radius: 12px; padding: 2px 10px; font-size: .8125rem; font-weight: 600; margin-bottom: 8px; }
+    .scan-note { background: #fdf6e3; color: #8a6d3b; border-radius: 6px; padding: 6px 10px; font-size: .8125rem; margin: 0 0 8px; }
     .scan-caption { font-size: .8125rem; color: #888; margin: 6px 0 8px; }
     .scan-actions { display: flex; gap: 12px; align-items: center; margin-top: 4px; }
     .confidence-val { background: none; border: none; padding-left: 0; font-size: .875rem; color: #555; }
@@ -194,6 +199,7 @@ export class OutcomeTabComponent implements OnInit {
   readonly confidence = signal<number | null>(null);
   readonly scanning = signal(false);
   readonly scanErr = signal<string | null>(null);
+  readonly scanNote = signal<string | null>(null);
   readonly saving = signal(false);
   readonly ok = signal(false);
   readonly formErr = signal<string | null>(null);
@@ -215,7 +221,7 @@ export class OutcomeTabComponent implements OnInit {
   resetForm(): void {
     this.billForm = { amountEurStr: '', expenseDate: today(), description: '' };
     this.selectedCounterparty = null;
-    this.confidence.set(null); this.ok.set(false); this.scanErr.set(null);
+    this.confidence.set(null); this.ok.set(false); this.scanErr.set(null); this.scanNote.set(null);
   }
 
   onCounterpartyChange(counterparty: Counterparty | null): void {
@@ -227,16 +233,20 @@ export class OutcomeTabComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     if (!file) { this.scanErr.set(this.t.instant('invoiceScan.errEmpty')); return; }
-    this.scanErr.set(null); this.ok.set(false); this.scanning.set(true);
+    this.scanErr.set(null); this.scanNote.set(null); this.ok.set(false); this.scanning.set(true);
     this.expSvc.scanInvoice(file).subscribe({
       next: (dto: ScannedInvoiceDto) => {
-        this.billForm = {
-          amountEurStr: dto.amount != null ? String(dto.amount) : '',
-          expenseDate: dto.date ?? today(),
-          description: dto.vendor ?? '',
-        };
+        // Only overwrite what the scan actually found. A field the model missed must not
+        // wipe out something the admin already typed, and a missed date must not silently
+        // reset the form to today.
+        if (dto.amount != null) this.billForm.amountEurStr = String(dto.amount);
+        if (dto.date) this.billForm.expenseDate = dto.date;
+        if (dto.vendor) this.billForm.description = dto.vendor;
         // Scanning never auto-selects a counterparty — manual selection is always required.
         this.confidence.set(dto.confidence);
+        // A null confidence means the document was analysed but no invoice fields matched —
+        // say so, instead of leaving a blank form next to a reassuring badge.
+        this.scanNote.set(dto.confidence == null ? this.t.instant('invoiceScan.noFields') : null);
         this.scanning.set(false);
       },
       error: () => { this.scanErr.set(this.t.instant('invoiceScan.errScan')); this.scanning.set(false); },

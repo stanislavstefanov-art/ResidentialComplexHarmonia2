@@ -58,7 +58,8 @@ export interface ScannedInvoiceDto {
   amount: number | null;
   date: string | null;
   vendor: string | null;
-  confidence: number;
+  /** Lowest confidence across the fields actually extracted; null when nothing matched. */
+  confidence: number | null;
 }
 
 export interface AnnualReportDto {
