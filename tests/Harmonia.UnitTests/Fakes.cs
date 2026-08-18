@@ -2,6 +2,7 @@ using Harmonia.Application;
 using Harmonia.Application.Counterparties;
 using Harmonia.Application.Directory;
 using Harmonia.Application.Expenses;
+using Harmonia.Application.Financial;
 using Harmonia.Application.MaintenanceFees;
 using Harmonia.Application.Notifications;
 using Harmonia.Application.Payments;
@@ -639,4 +640,18 @@ public sealed class FakeHouseholdByOidLookup(string? householdRef, string role =
 {
     public Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default)
         => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, role));
+}
+
+public sealed class FakeInvoiceScanner(ScannedInvoice result) : IInvoiceScanner
+{
+    /// A scan that analysed the document but matched no invoice fields.
+    public static FakeInvoiceScanner FindingNothing() => new(new ScannedInvoice(null, null, null, null));
+
+    public bool WasCalled { get; private set; }
+
+    public Task<ScannedInvoice> ScanAsync(Stream fileStream, string contentType, CancellationToken ct)
+    {
+        WasCalled = true;
+        return Task.FromResult(result);
+    }
 }
