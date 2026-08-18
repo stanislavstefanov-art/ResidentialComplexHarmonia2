@@ -340,7 +340,8 @@
     "reset": "Scan another",
     "errScan": "Could not scan invoice. Please try again.",
     "errSave": "Could not save expense. Please try again.",
-    "errEmpty": "Please select a file."
+    "errEmpty": "Please select a file.",
+    "noFields": "No invoice details were found in this document. Please enter them manually."
   },
   "pwa": {
     "iosInstallBanner": "To install: tap the Share button, then \"Add to Home Screen\".",
