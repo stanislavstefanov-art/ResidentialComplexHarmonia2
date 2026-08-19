@@ -678,3 +678,28 @@ public sealed class FakeInvoiceScanner(ScannedInvoice result) : IInvoiceScanner
         return Task.FromResult(result);
     }
 }
+
+public sealed class FakeNewPendingSignInQueue : INewPendingSignInQueue
+{
+    private readonly Queue<NewPendingSignIn> _queue = new();
+
+    public List<NewPendingSignIn> Enqueued { get; } = [];
+
+    public void Enqueue(NewPendingSignIn signal)
+    {
+        Enqueued.Add(signal);
+        _queue.Enqueue(signal);
+    }
+
+    public ValueTask<NewPendingSignIn> DequeueAsync(CancellationToken ct)
+        => _queue.Count > 0
+            ? ValueTask.FromResult(_queue.Dequeue())
+            : ValueTask.FromException<NewPendingSignIn>(new OperationCanceledException());
+
+    public int DrainPending()
+    {
+        var drained = _queue.Count;
+        _queue.Clear();
+        return drained;
+    }
+}

@@ -65,3 +65,28 @@ public interface IHouseholdByOidLookup
     /// </summary>
     Task SetAdminFlagAsync(string oid, bool isAdmin, CancellationToken ct = default);
 }
+
+/// <summary>
+/// A new sign-up appeared. Deliberately carries no identifying data (R3): the
+/// notification never names the person, so nothing about them need travel.
+/// </summary>
+public readonly record struct NewPendingSignIn(DateTimeOffset OccurredAt);
+
+/// <summary>
+/// Hands new-sign-up signals from the request thread to a background consumer.
+/// Enqueue must never block or throw — it runs inside session resolution, which
+/// is on the hot path of every request.
+/// </summary>
+public interface INewPendingSignInQueue
+{
+    void Enqueue(NewPendingSignIn signal);
+
+    /// <summary>Completes once at least one signal is available.</summary>
+    ValueTask<NewPendingSignIn> DequeueAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Discards any signals already waiting and returns how many. Used to coalesce
+    /// a burst into a single dispatch round.
+    /// </summary>
+    int DrainPending();
+}
