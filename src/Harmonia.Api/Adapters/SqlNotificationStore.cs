@@ -147,6 +147,20 @@ public sealed class SqlNotificationStore(string connectionString) : INotificatio
         return list;
     }
 
+    public async Task<IReadOnlyList<HouseholdRef>> GetAdminHouseholdRefsAsync(CancellationToken ct = default)
+    {
+        await using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT DISTINCT HouseholdRef FROM dbo.HouseholdLinks WHERE IsAdmin = 1;";
+        var list = new List<HouseholdRef>();
+        await using var reader = (SqlDataReader)await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            list.Add(new HouseholdRef(reader.GetString(0)));
+        return list;
+    }
+
     public async Task<IReadOnlyList<NotificationRecord>> GetHistoryAsync(
         HouseholdRef householdRef, CancellationToken ct = default)
     {

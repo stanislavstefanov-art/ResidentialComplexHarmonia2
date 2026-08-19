@@ -357,6 +357,12 @@ public sealed class FakeNotificationStore : INotificationStore
 
     public Task<IReadOnlyList<HouseholdRef>> GetAllHouseholdRefsAsync(CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<HouseholdRef>>(_subs.Keys.ToList());
+
+    /// Seeded by tests; GetAdminHouseholdRefsAsync returns exactly these.
+    public List<HouseholdRef> AdminRefs { get; } = [];
+
+    public Task<IReadOnlyList<HouseholdRef>> GetAdminHouseholdRefsAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<HouseholdRef>>(AdminRefs.ToList());
 }
 
 public sealed class FailingNotificationStore : INotificationStore
@@ -384,6 +390,9 @@ public sealed class FailingNotificationStore : INotificationStore
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<IReadOnlyList<HouseholdRef>> GetAllHouseholdRefsAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<HouseholdRef>> GetAdminHouseholdRefsAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 

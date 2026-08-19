@@ -47,9 +47,16 @@ public interface INotificationStore
     Task AppendHistoryAsync(NotificationRecord record, CancellationToken ct = default);
     Task<IReadOnlyList<NotificationRecord>> GetHistoryAsync(HouseholdRef householdRef, CancellationToken ct = default);
     Task<IReadOnlyList<HouseholdRef>> GetAllHouseholdRefsAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Households with at least one admin-flagged link, de-duplicated. Used by
+    /// system-initiated notifications, which have no session to derive identity from.
+    /// R3: the returned refs are personal data — never log their values.
+    /// </summary>
+    Task<IReadOnlyList<HouseholdRef>> GetAdminHouseholdRefsAsync(CancellationToken ct = default);
 }
 
-public enum NotificationKind { ChargePosted, PaymentRecorded, BbqReminder, Announcement }
+public enum NotificationKind { ChargePosted, PaymentRecorded, BbqReminder, Announcement, PendingSignIn }
 
 public interface INotificationDispatcher
 {
