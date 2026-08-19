@@ -49,8 +49,8 @@ public enum PendingUpsertResult { Inserted, AlreadyPending }
 public sealed record HouseholdLink(string HouseholdRef, string Role, bool IsAdmin);
 
 /// <summary>
-/// Looks up the HouseholdRef and Role for an activated member by their Entra OID.
-/// Returns null when no linked row exists (caller is pending).
+/// Looks up the HouseholdRef, Role and IsAdmin flag for an activated member by their
+/// Entra OID. Returns null when no linked row exists (caller is pending).
 /// R3: oid is personal data — never log its value.
 /// </summary>
 public interface IHouseholdByOidLookup
