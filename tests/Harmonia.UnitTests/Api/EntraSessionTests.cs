@@ -4,6 +4,7 @@ using Harmonia.Application;
 using Harmonia.Application.PendingSignIn;
 using Harmonia.Domain;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Harmonia.UnitTests.Api;
 
@@ -52,6 +53,22 @@ public class EntraSessionTests
         Assert.Equal("admin-oid-1", ctx.EntraObjectId);
         Assert.Null(ctx.HouseholdRef);
         Assert.Empty(store.UpsertCalls);
+    }
+
+    [Fact]
+    public void Admin_with_no_household_link_never_writes_the_flag()
+    {
+        // householdRef: null -> FakeHouseholdByOidLookup.FindAsync returns null,
+        // so there is no row to mirror the flag onto.
+        var lookup = new FakeHouseholdByOidLookup(null);
+        var user = Authenticated(("oid", "admin-oid-2"), (ClaimTypes.Role, "admin"));
+        var session = MakeSession(user, householdRef: null, lookup: lookup);
+
+        var ctx = session.Resolve();
+
+        Assert.NotNull(ctx);
+        Assert.True(ctx.IsAdmin);
+        Assert.Empty(lookup.SetAdminFlagCalls);
     }
 
     // ── resident path (OID found in DB) ───────────────────────────────────────
@@ -180,19 +197,46 @@ public class EntraSessionTests
         Assert.Empty(lookup.SetAdminFlagCalls);
     }
 
+    [Fact]
+    public void A_failed_mirror_write_does_not_break_authentication()
+    {
+        // A transient SQL failure while mirroring the flag must not turn a valid
+        // admin request into an unhandled exception — the flag just stays stale
+        // until the next request.
+        var lookup = new ThrowingSetAdminFlagLookup("HH-1", isAdmin: false);
+        var user = Authenticated(("oid", "admin-oid"), (ClaimTypes.Role, "admin"));
+        var session = MakeSession(user, householdRef: "HH-1", lookup: lookup);
+
+        var ctx = session.Resolve();
+
+        Assert.NotNull(ctx);
+        Assert.True(ctx.IsAdmin);
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────────
 
     private static EntraSession MakeSession(
         ClaimsPrincipal? user,
         string? householdRef,
         FakePendingSignInStore? store = null,
-        FakeHouseholdByOidLookup? lookup = null)
+        IHouseholdByOidLookup? lookup = null)
     {
         HttpContext? ctx = user is null ? null : new DefaultHttpContext { User = user };
         IHttpContextAccessor  accessor     = new StubAccessor(ctx);
         IPendingSignInStore   pendingStore = store ?? new FakePendingSignInStore();
         IHouseholdByOidLookup oidLookup    = lookup ?? new FakeHouseholdByOidLookup(householdRef);
-        return new EntraSession(accessor, pendingStore, oidLookup);
+        return new EntraSession(accessor, pendingStore, oidLookup, NullLogger<EntraSession>.Instance);
+    }
+
+    /// Reports a stale flag like FakeHouseholdByOidLookup, but SetAdminFlagAsync
+    /// always throws — used to prove a mirror-write failure never breaks Resolve().
+    private sealed class ThrowingSetAdminFlagLookup(string? householdRef, bool isAdmin) : IHouseholdByOidLookup
+    {
+        public Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default)
+            => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, "Owner", isAdmin));
+
+        public Task SetAdminFlagAsync(string oid, bool isAdmin, CancellationToken ct = default)
+            => throw new InvalidOperationException("Simulated store failure");
     }
 
     private static ClaimsPrincipal Authenticated(params (string Type, string Value)[] claims)

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Harmonia.Application;
 using Harmonia.Application.PendingSignIn;
 using Harmonia.Domain;
+using Microsoft.Extensions.Logging;
 using ISession = Harmonia.Application.ISession;
 
 namespace Harmonia.Api.Identity;
@@ -9,7 +10,8 @@ namespace Harmonia.Api.Identity;
 public sealed class EntraSession(
     IHttpContextAccessor  httpContextAccessor,
     IPendingSignInStore   pendingStore,
-    IHouseholdByOidLookup householdLookup) : ISession
+    IHouseholdByOidLookup householdLookup,
+    ILogger<EntraSession> logger) : ISession
 {
     private SessionContext? _cached;
     private bool _resolved;
@@ -36,8 +38,12 @@ public sealed class EntraSession(
             var adminLink = await householdLookup.FindAsync(oid);
             // Mirror the token's claim so background work, which has no token, can
             // find admins. Written only on disagreement: this runs on every request.
+            // A failed mirror write must never fail authentication for an otherwise
+            // valid caller — the flag simply stays stale until the next request.
+            // Two concurrent requests from the same newly-admin OID can both attempt
+            // this write; both converge on the same value, so that race is harmless.
             if (adminLink is { IsAdmin: false })
-                await householdLookup.SetAdminFlagAsync(oid, true);
+                await TrySetAdminFlagAsync(oid, true);
             return new SessionContext(IsResident: false, IsAdmin: true,
                 HouseholdRef: adminLink is not null ? new HouseholdRef(adminLink.HouseholdRef) : null,
                 EntraObjectId: oid, IsPending: false, Role: adminLink?.Role);
@@ -49,7 +55,7 @@ public sealed class EntraSession(
             // The token no longer says admin: clear a stale flag so a revoked admin
             // stops receiving admin notifications.
             if (link.IsAdmin)
-                await householdLookup.SetAdminFlagAsync(oid, false);
+                await TrySetAdminFlagAsync(oid, false);
             return new SessionContext(IsResident: true, IsAdmin: false,
                 HouseholdRef: new HouseholdRef(link.HouseholdRef),
                 EntraObjectId: oid, IsPending: false, Role: link.Role);
@@ -61,5 +67,18 @@ public sealed class EntraSession(
         await pendingStore.UpsertAsync(oid, email, displayName);
         return new SessionContext(IsResident: false, IsAdmin: false,
             HouseholdRef: null, EntraObjectId: oid, IsPending: true);
+    }
+
+    // R3: oid is personal data — never log its value.
+    private async Task TrySetAdminFlagAsync(string oid, bool isAdmin)
+    {
+        try
+        {
+            await householdLookup.SetAdminFlagAsync(oid, isAdmin);
+        }
+        catch (Exception)
+        {
+            logger.LogWarning("Failed to mirror the admin flag; will retry on the next request");
+        }
     }
 }
