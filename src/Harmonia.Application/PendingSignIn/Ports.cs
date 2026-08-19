@@ -46,7 +46,7 @@ public enum DirectLinkResult { Ok, AlreadyLinked }
 public enum PendingUpsertResult { Inserted, AlreadyPending }
 
 /// <summary>Household link resolved from an Entra OID.</summary>
-public sealed record HouseholdLink(string HouseholdRef, string Role);
+public sealed record HouseholdLink(string HouseholdRef, string Role, bool IsAdmin);
 
 /// <summary>
 /// Looks up the HouseholdRef and Role for an activated member by their Entra OID.
@@ -56,4 +56,12 @@ public sealed record HouseholdLink(string HouseholdRef, string Role);
 public interface IHouseholdByOidLookup
 {
     Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default);
+
+    /// <summary>
+    /// Mirrors the Entra token's admin claim onto the stored link. Called only when
+    /// the stored value disagrees with the token, so this is a write on change, not
+    /// a write per request.
+    /// R3: oid is personal data — never log its value.
+    /// </summary>
+    Task SetAdminFlagAsync(string oid, bool isAdmin, CancellationToken ct = default);
 }

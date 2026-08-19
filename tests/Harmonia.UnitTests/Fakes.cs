@@ -641,10 +641,19 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
     }
 }
 
-public sealed class FakeHouseholdByOidLookup(string? householdRef, string role = "Owner") : IHouseholdByOidLookup
+public sealed class FakeHouseholdByOidLookup(
+    string? householdRef, string role = "Owner", bool isAdmin = false) : IHouseholdByOidLookup
 {
+    public List<(string Oid, bool IsAdmin)> SetAdminFlagCalls { get; } = [];
+
     public Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default)
-        => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, role));
+        => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, role, isAdmin));
+
+    public Task SetAdminFlagAsync(string oid, bool isAdmin, CancellationToken ct = default)
+    {
+        SetAdminFlagCalls.Add((oid, isAdmin));
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class FakeInvoiceScanner(ScannedInvoice result) : IInvoiceScanner
