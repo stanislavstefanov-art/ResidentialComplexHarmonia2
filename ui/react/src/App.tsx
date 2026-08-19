@@ -63,7 +63,8 @@ function MainApp() {
   const roles = claims?.['roles'] as string[] | undefined;
   const initialRole: Role = roles?.includes('admin') ? 'admin' : 'resident';
   const role = initialRole;
-  const pendingCount = usePendingCount(initialRole === 'admin');
+  const { count: pendingCount, setCount: setPendingCount } =
+    usePendingCount(initialRole === 'admin');
 
   const firstLogin = initialRole === 'resident' && !localStorage.getItem('harmonia-welcomed');
   const [screen, setScreen] = useState<Screen>(
@@ -210,7 +211,8 @@ function MainApp() {
         {screen === 'notifications' && <NotificationsScreen role={role} />}
         {screen === 'privacy' && <PrivacyScreen role={role} />}
         {screen === 'contact-edit' && <ContactEditScreen role={role} />}
-        {screen === 'admin-pending' && initialRole === 'admin' && <AdminPendingScreen role={role} />}
+        {screen === 'admin-pending' && initialRole === 'admin' &&
+          <AdminPendingScreen role={role} onPendingCount={setPendingCount} />}
         {screen === 'households' && initialRole === 'admin' && <HouseholdsScreen />}
         {screen === 'counterparties' && initialRole === 'admin' && <CounterpartiesScreen />}
       </Box>
