@@ -34,6 +34,10 @@ public sealed class EntraSession(
         if (user.IsInRole("admin"))
         {
             var adminLink = await householdLookup.FindAsync(oid);
+            // Mirror the token's claim so background work, which has no token, can
+            // find admins. Written only on disagreement: this runs on every request.
+            if (adminLink is { IsAdmin: false })
+                await householdLookup.SetAdminFlagAsync(oid, true);
             return new SessionContext(IsResident: false, IsAdmin: true,
                 HouseholdRef: adminLink is not null ? new HouseholdRef(adminLink.HouseholdRef) : null,
                 EntraObjectId: oid, IsPending: false, Role: adminLink?.Role);
@@ -41,9 +45,15 @@ public sealed class EntraSession(
 
         var link = await householdLookup.FindAsync(oid);
         if (link is not null)
+        {
+            // The token no longer says admin: clear a stale flag so a revoked admin
+            // stops receiving admin notifications.
+            if (link.IsAdmin)
+                await householdLookup.SetAdminFlagAsync(oid, false);
             return new SessionContext(IsResident: true, IsAdmin: false,
                 HouseholdRef: new HouseholdRef(link.HouseholdRef),
                 EntraObjectId: oid, IsPending: false, Role: link.Role);
+        }
 
         var email       = user.FindFirstValue("email") ?? string.Empty;
         var displayName = user.FindFirstValue(ClaimTypes.Name)

@@ -129,18 +129,70 @@ public class EntraSessionTests
         Assert.False(ctx.IsPending);
     }
 
+    // ── admin flag mirroring ──────────────────────────────────────────────────
+
+    [Fact]
+    public void Admin_token_writes_the_flag_when_the_stored_link_disagrees()
+    {
+        var lookup = new FakeHouseholdByOidLookup("HH-1", isAdmin: false);
+        var user = Authenticated(("oid", "admin-oid"), (ClaimTypes.Role, "admin"));
+        var session = MakeSession(user, householdRef: "HH-1", lookup: lookup);
+
+        session.Resolve();
+
+        Assert.Equal(("admin-oid", true), Assert.Single(lookup.SetAdminFlagCalls));
+    }
+
+    [Fact]
+    public void Admin_token_does_not_write_the_flag_when_it_already_agrees()
+    {
+        // The write must be on change only — this path runs on every single request.
+        var lookup = new FakeHouseholdByOidLookup("HH-1", isAdmin: true);
+        var user = Authenticated(("oid", "admin-oid"), (ClaimTypes.Role, "admin"));
+        var session = MakeSession(user, householdRef: "HH-1", lookup: lookup);
+
+        session.Resolve();
+
+        Assert.Empty(lookup.SetAdminFlagCalls);
+    }
+
+    [Fact]
+    public void Revoked_admin_has_the_stored_flag_cleared()
+    {
+        var lookup = new FakeHouseholdByOidLookup("HH-1", isAdmin: true);
+        var user = Authenticated(("oid", "ex-admin-oid")); // no admin role any more
+        var session = MakeSession(user, householdRef: "HH-1", lookup: lookup);
+
+        session.Resolve();
+
+        Assert.Equal(("ex-admin-oid", false), Assert.Single(lookup.SetAdminFlagCalls));
+    }
+
+    [Fact]
+    public void Plain_resident_never_writes_the_flag()
+    {
+        var lookup = new FakeHouseholdByOidLookup("HH-1", isAdmin: false);
+        var user = Authenticated(("oid", "resident-oid"));
+        var session = MakeSession(user, householdRef: "HH-1", lookup: lookup);
+
+        session.Resolve();
+
+        Assert.Empty(lookup.SetAdminFlagCalls);
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────────
 
     private static EntraSession MakeSession(
         ClaimsPrincipal? user,
         string? householdRef,
-        FakePendingSignInStore? store = null)
+        FakePendingSignInStore? store = null,
+        FakeHouseholdByOidLookup? lookup = null)
     {
         HttpContext? ctx = user is null ? null : new DefaultHttpContext { User = user };
-        IHttpContextAccessor  accessor    = new StubAccessor(ctx);
+        IHttpContextAccessor  accessor     = new StubAccessor(ctx);
         IPendingSignInStore   pendingStore = store ?? new FakePendingSignInStore();
-        IHouseholdByOidLookup lookup      = new FakeHouseholdByOidLookup(householdRef);
-        return new EntraSession(accessor, pendingStore, lookup);
+        IHouseholdByOidLookup oidLookup    = lookup ?? new FakeHouseholdByOidLookup(householdRef);
+        return new EntraSession(accessor, pendingStore, oidLookup);
     }
 
     private static ClaimsPrincipal Authenticated(params (string Type, string Value)[] claims)
