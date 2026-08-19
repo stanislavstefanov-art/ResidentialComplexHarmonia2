@@ -186,6 +186,13 @@ IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL
     ALTER TABLE dbo.HouseholdLinks ADD Role nvarchar(10) NOT NULL
         CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner';
 
+-- Admin-ness lives in the Entra token, not in the database, so there is no way to
+-- ask SQL "who are the admins". EntraSession mirrors the token's claim into this
+-- column (on change only) so background work, which has no token, can address them.
+IF COL_LENGTH('dbo.HouseholdLinks', 'IsAdmin') IS NULL
+    ALTER TABLE dbo.HouseholdLinks ADD IsAdmin bit NOT NULL
+        CONSTRAINT DF_HouseholdLinks_IsAdmin DEFAULT 0;
+
 -- Household master data: sq.m. per household for fee calculation.
 IF OBJECT_ID(N'dbo.Households', N'U') IS NULL
 CREATE TABLE dbo.Households
