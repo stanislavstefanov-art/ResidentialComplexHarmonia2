@@ -546,10 +546,14 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
 {
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
 
-    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    /// What the next UpsertAsync reports. Defaults to Inserted so existing tests,
+    /// which only assert that the call happened, keep their meaning.
+    public PendingUpsertResult NextUpsertResult { get; set; } = PendingUpsertResult.Inserted;
+
+    public Task<PendingUpsertResult> UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
     {
         UpsertCalls.Add((oid, email, displayName));
-        return Task.CompletedTask;
+        return Task.FromResult(NextUpsertResult);
     }
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
@@ -567,7 +571,7 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
 
 public sealed class FailingPendingSignInStore : IPendingSignInStore
 {
-    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    public Task<PendingUpsertResult> UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
@@ -593,11 +597,12 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
     public List<(string Oid, string HouseholdRef, string Role)> ActivateCalls { get; } = [];
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
     public int PurgeCalls { get; private set; }
+    public PendingUpsertResult NextUpsertResult { get; set; } = PendingUpsertResult.Inserted;
 
-    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    public Task<PendingUpsertResult> UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
     {
         UpsertCalls.Add((oid, email, displayName));
-        return Task.CompletedTask;
+        return Task.FromResult(NextUpsertResult);
     }
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)

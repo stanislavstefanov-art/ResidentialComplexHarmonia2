@@ -9,8 +9,12 @@ public interface IPendingSignInStore
     /// <summary>
     /// Inserts a row if the OID is new; does nothing if it already exists.
     /// FirstSeenAt is set on first INSERT and never updated on repeat calls.
+    /// Returns Inserted only on a genuine first insert. This matters: the caller
+    /// runs on every request from an unlinked user, so anything that reacts to a
+    /// new sign-up must react to Inserted, never to the call itself.
     /// </summary>
-    Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default);
+    Task<PendingUpsertResult> UpsertAsync(
+        string oid, string email, string displayName, CancellationToken ct = default);
 
     /// <summary>
     /// Returns all pending-activation rows, ordered by FirstSeenAt ascending.
@@ -37,6 +41,9 @@ public interface IPendingSignInStore
 
 public enum ActivateResult { Ok, NotFound, AlreadyActivated, RoleConflict }
 public enum DirectLinkResult { Ok, AlreadyLinked }
+
+/// <summary>Whether a pending row was actually created, or already existed.</summary>
+public enum PendingUpsertResult { Inserted, AlreadyPending }
 
 /// <summary>Household link resolved from an Entra OID.</summary>
 public sealed record HouseholdLink(string HouseholdRef, string Role);
