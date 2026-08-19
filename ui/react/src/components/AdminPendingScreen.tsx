@@ -13,9 +13,14 @@ import HouseholdRefPicker from './HouseholdRefPicker';
 
 interface Props {
   role: Role;
+  /**
+   * Reports the number of waiting sign-ups every time this screen loads the
+   * list, so the nav badge stays in step without issuing a request of its own.
+   */
+  onPendingCount?: (count: number) => void;
 }
 
-export default function AdminPendingScreen({ role }: Props) {
+export default function AdminPendingScreen({ role, onPendingCount }: Props) {
   const { t } = useTranslation();
   const [rows, setRows] = useState<PendingSignInDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +50,7 @@ export default function AdminPendingScreen({ role }: Props) {
     try {
       const data = await listPending();
       setRows(data);
+      onPendingCount?.(data.length);
     } catch (e: any) {
       if (e?.status === 403) {
         setForbidden(true);
@@ -55,7 +61,7 @@ export default function AdminPendingScreen({ role }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, onPendingCount]);
 
   useEffect(() => { load(); }, [load]);
 
