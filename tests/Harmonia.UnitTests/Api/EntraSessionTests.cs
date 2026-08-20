@@ -213,19 +213,63 @@ public class EntraSessionTests
         Assert.True(ctx.IsAdmin);
     }
 
+    // ── new-sign-up signalling ────────────────────────────────────────────────
+
+    [Fact]
+    public void A_genuinely_new_pending_signup_enqueues_one_signal()
+    {
+        var store = new FakePendingSignInStore { NextUpsertResult = PendingUpsertResult.Inserted };
+        var queue = new FakeNewPendingSignInQueue();
+        var user = Authenticated(("oid", "new-oid"), ("email", "a@b.c"));
+        var session = MakeSession(user, householdRef: null, store: store, queue: queue);
+
+        session.Resolve();
+
+        Assert.Single(queue.Enqueued);
+    }
+
+    [Fact]
+    public void A_repeat_request_from_an_already_pending_user_enqueues_nothing()
+    {
+        // The regression that matters: UpsertAsync runs on EVERY request from an
+        // unlinked caller, so notifying on the call itself would storm every admin.
+        var store = new FakePendingSignInStore { NextUpsertResult = PendingUpsertResult.AlreadyPending };
+        var queue = new FakeNewPendingSignInQueue();
+        var user = Authenticated(("oid", "known-oid"), ("email", "a@b.c"));
+        var session = MakeSession(user, householdRef: null, store: store, queue: queue);
+
+        session.Resolve();
+
+        Assert.Empty(queue.Enqueued);
+    }
+
+    [Fact]
+    public void A_linked_resident_enqueues_nothing()
+    {
+        var queue = new FakeNewPendingSignInQueue();
+        var user = Authenticated(("oid", "resident-oid"));
+        var session = MakeSession(user, householdRef: "HH-7", queue: queue);
+
+        session.Resolve();
+
+        Assert.Empty(queue.Enqueued);
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────────
 
     private static EntraSession MakeSession(
         ClaimsPrincipal? user,
         string? householdRef,
         FakePendingSignInStore? store = null,
-        IHouseholdByOidLookup? lookup = null)
+        IHouseholdByOidLookup? lookup = null,
+        FakeNewPendingSignInQueue? queue = null)
     {
         HttpContext? ctx = user is null ? null : new DefaultHttpContext { User = user };
-        IHttpContextAccessor  accessor     = new StubAccessor(ctx);
-        IPendingSignInStore   pendingStore = store ?? new FakePendingSignInStore();
-        IHouseholdByOidLookup oidLookup    = lookup ?? new FakeHouseholdByOidLookup(householdRef);
-        return new EntraSession(accessor, pendingStore, oidLookup, NullLogger<EntraSession>.Instance);
+        IHttpContextAccessor   accessor     = new StubAccessor(ctx);
+        IPendingSignInStore    pendingStore = store ?? new FakePendingSignInStore();
+        IHouseholdByOidLookup  oidLookup    = lookup ?? new FakeHouseholdByOidLookup(householdRef);
+        INewPendingSignInQueue signalQueue  = queue ?? new FakeNewPendingSignInQueue();
+        return new EntraSession(accessor, pendingStore, oidLookup, NullLogger<EntraSession>.Instance, signalQueue);
     }
 
     /// Reports a stale flag like FakeHouseholdByOidLookup, but SetAdminFlagAsync

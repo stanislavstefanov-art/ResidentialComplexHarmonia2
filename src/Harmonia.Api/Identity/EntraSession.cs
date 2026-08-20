@@ -8,10 +8,11 @@ using ISession = Harmonia.Application.ISession;
 namespace Harmonia.Api.Identity;
 
 public sealed class EntraSession(
-    IHttpContextAccessor  httpContextAccessor,
-    IPendingSignInStore   pendingStore,
-    IHouseholdByOidLookup householdLookup,
-    ILogger<EntraSession> logger) : ISession
+    IHttpContextAccessor    httpContextAccessor,
+    IPendingSignInStore     pendingStore,
+    IHouseholdByOidLookup   householdLookup,
+    ILogger<EntraSession>   logger,
+    INewPendingSignInQueue  newSignInQueue) : ISession
 {
     private SessionContext? _cached;
     private bool _resolved;
@@ -64,7 +65,13 @@ public sealed class EntraSession(
         var email       = user.FindFirstValue("email") ?? string.Empty;
         var displayName = user.FindFirstValue(ClaimTypes.Name)
                        ?? user.FindFirstValue("name") ?? string.Empty;
-        await pendingStore.UpsertAsync(oid, email, displayName);
+        var upsert = await pendingStore.UpsertAsync(oid, email, displayName);
+        // Only a genuine insert is news. This runs on every request from an unlinked
+        // caller, so signalling on the call itself would notify admins repeatedly.
+        // Enqueue is non-blocking and cannot throw — nothing here may slow or break
+        // authentication.
+        if (upsert == PendingUpsertResult.Inserted)
+            newSignInQueue.Enqueue(new NewPendingSignIn(DateTimeOffset.UtcNow));
         return new SessionContext(IsResident: false, IsAdmin: false,
             HouseholdRef: null, EntraObjectId: oid, IsPending: true);
     }

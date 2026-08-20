@@ -55,6 +55,9 @@ builder.Services.AddSingleton<IHouseholdStore>(new SqlHouseholdStore(defaultConn
 builder.Services.AddSingleton<ICounterpartyStore>(new SqlCounterpartyStore(defaultConn));
 builder.Services.AddSingleton<IPendingSignInStore>(new SqlPendingSignInStore(defaultConn));
 builder.Services.AddSingleton<IHouseholdByOidLookup>(new SqlHouseholdByOidLookup(defaultConn));
+// Registered here (ahead of Task 11's other notification wiring) because EntraSession
+// now takes this as a constructor dependency — DI must resolve it on every request.
+builder.Services.AddSingleton<INewPendingSignInQueue, ChannelNewPendingSignInQueue>();
 
 var vapidSubject = builder.Configuration["Vapid:Subject"];
 var vapidPublic  = builder.Configuration["Vapid:PublicKey"];
