@@ -153,6 +153,39 @@ BEGIN
     ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef, Role);
 END
 
+-- Multi-resident fix: HouseholdContacts must be keyed per person, not per (HouseholdRef, Role) —
+-- two residents sharing a household+role otherwise collide (docs/superpowers/specs/2026-08-20-directory-multi-resident-design.md).
+IF COL_LENGTH('dbo.HouseholdContacts', 'EntraObjectId') IS NULL
+BEGIN
+    ALTER TABLE dbo.HouseholdContacts ADD EntraObjectId nvarchar(36) NULL;
+
+    -- Backfill. Deterministic: earliest-linked account per (HouseholdRef, Role) wins the
+    -- existing row's data (HouseholdLinks can already have duplicates — that duplication
+    -- IS this bug — so a plain join would be ambiguous). Any other same-role account was
+    -- never the one whose data survived under the old UpsertAsync/DirectLinkAsync anyway;
+    -- it starts fresh, which the new self-service upsert-recovery path handles safely.
+    ;WITH Ranked AS (
+        SELECT EntraObjectId, HouseholdRef, Role,
+               ROW_NUMBER() OVER (PARTITION BY HouseholdRef, Role ORDER BY LinkedAt ASC) AS rn
+        FROM dbo.HouseholdLinks
+    )
+    UPDATE hc
+    SET hc.EntraObjectId = r.EntraObjectId
+    FROM dbo.HouseholdContacts hc
+    JOIN Ranked r
+      ON r.HouseholdRef = hc.HouseholdRef AND r.Role = hc.Role AND r.rn = 1;
+
+    -- Orphaned contact row (no matching HouseholdLinks row at all) — delete rather than
+    -- leave a NULL-keyed row once EntraObjectId is required.
+    DELETE FROM dbo.HouseholdContacts WHERE EntraObjectId IS NULL;
+
+    ALTER TABLE dbo.HouseholdContacts ALTER COLUMN EntraObjectId nvarchar(36) NOT NULL;
+
+    ALTER TABLE dbo.HouseholdContacts DROP CONSTRAINT PK_HouseholdContacts;
+    ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (EntraObjectId);
+    CREATE INDEX IX_HouseholdContacts_HouseholdRef ON dbo.HouseholdContacts (HouseholdRef);
+END
+
 -- Pending activation queue: authenticated residents not yet linked to a household.
 -- EntraObjectId is the JWT 'oid' claim. FirstSeenAt is set once on INSERT, never updated.
 -- Email, DisplayName, EntraObjectId are personal data (R3) — never log their values.
