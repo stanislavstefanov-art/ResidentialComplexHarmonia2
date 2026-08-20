@@ -682,24 +682,50 @@ public sealed class FakeInvoiceScanner(ScannedInvoice result) : IInvoiceScanner
 public sealed class FakeNewPendingSignInQueue : INewPendingSignInQueue
 {
     private readonly Queue<NewPendingSignIn> _queue = new();
+    private readonly object _gate = new();
+    private TaskCompletionSource<NewPendingSignIn>? _waiter;
 
     public List<NewPendingSignIn> Enqueued { get; } = [];
 
     public void Enqueue(NewPendingSignIn signal)
     {
         Enqueued.Add(signal);
-        _queue.Enqueue(signal);
+        lock (_gate)
+        {
+            if (_waiter is { Task.IsCompleted: false } waiter)
+            {
+                _waiter = null;
+                waiter.TrySetResult(signal);
+                return;
+            }
+            _queue.Enqueue(signal);
+        }
     }
 
-    public ValueTask<NewPendingSignIn> DequeueAsync(CancellationToken ct)
-        => _queue.Count > 0
-            ? ValueTask.FromResult(_queue.Dequeue())
-            : ValueTask.FromException<NewPendingSignIn>(new OperationCanceledException());
+    public async ValueTask<NewPendingSignIn> DequeueAsync(CancellationToken ct)
+    {
+        TaskCompletionSource<NewPendingSignIn> waiter;
+        lock (_gate)
+        {
+            if (_queue.Count > 0) return _queue.Dequeue();
+            waiter = new TaskCompletionSource<NewPendingSignIn>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _waiter = waiter;
+        }
+
+        // Genuinely waits for cancellation rather than throwing eagerly, so callers
+        // (PendingSignInNotifier's tests) exercise the real graceful-shutdown branch
+        // instead of racing a busy-loop against StopAsync.
+        await using var registration = ct.Register(() => waiter.TrySetCanceled(ct));
+        return await waiter.Task;
+    }
 
     public int DrainPending()
     {
-        var drained = _queue.Count;
-        _queue.Clear();
-        return drained;
+        lock (_gate)
+        {
+            var drained = _queue.Count;
+            _queue.Clear();
+            return drained;
+        }
     }
 }
