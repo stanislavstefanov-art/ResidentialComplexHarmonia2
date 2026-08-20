@@ -1,4 +1,5 @@
 // tests/Harmonia.IntegrationTests/SqlNotificationStoreTests.cs
+using Harmonia.Api.Adapters;
 using Harmonia.Api.Reservations.Adapters;
 using Harmonia.Application.Notifications;
 using Harmonia.Domain;
@@ -11,6 +12,29 @@ namespace Harmonia.IntegrationTests;
 public class SqlNotificationStoreTests(SqlServerFixture fixture)
 {
     private SqlNotificationStore Store => new(fixture.ConnectionString);
+
+    [Fact]
+    public async Task GetAdminHouseholdRefsAsync_returns_only_admin_flagged_households()
+    {
+        var adminOid = $"oid-{Guid.NewGuid():N}";
+        var adminRef = $"HH-ADMIN-{Guid.NewGuid():N}";
+        var plainOid = $"oid-{Guid.NewGuid():N}";
+        var plainRef = $"HH-PLAIN-{Guid.NewGuid():N}";
+
+        var pending = new SqlPendingSignInStore(fixture.ConnectionString);
+        await pending.UpsertAsync(adminOid, "a@b.c", "Admin");
+        await pending.ActivateAsync(adminOid, adminRef, "Owner");
+        await pending.UpsertAsync(plainOid, "c@d.e", "Resident");
+        await pending.ActivateAsync(plainOid, plainRef, "Owner");
+
+        await new SqlHouseholdByOidLookup(fixture.ConnectionString).SetAdminFlagAsync(adminOid, true);
+
+        var refs = await Store.GetAdminHouseholdRefsAsync();
+        var values = refs.Select(r => r.Value).ToList();
+
+        Assert.Contains(adminRef, values);
+        Assert.DoesNotContain(plainRef, values);
+    }
 
     [Fact]
     public async Task Save_first_time_returns_Saved_IsNew_true()
