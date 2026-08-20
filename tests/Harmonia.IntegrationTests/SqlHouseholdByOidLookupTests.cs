@@ -66,6 +66,22 @@ public class SqlHouseholdByOidLookupTests(SqlServerFixture fixture)
         await Assert.ThrowsAnyAsync<Exception>(() => SeedLinkAsync(oid, hh));
     }
 
+    [Fact]
+    public async Task Admin_flag_round_trips_and_can_be_cleared()
+    {
+        var oid = $"oid-{Guid.NewGuid():N}";
+        var hh  = $"HH-ADMIN-{Guid.NewGuid():N}";
+        await SeedLinkAsync(oid, hh);
+
+        Assert.False((await Lookup.FindAsync(oid))!.IsAdmin);
+
+        await Lookup.SetAdminFlagAsync(oid, true);
+        Assert.True((await Lookup.FindAsync(oid))!.IsAdmin);
+
+        await Lookup.SetAdminFlagAsync(oid, false);
+        Assert.False((await Lookup.FindAsync(oid))!.IsAdmin);
+    }
+
     private async Task SeedLinkAsync(string oid, string householdRef, string role = "Owner")
     {
         await using var conn = new SqlConnection(fixture.ConnectionString);

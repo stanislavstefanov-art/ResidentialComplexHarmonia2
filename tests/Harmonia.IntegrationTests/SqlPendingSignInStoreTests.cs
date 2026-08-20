@@ -1,4 +1,5 @@
 using Harmonia.Api.Adapters;
+using Harmonia.Application.PendingSignIn;
 using Microsoft.Data.SqlClient;
 
 namespace Harmonia.IntegrationTests;
@@ -8,6 +9,19 @@ namespace Harmonia.IntegrationTests;
 public class SqlPendingSignInStoreTests(SqlServerFixture fixture)
 {
     private SqlPendingSignInStore Store => new(fixture.ConnectionString);
+
+    [Fact]
+    public async Task Upsert_reports_Inserted_once_then_AlreadyPending()
+    {
+        var oid = $"oid-{Guid.NewGuid():N}";
+
+        Assert.Equal(PendingUpsertResult.Inserted,
+            await Store.UpsertAsync(oid, "a@b.c", "Test User"));
+        Assert.Equal(PendingUpsertResult.AlreadyPending,
+            await Store.UpsertAsync(oid, "a@b.c", "Test User"));
+        Assert.Equal(PendingUpsertResult.AlreadyPending,
+            await Store.UpsertAsync(oid, "a@b.c", "Test User"));
+    }
 
     [Fact]
     public async Task Upsert_new_oid_creates_row_with_FirstSeenAt()

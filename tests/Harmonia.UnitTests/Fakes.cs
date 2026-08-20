@@ -357,6 +357,12 @@ public sealed class FakeNotificationStore : INotificationStore
 
     public Task<IReadOnlyList<HouseholdRef>> GetAllHouseholdRefsAsync(CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<HouseholdRef>>(_subs.Keys.ToList());
+
+    /// Seeded by tests; GetAdminHouseholdRefsAsync returns exactly these.
+    public List<HouseholdRef> AdminRefs { get; } = [];
+
+    public Task<IReadOnlyList<HouseholdRef>> GetAdminHouseholdRefsAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<HouseholdRef>>(AdminRefs.ToList());
 }
 
 public sealed class FailingNotificationStore : INotificationStore
@@ -384,6 +390,9 @@ public sealed class FailingNotificationStore : INotificationStore
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<IReadOnlyList<HouseholdRef>> GetAllHouseholdRefsAsync(CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<IReadOnlyList<HouseholdRef>> GetAdminHouseholdRefsAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 }
 
@@ -546,10 +555,14 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
 {
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
 
-    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    /// What the next UpsertAsync reports. Defaults to Inserted so existing tests,
+    /// which only assert that the call happened, keep their meaning.
+    public PendingUpsertResult NextUpsertResult { get; set; } = PendingUpsertResult.Inserted;
+
+    public Task<PendingUpsertResult> UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
     {
         UpsertCalls.Add((oid, email, displayName));
-        return Task.CompletedTask;
+        return Task.FromResult(NextUpsertResult);
     }
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
@@ -567,7 +580,7 @@ public sealed class FakePendingSignInStore : IPendingSignInStore
 
 public sealed class FailingPendingSignInStore : IPendingSignInStore
 {
-    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    public Task<PendingUpsertResult> UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
@@ -593,11 +606,12 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
     public List<(string Oid, string HouseholdRef, string Role)> ActivateCalls { get; } = [];
     public List<(string Oid, string Email, string DisplayName)> UpsertCalls { get; } = [];
     public int PurgeCalls { get; private set; }
+    public PendingUpsertResult NextUpsertResult { get; set; } = PendingUpsertResult.Inserted;
 
-    public Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
+    public Task<PendingUpsertResult> UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default)
     {
         UpsertCalls.Add((oid, email, displayName));
-        return Task.CompletedTask;
+        return Task.FromResult(NextUpsertResult);
     }
 
     public Task<IReadOnlyList<PendingSignIn>> ListAsync(CancellationToken ct = default)
@@ -636,10 +650,19 @@ public sealed class FakePendingSignInStoreV2 : IPendingSignInStore
     }
 }
 
-public sealed class FakeHouseholdByOidLookup(string? householdRef, string role = "Owner") : IHouseholdByOidLookup
+public sealed class FakeHouseholdByOidLookup(
+    string? householdRef, string role = "Owner", bool isAdmin = false) : IHouseholdByOidLookup
 {
+    public List<(string Oid, bool IsAdmin)> SetAdminFlagCalls { get; } = [];
+
     public Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default)
-        => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, role));
+        => Task.FromResult(householdRef is null ? null : new HouseholdLink(householdRef, role, isAdmin));
+
+    public Task SetAdminFlagAsync(string oid, bool isAdmin, CancellationToken ct = default)
+    {
+        SetAdminFlagCalls.Add((oid, isAdmin));
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class FakeInvoiceScanner(ScannedInvoice result) : IInvoiceScanner
@@ -653,5 +676,56 @@ public sealed class FakeInvoiceScanner(ScannedInvoice result) : IInvoiceScanner
     {
         WasCalled = true;
         return Task.FromResult(result);
+    }
+}
+
+public sealed class FakeNewPendingSignInQueue : INewPendingSignInQueue
+{
+    private readonly Queue<NewPendingSignIn> _queue = new();
+    private readonly object _gate = new();
+    private TaskCompletionSource<NewPendingSignIn>? _waiter;
+
+    public List<NewPendingSignIn> Enqueued { get; } = [];
+
+    public void Enqueue(NewPendingSignIn signal)
+    {
+        Enqueued.Add(signal);
+        lock (_gate)
+        {
+            if (_waiter is { Task.IsCompleted: false } waiter)
+            {
+                _waiter = null;
+                waiter.TrySetResult(signal);
+                return;
+            }
+            _queue.Enqueue(signal);
+        }
+    }
+
+    public async ValueTask<NewPendingSignIn> DequeueAsync(CancellationToken ct)
+    {
+        TaskCompletionSource<NewPendingSignIn> waiter;
+        lock (_gate)
+        {
+            if (_queue.Count > 0) return _queue.Dequeue();
+            waiter = new TaskCompletionSource<NewPendingSignIn>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _waiter = waiter;
+        }
+
+        // Genuinely waits for cancellation rather than throwing eagerly, so callers
+        // (PendingSignInNotifier's tests) exercise the real graceful-shutdown branch
+        // instead of racing a busy-loop against StopAsync.
+        await using var registration = ct.Register(() => waiter.TrySetCanceled(ct));
+        return await waiter.Task;
+    }
+
+    public int DrainPending()
+    {
+        lock (_gate)
+        {
+            var drained = _queue.Count;
+            _queue.Clear();
+            return drained;
+        }
     }
 }

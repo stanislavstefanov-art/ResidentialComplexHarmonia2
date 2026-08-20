@@ -9,8 +9,12 @@ public interface IPendingSignInStore
     /// <summary>
     /// Inserts a row if the OID is new; does nothing if it already exists.
     /// FirstSeenAt is set on first INSERT and never updated on repeat calls.
+    /// Returns Inserted only on a genuine first insert. This matters: the caller
+    /// runs on every request from an unlinked user, so anything that reacts to a
+    /// new sign-up must react to Inserted, never to the call itself.
     /// </summary>
-    Task UpsertAsync(string oid, string email, string displayName, CancellationToken ct = default);
+    Task<PendingUpsertResult> UpsertAsync(
+        string oid, string email, string displayName, CancellationToken ct = default);
 
     /// <summary>
     /// Returns all pending-activation rows, ordered by FirstSeenAt ascending.
@@ -38,15 +42,51 @@ public interface IPendingSignInStore
 public enum ActivateResult { Ok, NotFound, AlreadyActivated, RoleConflict }
 public enum DirectLinkResult { Ok, AlreadyLinked }
 
+/// <summary>Whether a pending row was actually created, or already existed.</summary>
+public enum PendingUpsertResult { Inserted, AlreadyPending }
+
 /// <summary>Household link resolved from an Entra OID.</summary>
-public sealed record HouseholdLink(string HouseholdRef, string Role);
+public sealed record HouseholdLink(string HouseholdRef, string Role, bool IsAdmin);
 
 /// <summary>
-/// Looks up the HouseholdRef and Role for an activated member by their Entra OID.
-/// Returns null when no linked row exists (caller is pending).
+/// Looks up the HouseholdRef, Role and IsAdmin flag for an activated member by their
+/// Entra OID. Returns null when no linked row exists (caller is pending).
 /// R3: oid is personal data — never log its value.
 /// </summary>
 public interface IHouseholdByOidLookup
 {
     Task<HouseholdLink?> FindAsync(string oid, CancellationToken ct = default);
+
+    /// <summary>
+    /// Mirrors the Entra token's admin claim onto the stored link. Called only when
+    /// the stored value disagrees with the token, so this is a write on change, not
+    /// a write per request.
+    /// R3: oid is personal data — never log its value.
+    /// </summary>
+    Task SetAdminFlagAsync(string oid, bool isAdmin, CancellationToken ct = default);
+}
+
+/// <summary>
+/// A new sign-up appeared. Deliberately carries no identifying data (R3): the
+/// notification never names the person, so nothing about them need travel.
+/// </summary>
+public readonly record struct NewPendingSignIn(DateTimeOffset OccurredAt);
+
+/// <summary>
+/// Hands new-sign-up signals from the request thread to a background consumer.
+/// Enqueue must never block or throw — it runs inside session resolution, which
+/// is on the hot path of every request.
+/// </summary>
+public interface INewPendingSignInQueue
+{
+    void Enqueue(NewPendingSignIn signal);
+
+    /// <summary>Completes once at least one signal is available.</summary>
+    ValueTask<NewPendingSignIn> DequeueAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Discards any signals already waiting and returns how many. Used to coalesce
+    /// a burst into a single dispatch round.
+    /// </summary>
+    int DrainPending();
 }
