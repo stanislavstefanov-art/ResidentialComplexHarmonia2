@@ -107,6 +107,10 @@ else
     builder.Services.AddSingleton<INotificationDispatcher, NoOpNotificationDispatcher>();
 }
 builder.Services.AddHostedService<BbqReminderService>();
+// Singleton, not scoped: its dependencies (INotificationStore, INotificationDispatcher)
+// are singletons and the hosted service resolves it once at startup.
+builder.Services.AddSingleton<NotifyAdminsOfPendingSignIn>();
+builder.Services.AddHostedService<PendingSignInNotifier>();
 
 if (builder.Environment.IsDevelopment())
 {
