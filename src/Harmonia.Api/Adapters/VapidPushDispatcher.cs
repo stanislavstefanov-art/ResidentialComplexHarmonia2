@@ -119,6 +119,7 @@ public sealed class VapidPushDispatcher(
         NotificationKind.PaymentRecorded => "Payment recorded",
         NotificationKind.BbqReminder     => "BBQ booking reminder",
         NotificationKind.Announcement    => "Announcement from the board",
+        NotificationKind.PendingSignIn   => "Someone is waiting for approval",
         _                                => "Harmonia notification"
     };
 
@@ -128,6 +129,8 @@ public sealed class VapidPushDispatcher(
         NotificationKind.PaymentRecorded => "A payment has been recorded for your apartment.",
         NotificationKind.BbqReminder     => "Reminder: you have a BBQ booking tomorrow.",
         NotificationKind.Announcement    => "The board has a message for you. Log in to Harmonia to view it.",
+        // R3: names nobody. The admin opens Harmonia to see who it is.
+        NotificationKind.PendingSignIn   => "A new sign-up is awaiting admission. Open Harmonia to review.",
         _                                => "You have a new notification."
     };
 }
