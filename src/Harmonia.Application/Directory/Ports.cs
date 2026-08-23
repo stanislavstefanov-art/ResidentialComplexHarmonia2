@@ -65,7 +65,7 @@ public abstract record EraseContactResult
     public sealed record Refused   : EraseContactResult;
     /// <summary>Row deleted successfully.</summary>
     public sealed record Ok        : EraseContactResult;
-    /// <summary>No row with that HouseholdRef exists.</summary>
+    /// <summary>No matching resident exists for the given lookup key (HouseholdRef+Role, or OID).</summary>
     public sealed record NotFound  : EraseContactResult;
     /// <summary>More than one resident matches this (HouseholdRef, Role) pair. Refuse rather than
     /// guess or delete more than one resident's data.</summary>
@@ -231,8 +231,9 @@ public interface IDirectoryStore
 
     /// <summary>
     /// Removes the one resident matching <paramref name="householdRef"/> + <paramref name="role"/>
-    /// completely: deletes their <c>HouseholdContacts</c> row and <c>HouseholdLinks</c> row,
-    /// resolved via <c>HouseholdLinks</c>. Returns <see cref="RemoveResidentResult.Ambiguous"/>
+    /// (resident is resolved via <c>HouseholdLinks</c>) completely: deletes their
+    /// <c>HouseholdContacts</c> row and their <c>HouseholdLinks</c> row. Returns
+    /// <see cref="RemoveResidentResult.Ambiguous"/>
     /// if more than one resident currently holds that role. After this call their Entra account
     /// is unlinked and they re-enter the pending flow on next sign-in.
     /// R3: never log <paramref name="householdRef"/>.
