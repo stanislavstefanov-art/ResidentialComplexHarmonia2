@@ -153,8 +153,38 @@ BEGIN
     ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (HouseholdRef, Role);
 END
 
+-- Pending activation queue: authenticated residents not yet linked to a household.
+-- EntraObjectId is the JWT 'oid' claim. FirstSeenAt is set once on INSERT, never updated.
+-- Email, DisplayName, EntraObjectId are personal data (R3) — never log their values.
+IF OBJECT_ID(N'dbo.PendingSignIns', N'U') IS NULL
+CREATE TABLE dbo.PendingSignIns
+(
+    EntraObjectId  nvarchar(36)  NOT NULL,
+    Email          nvarchar(256) NOT NULL,
+    DisplayName    nvarchar(256) NOT NULL,
+    FirstSeenAt    datetime2(3)  NOT NULL,
+    CONSTRAINT PK_PendingSignIns PRIMARY KEY (EntraObjectId)
+);
+
+-- Account-to-household link table (set by admin activation in Slice 2).
+-- EntraObjectId PK: one account belongs to exactly one household.
+-- Multiple OIDs can share one HouseholdRef (family members per apartment).
+-- EntraObjectId is personal data (R3) — never log its value.
+IF OBJECT_ID(N'dbo.HouseholdLinks', N'U') IS NULL
+CREATE TABLE dbo.HouseholdLinks
+(
+    EntraObjectId  nvarchar(36)   NOT NULL,
+    HouseholdRef   nvarchar(128)  NOT NULL,
+    Role           nvarchar(10)   NOT NULL
+        CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner',
+    LinkedAt       datetime2(3)   NOT NULL,
+    CONSTRAINT PK_HouseholdLinks PRIMARY KEY (EntraObjectId)
+);
+
 -- Multi-resident fix: HouseholdContacts must be keyed per person, not per (HouseholdRef, Role) —
 -- two residents sharing a household+role otherwise collide (docs/superpowers/specs/2026-08-20-directory-multi-resident-design.md).
+-- Placed after dbo.HouseholdLinks: the backfill below joins against it, and schema.sql runs
+-- top-to-bottom as one unbatched script, so HouseholdLinks must already exist by this point.
 IF COL_LENGTH('dbo.HouseholdContacts', 'EntraObjectId') IS NULL
 BEGIN
     ALTER TABLE dbo.HouseholdContacts ADD EntraObjectId nvarchar(36) NULL;
@@ -185,34 +215,6 @@ BEGIN
     ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (EntraObjectId);
     CREATE INDEX IX_HouseholdContacts_HouseholdRef ON dbo.HouseholdContacts (HouseholdRef);
 END
-
--- Pending activation queue: authenticated residents not yet linked to a household.
--- EntraObjectId is the JWT 'oid' claim. FirstSeenAt is set once on INSERT, never updated.
--- Email, DisplayName, EntraObjectId are personal data (R3) — never log their values.
-IF OBJECT_ID(N'dbo.PendingSignIns', N'U') IS NULL
-CREATE TABLE dbo.PendingSignIns
-(
-    EntraObjectId  nvarchar(36)  NOT NULL,
-    Email          nvarchar(256) NOT NULL,
-    DisplayName    nvarchar(256) NOT NULL,
-    FirstSeenAt    datetime2(3)  NOT NULL,
-    CONSTRAINT PK_PendingSignIns PRIMARY KEY (EntraObjectId)
-);
-
--- Account-to-household link table (set by admin activation in Slice 2).
--- EntraObjectId PK: one account belongs to exactly one household.
--- Multiple OIDs can share one HouseholdRef (family members per apartment).
--- EntraObjectId is personal data (R3) — never log its value.
-IF OBJECT_ID(N'dbo.HouseholdLinks', N'U') IS NULL
-CREATE TABLE dbo.HouseholdLinks
-(
-    EntraObjectId  nvarchar(36)   NOT NULL,
-    HouseholdRef   nvarchar(128)  NOT NULL,
-    Role           nvarchar(10)   NOT NULL
-        CONSTRAINT DF_HouseholdLinks_Role DEFAULT 'Owner',
-    LinkedAt       datetime2(3)   NOT NULL,
-    CONSTRAINT PK_HouseholdLinks PRIMARY KEY (EntraObjectId)
-);
 
 -- Add Role to existing HouseholdLinks rows (idempotent upgrade for pre-existing databases).
 IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL
