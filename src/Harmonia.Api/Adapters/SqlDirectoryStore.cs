@@ -100,7 +100,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
             await conn.OpenAsync(ct);
 
             var resolved = await ResolveOneByRoleAsync(conn, transaction: null, householdRef, role, ct);
-            if (resolved.Count == 0) return new UpdateContactResult.Ok(); // see note below
+            if (resolved.Count == 0) return new UpdateContactResult.Ok(); // see Step 2 note below
             if (resolved.Count > 1)  return new UpdateContactResult.Ambiguous();
 
             var rows = await UpsertByOidCoreAsync(
