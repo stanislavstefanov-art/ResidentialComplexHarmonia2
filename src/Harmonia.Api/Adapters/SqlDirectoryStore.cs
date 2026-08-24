@@ -98,13 +98,17 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         {
             await using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync(ct);
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync(ct);
 
-            var resolved = await ResolveOneByRoleAsync(conn, transaction: null, householdRef, role, ct);
-            if (resolved.Count == 0) return new UpdateContactResult.Ok(); // see Step 2 note below
-            if (resolved.Count > 1)  return new UpdateContactResult.Ambiguous();
+            // A household with zero linked residents for this role has nothing to update — not
+            // an error, since the caller only supplied householdRef+role, not a specific person.
+            var resolved = await ResolveOneByRoleAsync(conn, tx, householdRef, role, ct);
+            if (resolved.Count == 0) { await tx.RollbackAsync(ct); return new UpdateContactResult.Ok(); }
+            if (resolved.Count > 1)  { await tx.RollbackAsync(ct); return new UpdateContactResult.Ambiguous(); }
 
             var rows = await UpsertByOidCoreAsync(
-                conn, transaction: null, resolved.SingleOid!, displayName, phone, email, isOptedOut, ct);
+                conn, tx, resolved.SingleOid!, displayName, phone, email, isOptedOut, ct);
+            await tx.CommitAsync(ct);
             return rows == 0 ? new UpdateContactResult.Failed() : new UpdateContactResult.Ok();
         }
         catch (OperationCanceledException) { throw; }
@@ -176,12 +180,14 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
         {
             await using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync(ct);
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync(ct);
 
-            var resolved = await ResolveOneByRoleAsync(conn, transaction: null, householdRef, role, ct);
-            if (resolved.Count == 0) return new MarkDepartedResult.NotFound();
-            if (resolved.Count > 1)  return new MarkDepartedResult.Ambiguous();
+            var resolved = await ResolveOneByRoleAsync(conn, tx, householdRef, role, ct);
+            if (resolved.Count == 0) { await tx.RollbackAsync(ct); return new MarkDepartedResult.NotFound(); }
+            if (resolved.Count > 1)  { await tx.RollbackAsync(ct); return new MarkDepartedResult.Ambiguous(); }
 
             await using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
             cmd.CommandText = """
                 UPDATE dbo.HouseholdContacts
                 SET DepartedAt = ISNULL(DepartedAt, SYSUTCDATETIME())
@@ -189,6 +195,7 @@ public sealed class SqlDirectoryStore(string connectionString) : IDirectoryStore
                 """;
             cmd.Parameters.Add(new SqlParameter("@Oid", SqlDbType.NVarChar, 36) { Value = resolved.SingleOid });
             var rows = await cmd.ExecuteNonQueryAsync(ct);
+            await tx.CommitAsync(ct);
             // The person is linked (resolved.Count == 1) but has no HouseholdContacts row
             // (e.g. already erased) — nothing to mark.
             return rows == 0 ? new MarkDepartedResult.NotFound() : new MarkDepartedResult.Ok();
