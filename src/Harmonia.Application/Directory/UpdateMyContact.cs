@@ -1,9 +1,8 @@
 namespace Harmonia.Application.Directory;
 
 /// <summary>
-/// Lets a resident update their own contact details.
-/// R2: the target <see cref="HouseholdRef"/> is always taken from <see cref="ISession.Resolve()"/>
-/// — never from any caller-supplied parameter.
+/// Lets a resident update their own contact details, resolved strictly by their own Entra
+/// OID — never by role, which two residents can share (R2, and the actual bug this fixes).
 /// </summary>
 public sealed class UpdateMyContact(ISession session, IDirectoryStore store)
 {
@@ -12,18 +11,15 @@ public sealed class UpdateMyContact(ISession session, IDirectoryStore store)
         CancellationToken ct = default)
     {
         var ctx = session.Resolve();
-        if (ctx is null || ctx.HouseholdRef is null)
+        if (ctx is not { HouseholdRef: not null, EntraObjectId: not null })
             return new UpdateContactResult.Refused();
 
         try
         {
-            return await store.UpsertContactAsync(
-                ctx.HouseholdRef.Value, ctx.Role ?? "Owner", displayName, phone, email, isOptedOut, ct);
+            return await store.UpsertContactByOidAsync(
+                ctx.EntraObjectId, displayName, phone, email, isOptedOut, ct);
         }
         catch (OperationCanceledException) { throw; }
-        catch (Exception)
-        {
-            return new UpdateContactResult.Failed();
-        }
+        catch (Exception) { return new UpdateContactResult.Failed(); }
     }
 }
