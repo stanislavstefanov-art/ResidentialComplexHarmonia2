@@ -430,14 +430,23 @@ public sealed class FakeDirectoryStore : IDirectoryStore
 
     public List<HouseholdContact> Contacts => _contacts;
 
+    /// <summary>Optional seam: represents a HouseholdLinks row for a person who has no
+    /// HouseholdContacts row yet (erased it, or never filled it in). Only populate this for a
+    /// test that specifically exercises that recovery path — every other test's Contacts
+    /// entries already carry a real EntraObjectId and need nothing here.</summary>
+    public List<(string EntraObjectId, HouseholdRef HouseholdRef, string Role)> Links { get; } = [];
+
     public Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<HouseholdContact>>([.. _contacts]);
 
-    public Task<UpdateContactResult> UpsertContactAsync(
-        HouseholdRef householdRef, string role, string? displayName, string? phone, string? email,
-        bool? isOptedOut, CancellationToken ct = default)
+    public Task<HouseholdContact?> GetContactByOidAsync(string entraObjectId, CancellationToken ct = default)
+        => Task.FromResult(_contacts.FirstOrDefault(c => c.EntraObjectId == entraObjectId));
+
+    public Task<UpdateContactResult> UpsertContactByOidAsync(
+        string entraObjectId, string? displayName, string? phone, string? email, bool? isOptedOut,
+        CancellationToken ct = default)
     {
-        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef && c.Role == role);
+        var idx = _contacts.FindIndex(c => c.EntraObjectId == entraObjectId);
         if (idx >= 0)
         {
             var e = _contacts[idx];
@@ -449,46 +458,72 @@ public sealed class FakeDirectoryStore : IDirectoryStore
                 IsOptedOut  = isOptedOut  ?? e.IsOptedOut,
                 UpdatedAt   = DateTimeOffset.UtcNow
             };
+            return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
         }
-        else
-        {
-            _contacts.Add(new HouseholdContact(
-                householdRef, role, displayName, phone, email, null,
-                isOptedOut ?? false, DateTimeOffset.UtcNow, null));
-        }
+
+        var link = Links.FirstOrDefault(l => l.EntraObjectId == entraObjectId);
+        if (link.EntraObjectId is null)
+            return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Failed());
+
+        _contacts.Add(new HouseholdContact(
+            link.HouseholdRef, link.Role, displayName, phone, email, null,
+            isOptedOut ?? false, DateTimeOffset.UtcNow, null, entraObjectId));
         return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
+    }
+
+    public Task<EraseContactResult> DeleteContactByOidAsync(string entraObjectId, CancellationToken ct = default)
+    {
+        var linked = _contacts.Any(c => c.EntraObjectId == entraObjectId)
+                  || Links.Any(l => l.EntraObjectId == entraObjectId);
+        if (!linked) return Task.FromResult<EraseContactResult>(new EraseContactResult.NotFound());
+
+        _contacts.RemoveAll(c => c.EntraObjectId == entraObjectId);
+        return Task.FromResult<EraseContactResult>(new EraseContactResult.Ok());
+    }
+
+    public Task<UpdateContactResult> UpsertContactAsync(
+        HouseholdRef householdRef, string role, string? displayName, string? phone, string? email,
+        bool? isOptedOut, CancellationToken ct = default)
+    {
+        var resolved = ResolveOneByRole(householdRef, role);
+        if (resolved.Count > 1) return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ambiguous());
+        if (resolved.Count == 0)
+        {
+            // No linked resident at all for this role — matches SqlDirectoryStore's defensive
+            // Ok no-op (Task 4's Step 2 note); not reachable from the current admin UI.
+            return Task.FromResult<UpdateContactResult>(new UpdateContactResult.Ok());
+        }
+        return UpsertContactByOidAsync(resolved.SingleOid!, displayName, phone, email, isOptedOut, ct);
     }
 
     public Task<UpdateNotesResult> UpsertNotesAsync(
         HouseholdRef householdRef, string? notes, CancellationToken ct = default)
     {
-        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
-        if (idx >= 0)
+        for (var i = 0; i < _contacts.Count; i++)
         {
-            var e = _contacts[idx];
-            _contacts[idx] = e with { Notes = notes, UpdatedAt = DateTimeOffset.UtcNow };
-        }
-        else
-        {
-            _contacts.Add(new HouseholdContact(
-                householdRef, "Owner", null, null, null, notes, false, DateTimeOffset.UtcNow, null));
+            if (_contacts[i].HouseholdRef != householdRef) continue;
+            _contacts[i] = _contacts[i] with { Notes = notes, UpdatedAt = DateTimeOffset.UtcNow };
         }
         return Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Ok());
     }
 
     public Task<EraseContactResult> DeleteContactAsync(
-        HouseholdRef householdRef, CancellationToken ct = default)
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
     {
-        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
-        if (idx < 0) return Task.FromResult<EraseContactResult>(new EraseContactResult.NotFound());
-        _contacts.RemoveAt(idx);
-        return Task.FromResult<EraseContactResult>(new EraseContactResult.Ok());
+        var resolved = ResolveOneByRole(householdRef, role);
+        if (resolved.Count == 0) return Task.FromResult<EraseContactResult>(new EraseContactResult.NotFound());
+        if (resolved.Count > 1)  return Task.FromResult<EraseContactResult>(new EraseContactResult.Ambiguous());
+        return DeleteContactByOidAsync(resolved.SingleOid!, ct);
     }
 
     public Task<MarkDepartedResult> MarkDepartedAsync(
-        HouseholdRef householdRef, CancellationToken ct = default)
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
     {
-        var idx = _contacts.FindIndex(c => c.HouseholdRef == householdRef);
+        var resolved = ResolveOneByRole(householdRef, role);
+        if (resolved.Count == 0) return Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.NotFound());
+        if (resolved.Count > 1)  return Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.Ambiguous());
+
+        var idx = _contacts.FindIndex(c => c.EntraObjectId == resolved.SingleOid);
         if (idx < 0) return Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.NotFound());
         var c = _contacts[idx];
         _contacts[idx] = c with { DepartedAt = c.DepartedAt ?? DateTimeOffset.UtcNow };
@@ -502,18 +537,31 @@ public sealed class FakeDirectoryStore : IDirectoryStore
         return Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Ok(removed));
     }
 
-    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default)
-    {
-        var contact = _contacts.FirstOrDefault(c => c.HouseholdRef == householdRef && c.Role == role);
-        return Task.FromResult<HouseholdContact?>(contact);
-    }
-
     public Task<RemoveResidentResult> RemoveResidentAsync(
         HouseholdRef householdRef, string role, CancellationToken ct = default)
     {
-        var removed = _contacts.RemoveAll(c => c.HouseholdRef == householdRef && c.Role == role);
-        return Task.FromResult<RemoveResidentResult>(
-            removed > 0 ? new RemoveResidentResult.Ok() : new RemoveResidentResult.NotFound());
+        var resolved = ResolveOneByRole(householdRef, role);
+        if (resolved.Count == 0) return Task.FromResult<RemoveResidentResult>(new RemoveResidentResult.NotFound());
+        if (resolved.Count > 1)  return Task.FromResult<RemoveResidentResult>(new RemoveResidentResult.Ambiguous());
+
+        _contacts.RemoveAll(c => c.EntraObjectId == resolved.SingleOid);
+        Links.RemoveAll(l => l.EntraObjectId == resolved.SingleOid);
+        return Task.FromResult<RemoveResidentResult>(new RemoveResidentResult.Ok());
+    }
+
+    private readonly record struct RoleResolution(int Count, string? SingleOid);
+
+    private RoleResolution ResolveOneByRole(HouseholdRef householdRef, string role)
+    {
+        var oids = _contacts
+            .Where(c => c.HouseholdRef == householdRef && c.Role == role)
+            .Select(c => c.EntraObjectId)
+            .Concat(Links
+                .Where(l => l.HouseholdRef == householdRef && l.Role == role)
+                .Select(l => l.EntraObjectId))
+            .Distinct()
+            .ToList();
+        return new RoleResolution(oids.Count, oids.Count == 1 ? oids[0] : null);
     }
 }
 
@@ -522,32 +570,40 @@ public sealed class FailingDirectoryStore : IDirectoryStore
     public Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
+    public Task<HouseholdContact?> GetContactByOidAsync(string entraObjectId, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<UpdateContactResult> UpsertContactByOidAsync(
+        string entraObjectId, string? displayName, string? phone, string? email, bool? isOptedOut,
+        CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
+    public Task<EraseContactResult> DeleteContactByOidAsync(string entraObjectId, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
+
     public Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef, string role, string? displayName, string? phone, string? email,
         bool? isOptedOut, CancellationToken ct = default)
-        => Task.FromResult<UpdateContactResult>(new UpdateContactResult.Failed());
+        => throw new InvalidOperationException("Simulated store failure");
 
     public Task<UpdateNotesResult> UpsertNotesAsync(
         HouseholdRef householdRef, string? notes, CancellationToken ct = default)
-        => Task.FromResult<UpdateNotesResult>(new UpdateNotesResult.Failed());
+        => throw new InvalidOperationException("Simulated store failure");
 
     public Task<EraseContactResult> DeleteContactAsync(
-        HouseholdRef householdRef, CancellationToken ct = default)
-        => Task.FromResult<EraseContactResult>(new EraseContactResult.Failed());
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
 
     public Task<MarkDepartedResult> MarkDepartedAsync(
-        HouseholdRef householdRef, CancellationToken ct = default)
-        => Task.FromResult<MarkDepartedResult>(new MarkDepartedResult.Failed());
+        HouseholdRef householdRef, string role, CancellationToken ct = default)
+        => throw new InvalidOperationException("Simulated store failure");
 
     public Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(CancellationToken ct = default)
-        => Task.FromResult<PurgeExpiredContactsResult>(new PurgeExpiredContactsResult.Failed());
-
-    public Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default)
         => throw new InvalidOperationException("Simulated store failure");
 
     public Task<RemoveResidentResult> RemoveResidentAsync(
         HouseholdRef householdRef, string role, CancellationToken ct = default)
-        => Task.FromResult<RemoveResidentResult>(new RemoveResidentResult.Failed());
+        => throw new InvalidOperationException("Simulated store failure");
 }
 
 // Slice 1 fake — only UpsertAsync is exercised; the 3 new methods throw so they're never called from Slice 1 tests.
