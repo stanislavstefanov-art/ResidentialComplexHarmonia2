@@ -78,8 +78,8 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
                     INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
                     VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
 
-                    INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt)
-                    SELECT @HouseholdRef, @Role, ps.DisplayName, ps.Email, 0, SYSUTCDATETIME()
+                    INSERT INTO dbo.HouseholdContacts (EntraObjectId, HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt)
+                    SELECT @Oid, @HouseholdRef, @Role, ps.DisplayName, ps.Email, 0, SYSUTCDATETIME()
                     FROM dbo.PendingSignIns ps
                     WHERE ps.EntraObjectId = @Oid;
 
@@ -123,9 +123,8 @@ public sealed class SqlPendingSignInStore(string connectionString) : IPendingSig
                 INSERT INTO dbo.HouseholdLinks (EntraObjectId, HouseholdRef, Role, LinkedAt)
                 VALUES (@Oid, @HouseholdRef, @Role, SYSUTCDATETIME());
 
-                IF NOT EXISTS (SELECT 1 FROM dbo.HouseholdContacts WHERE HouseholdRef = @HouseholdRef AND Role = @Role)
-                    INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, IsOptedOut, UpdatedAt)
-                    VALUES (@HouseholdRef, @Role, 0, SYSUTCDATETIME());
+                INSERT INTO dbo.HouseholdContacts (EntraObjectId, HouseholdRef, Role, IsOptedOut, UpdatedAt)
+                VALUES (@Oid, @HouseholdRef, @Role, 0, SYSUTCDATETIME());
 
                 IF NOT EXISTS (SELECT 1 FROM dbo.Households WHERE HouseholdRef = @HouseholdRef)
                     INSERT INTO dbo.Households (HouseholdRef, SqMeters) VALUES (@HouseholdRef, 0);
