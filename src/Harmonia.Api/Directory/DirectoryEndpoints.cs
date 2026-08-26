@@ -99,10 +99,11 @@ public static class DirectoryEndpoints
             householdRef, body.Role ?? "Owner", body.DisplayName, body.Phone, body.Email, body.OptedOut, ct);
         return result switch
         {
-            UpdateContactResult.Refused => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
-            UpdateContactResult.Ok      => TypedResults.Ok(),
-            UpdateContactResult.Failed  => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
-            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+            UpdateContactResult.Refused   => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            UpdateContactResult.Ok        => TypedResults.Ok(),
+            UpdateContactResult.Ambiguous => TypedResults.StatusCode(StatusCodes.Status409Conflict),
+            UpdateContactResult.Failed    => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                             => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
 
@@ -140,38 +141,43 @@ public static class DirectoryEndpoints
     }
 
     /// <summary>
-    /// DELETE /directory/{householdRef}/contact — board DSAR hard-delete.
+    /// DELETE /directory/board/contact — board DSAR hard-delete.
+    /// role defaults to "Owner" when the query parameter is absent, for backward compatibility
+    /// with the current admin UI (see EraseContact's doc comment).
     /// R3: householdRef never logged here.
     /// </summary>
     public static async Task<IResult> EraseContactEndpoint(
-        EraseContact useCase, string householdRef, ILogger logger, CancellationToken ct)
+        EraseContact useCase, string householdRef, string? role, ILogger logger, CancellationToken ct)
     {
-        var result = await useCase.ExecuteAsync(householdRef, ct: ct);
+        var result = await useCase.ExecuteAsync(householdRef, role ?? "Owner", ct);
         return result switch
         {
-            EraseContactResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
-            EraseContactResult.Ok       => TypedResults.NoContent(),
-            EraseContactResult.NotFound => TypedResults.NotFound(),    // 404 — board DSAR confirmation
-            EraseContactResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
-            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+            EraseContactResult.Refused   => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            EraseContactResult.Ok        => TypedResults.NoContent(),
+            EraseContactResult.NotFound  => TypedResults.NotFound(),    // 404 — board DSAR confirmation
+            EraseContactResult.Ambiguous => TypedResults.StatusCode(StatusCodes.Status409Conflict),
+            EraseContactResult.Failed    => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                            => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
 
     /// <summary>
-    /// PUT /directory/{householdRef}/departed — board sets departure date.
+    /// DELETE /directory/board/departed — board sets departure date.
+    /// role defaults to "Owner" when the query parameter is absent (see EraseContact).
     /// R3: householdRef never logged here.
     /// </summary>
     public static async Task<IResult> MarkDepartedEndpoint(
-        MarkDeparted useCase, string householdRef, ILogger logger, CancellationToken ct)
+        MarkDeparted useCase, string householdRef, string? role, ILogger logger, CancellationToken ct)
     {
-        var result = await useCase.ExecuteAsync(householdRef, ct: ct);
+        var result = await useCase.ExecuteAsync(householdRef, role ?? "Owner", ct);
         return result switch
         {
-            MarkDepartedResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
-            MarkDepartedResult.Ok       => TypedResults.Ok(),
-            MarkDepartedResult.NotFound => TypedResults.NotFound(),
-            MarkDepartedResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
-            _                           => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+            MarkDepartedResult.Refused   => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            MarkDepartedResult.Ok        => TypedResults.Ok(),
+            MarkDepartedResult.NotFound  => TypedResults.NotFound(),
+            MarkDepartedResult.Ambiguous => TypedResults.StatusCode(StatusCodes.Status409Conflict),
+            MarkDepartedResult.Failed    => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                            => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
 
@@ -207,7 +213,7 @@ public static class DirectoryEndpoints
     }
 
     /// <summary>
-    /// DELETE /directory/{householdRef}/{role}/resident — fully removes a resident
+    /// DELETE /directory/board/resident — fully removes a resident
     /// (HouseholdContacts + HouseholdLinks). Their Entra account is unlinked and they
     /// re-enter the pending flow on next sign-in.
     /// R3: householdRef never logged here.
@@ -216,14 +222,15 @@ public static class DirectoryEndpoints
         RemoveResident useCase, string householdRef, string role, ILogger logger, CancellationToken ct)
     {
         var result = await useCase.ExecuteAsync(householdRef, role, ct);
-        logger.LogInformation("DELETE /directory/.../resident — {Outcome}", result.GetType().Name);
+        logger.LogInformation("DELETE /directory/board/resident — {Outcome}", result.GetType().Name);
         return result switch
         {
-            RemoveResidentResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
-            RemoveResidentResult.Ok       => TypedResults.NoContent(),
-            RemoveResidentResult.NotFound => TypedResults.NotFound(),
-            RemoveResidentResult.Failed   => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
-            _                            => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
+            RemoveResidentResult.Refused   => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
+            RemoveResidentResult.Ok        => TypedResults.NoContent(),
+            RemoveResidentResult.NotFound  => TypedResults.NotFound(),
+            RemoveResidentResult.Ambiguous => TypedResults.StatusCode(StatusCodes.Status409Conflict),
+            RemoveResidentResult.Failed    => TypedResults.StatusCode(StatusCodes.Status500InternalServerError),
+            _                              => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
 

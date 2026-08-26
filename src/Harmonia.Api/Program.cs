@@ -374,15 +374,15 @@ app.MapDelete(
 
 app.MapDelete(
     "/directory/board/contact",
-    (EraseContact uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
+    (EraseContact uc, string householdRef, string? role, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.EraseContactEndpoint(
-            uc, householdRef, loggers.CreateLogger("Directory"), ct));
+            uc, householdRef, role, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
     "/directory/board/departed",
-    (MarkDeparted uc, string householdRef, ILoggerFactory loggers, CancellationToken ct) =>
+    (MarkDeparted uc, string householdRef, string? role, ILoggerFactory loggers, CancellationToken ct) =>
         DirectoryEndpoints.MarkDepartedEndpoint(
-            uc, householdRef, loggers.CreateLogger("Directory"), ct));
+            uc, householdRef, role, loggers.CreateLogger("Directory"), ct));
 
 app.MapDelete(
     "/directory/board/resident",
