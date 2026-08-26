@@ -18,7 +18,8 @@ public class DirectoryLogExclusionTests
     private const string SecretBoardRef    = "HH-R3-BOARD-SECRET";
 
     private static readonly SessionContext ResidentCtx =
-        new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef(SecretResidentRef));
+        new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef(SecretResidentRef),
+            EntraObjectId: "oid-r3-resident");
     private static readonly SessionContext AdminCtx =
         new(IsResident: false, IsAdmin: true, HouseholdRef: null);
 
@@ -34,7 +35,7 @@ public class DirectoryLogExclusionTests
         {
             store.Contacts.Add(new HouseholdContact(
                 new HouseholdRef(SecretResidentRef), "Owner", "Alice", null, null, null,
-                false, DateTimeOffset.UtcNow, null));
+                false, DateTimeOffset.UtcNow, null, "oid-r3-resident"));
         }
 
         var session = scenario == "refused"
@@ -64,7 +65,7 @@ public class DirectoryLogExclusionTests
         {
             store.Contacts.Add(new HouseholdContact(
                 new HouseholdRef(SecretBoardRef), "Owner", "Bob", null, null, null,
-                false, DateTimeOffset.UtcNow, null));
+                false, DateTimeOffset.UtcNow, null, "oid-r3-board"));
         }
 
         var session = scenario == "refused"
@@ -77,7 +78,7 @@ public class DirectoryLogExclusionTests
         var logger = new CapturingLogger();
         var uc = new EraseContact(session, storeToUse);
 
-        await DirectoryEndpoints.EraseContactEndpoint(uc, SecretBoardRef, logger, default);
+        await DirectoryEndpoints.EraseContactEndpoint(uc, SecretBoardRef, role: null, logger, default);
 
         Assert.All(logger.Lines, line => Assert.DoesNotContain(SecretBoardRef, line));
     }
@@ -94,7 +95,7 @@ public class DirectoryLogExclusionTests
         {
             store.Contacts.Add(new HouseholdContact(
                 new HouseholdRef(SecretBoardRef), "Owner", "Dave", null, null, null,
-                false, DateTimeOffset.UtcNow, null));
+                false, DateTimeOffset.UtcNow, null, "oid-r3-dave"));
         }
 
         var session = scenario == "refused"
@@ -107,7 +108,7 @@ public class DirectoryLogExclusionTests
         var logger = new CapturingLogger();
         var uc = new MarkDeparted(session, storeToUse);
 
-        await DirectoryEndpoints.MarkDepartedEndpoint(uc, SecretBoardRef, logger, default);
+        await DirectoryEndpoints.MarkDepartedEndpoint(uc, SecretBoardRef, role: null, logger, default);
 
         Assert.All(logger.Lines, line => Assert.DoesNotContain(SecretBoardRef, line));
     }
