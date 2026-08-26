@@ -140,7 +140,13 @@ IF COL_LENGTH('dbo.HouseholdContacts', 'Role') IS NULL
         CONSTRAINT DF_HouseholdContacts_Role DEFAULT 'Owner';
 
 -- Migrate PK from single-column (HouseholdRef) to composite (HouseholdRef, Role).
-IF NOT EXISTS (
+-- Superseded by the EntraObjectId-PK migration below once that has run — gate on
+-- EntraObjectId not existing yet, or this block re-fires on every later schema.sql
+-- re-run (the "PK doesn't include Role" check becomes true again once the PK is
+-- narrowed to EntraObjectId-only) and silently reverts the per-person PK back to the
+-- buggy (HouseholdRef, Role) composite.
+IF COL_LENGTH('dbo.HouseholdContacts', 'EntraObjectId') IS NULL
+AND NOT EXISTS (
     SELECT 1 FROM sys.indexes i
     INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
     INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
