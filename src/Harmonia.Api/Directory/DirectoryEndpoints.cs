@@ -146,7 +146,7 @@ public static class DirectoryEndpoints
     public static async Task<IResult> EraseContactEndpoint(
         EraseContact useCase, string householdRef, ILogger logger, CancellationToken ct)
     {
-        var result = await useCase.ExecuteAsync(householdRef, ct);
+        var result = await useCase.ExecuteAsync(householdRef, ct: ct);
         return result switch
         {
             EraseContactResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
@@ -164,7 +164,7 @@ public static class DirectoryEndpoints
     public static async Task<IResult> MarkDepartedEndpoint(
         MarkDeparted useCase, string householdRef, ILogger logger, CancellationToken ct)
     {
-        var result = await useCase.ExecuteAsync(householdRef, ct);
+        var result = await useCase.ExecuteAsync(householdRef, ct: ct);
         return result switch
         {
             MarkDepartedResult.Refused  => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
