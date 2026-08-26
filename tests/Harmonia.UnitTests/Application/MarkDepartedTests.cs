@@ -34,10 +34,25 @@ public class MarkDepartedTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-TARGET-1"), "Owner", "Alice", null, null, null,
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-alice"));
         var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
         var result = await uc.ExecuteAsync("HH-TARGET-1");
         Assert.IsType<MarkDepartedResult.Ok>(result);
+    }
+
+    [Fact]
+    public async Task Explicit_role_is_forwarded_to_store()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-TARGET-1"), "Renter", "Dave", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-dave"));
+        var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
+
+        var result = await uc.ExecuteAsync("HH-TARGET-1", "Renter");
+
+        Assert.IsType<MarkDepartedResult.Ok>(result);
+        Assert.NotNull(store.Contacts[0].DepartedAt);
     }
 
     [Fact]
@@ -49,12 +64,31 @@ public class MarkDepartedTests
     }
 
     [Fact]
+    public async Task Two_residents_sharing_a_role_returns_Ambiguous()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-alice"));
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-1"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-bob"));
+
+        var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
+        var result = await uc.ExecuteAsync("HH-AMBIG-1", "Owner");
+
+        Assert.IsType<MarkDepartedResult.Ambiguous>(result);
+        Assert.Null(store.Contacts.Single(c => c.EntraObjectId == "oid-alice").DepartedAt);
+        Assert.Null(store.Contacts.Single(c => c.EntraObjectId == "oid-bob").DepartedAt);
+    }
+
+    [Fact]
     public async Task MarkDeparted_is_idempotent_second_call_returns_Ok_and_preserves_original_date()
     {
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-TARGET-2"), "Owner", "Bob", null, null, null,
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-bob-2"));
         var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
 
         // First call — sets DepartedAt
