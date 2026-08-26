@@ -40,6 +40,7 @@ public class RemoveResidentTests
 
         Assert.IsType<RemoveResidentResult.Ok>(result);
         Assert.Empty(store.Contacts);
+        Assert.Empty(store.Links);
     }
 
     [Fact]
@@ -69,6 +70,7 @@ public class RemoveResidentTests
 
         Assert.IsType<RemoveResidentResult.Ambiguous>(result);
         Assert.Equal(2, store.Contacts.Count);
+        Assert.Equal(2, store.Links.Count);
     }
 
     [Fact]
