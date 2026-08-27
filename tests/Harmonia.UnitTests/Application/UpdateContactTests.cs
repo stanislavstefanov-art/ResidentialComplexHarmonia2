@@ -12,10 +12,17 @@ public class UpdateContactTests
     private static readonly SessionContext ResidentCtx =
         new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-UC-1"));
 
+    private static FakeDirectoryStore StoreLinkedTo(string householdRef, string role = "Owner")
+    {
+        var store = new FakeDirectoryStore();
+        store.Links.Add(($"oid-{Guid.NewGuid():N}", new HouseholdRef(householdRef), role));
+        return store;
+    }
+
     [Fact]
     public async Task Admin_session_returns_Ok()
     {
-        var useCase = new UpdateContact(new FakeSession(AdminCtx), new FakeDirectoryStore());
+        var useCase = new UpdateContact(new FakeSession(AdminCtx), StoreLinkedTo("HH-TARGET-1"));
         Assert.IsType<UpdateContactResult.Ok>(
             await useCase.ExecuteAsync("HH-TARGET-1", "Owner", "Bob", "555-0200", null));
     }
@@ -47,7 +54,7 @@ public class UpdateContactTests
     [Fact]
     public async Task HouseholdRef_from_parameter_is_forwarded_to_store()
     {
-        var store = new FakeDirectoryStore();
+        var store = StoreLinkedTo("HH-FORWARDED-1");
         var useCase = new UpdateContact(new FakeSession(AdminCtx), store);
         await useCase.ExecuteAsync("HH-FORWARDED-1", "Owner", "Bob", null, null);
 
@@ -58,11 +65,31 @@ public class UpdateContactTests
     [Fact]
     public async Task OptOut_flag_is_forwarded_to_store()
     {
-        var store = new FakeDirectoryStore();
+        var store = StoreLinkedTo("HH-OPT-FWD-1");
         var useCase = new UpdateContact(new FakeSession(AdminCtx), store);
         await useCase.ExecuteAsync("HH-OPT-FWD-1", "Owner", null, null, null, isOptedOut: true);
 
         Assert.Single(store.Contacts);
         Assert.True(store.Contacts[0].IsOptedOut);
+    }
+
+    [Fact]
+    public async Task Two_residents_sharing_a_role_returns_Ambiguous()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-alice"));
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-1"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-bob"));
+
+        var useCase = new UpdateContact(new FakeSession(AdminCtx), store);
+        var result = await useCase.ExecuteAsync("HH-AMBIG-1", "Owner", "Someone", null, null);
+
+        Assert.IsType<UpdateContactResult.Ambiguous>(result);
+        // Neither resident's row was touched.
+        Assert.Equal("Alice", store.Contacts.Single(c => c.EntraObjectId == "oid-alice").DisplayName);
+        Assert.Equal("Bob",   store.Contacts.Single(c => c.EntraObjectId == "oid-bob").DisplayName);
     }
 }

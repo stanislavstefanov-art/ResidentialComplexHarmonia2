@@ -13,7 +13,8 @@ namespace Harmonia.UnitTests.Api;
 public class DirectoryEndpointsTests
 {
     private static readonly SessionContext ResidentCtx =
-        new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-EP-1"));
+        new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-EP-1"),
+            EntraObjectId: "oid-ep-1");
     private static readonly SessionContext AdminCtx =
         new(IsResident: false, IsAdmin: true, HouseholdRef: null);
 
@@ -60,7 +61,9 @@ public class DirectoryEndpointsTests
     [Fact]
     public async Task UpdateMyContact_ok_returns_200()
     {
-        var uc = new UpdateMyContact(new FakeSession(ResidentCtx), new FakeDirectoryStore());
+        var store = new FakeDirectoryStore();
+        store.Links.Add(("oid-ep-1", new HouseholdRef("HH-EP-1"), "Owner"));
+        var uc = new UpdateMyContact(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.UpdateMyContactEndpoint(
             uc, new UpdateContactRequest("Alice", null, null), NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status200OK,
@@ -87,12 +90,14 @@ public class DirectoryEndpointsTests
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
 
-    // ── PUT /directory/{householdRef}/contact ──────────────────────────────
+    // ── PUT /directory/board/contact ──────────────────────────────
 
     [Fact]
     public async Task UpdateContact_ok_returns_200()
     {
-        var uc = new UpdateContact(new FakeSession(AdminCtx), new FakeDirectoryStore());
+        var store = new FakeDirectoryStore();
+        store.Links.Add(("oid-bob", new HouseholdRef("HH-TARGET-1"), "Owner"));
+        var uc = new UpdateContact(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.UpdateContactEndpoint(
             uc, "HH-TARGET-1", new UpdateContactRequest("Bob", null, null),
             NullLogger.Instance, default);
@@ -122,7 +127,27 @@ public class DirectoryEndpointsTests
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
 
-    // ── PUT /directory/{householdRef}/notes ───────────────────────────────
+    [Fact]
+    public async Task UpdateContact_ambiguous_returns_409()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-alice"));
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-1"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-bob"));
+        var uc = new UpdateContact(new FakeSession(AdminCtx), store);
+
+        var result = await DirectoryEndpoints.UpdateContactEndpoint(
+            uc, "HH-AMBIG-1", new UpdateContactRequest("Someone", null, null),
+            NullLogger.Instance, default);
+
+        Assert.Equal(StatusCodes.Status409Conflict,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    // ── PUT /directory/board/notes ───────────────────────────────
 
     [Fact]
     public async Task UpdateNotes_ok_returns_200()
@@ -163,7 +188,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-PII"), "Owner", "Alice", "555-9999", "alice@test.com", "secret",
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-alice-pii"));
         var uc = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -179,7 +204,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-DTO"), "Owner", "Carol", null, null, null,
-            true, DateTimeOffset.UtcNow, null));
+            true, DateTimeOffset.UtcNow, null, "oid-carol"));
         var uc = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.GetDirectoryEndpoint(uc, NullLogger.Instance, default);
 
@@ -193,6 +218,7 @@ public class DirectoryEndpointsTests
     public async Task UpdateMyContact_opt_out_is_forwarded()
     {
         var store = new FakeDirectoryStore();
+        store.Links.Add(("oid-ep-1", new HouseholdRef("HH-EP-1"), "Owner"));
         var uc = new UpdateMyContact(new FakeSession(ResidentCtx), store);
         await DirectoryEndpoints.UpdateMyContactEndpoint(
             uc, new UpdateContactRequest(null, null, null, OptedOut: true), NullLogger.Instance, default);
@@ -209,7 +235,7 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-EP-1"), "Owner", "Alice", null, null, null,
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-ep-1"));
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         var result = await DirectoryEndpoints.EraseMyContactEndpoint(uc, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status204NoContent,
@@ -243,7 +269,7 @@ public class DirectoryEndpointsTests
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
 
-    // ── DELETE /directory/{householdRef}/contact (board DSAR) ────────────────
+    // ── DELETE /directory/board/contact (board DSAR) ────────────────────────
 
     [Fact]
     public async Task EraseContact_ok_returns_204()
@@ -251,10 +277,10 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-TARGET-1"), "Owner", "Bob", null, null, null,
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-bob-target"));
         var uc = new EraseContact(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.EraseContactEndpoint(
-            uc, "HH-TARGET-1", NullLogger.Instance, default);
+            uc, "HH-TARGET-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status204NoContent,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
@@ -264,7 +290,7 @@ public class DirectoryEndpointsTests
     {
         var uc = new EraseContact(new FakeSession(AdminCtx), new FakeDirectoryStore());
         var result = await DirectoryEndpoints.EraseContactEndpoint(
-            uc, "HH-TARGET-1", NullLogger.Instance, default);
+            uc, "HH-TARGET-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status404NotFound,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
@@ -274,7 +300,7 @@ public class DirectoryEndpointsTests
     {
         var uc = new EraseContact(new FakeSession(ResidentCtx), new FakeDirectoryStore());
         var result = await DirectoryEndpoints.EraseContactEndpoint(
-            uc, "HH-TARGET-1", NullLogger.Instance, default);
+            uc, "HH-TARGET-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status403Forbidden,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
@@ -284,12 +310,31 @@ public class DirectoryEndpointsTests
     {
         var uc = new EraseContact(new FakeSession(AdminCtx), new FailingDirectoryStore());
         var result = await DirectoryEndpoints.EraseContactEndpoint(
-            uc, "HH-TARGET-1", NullLogger.Instance, default);
+            uc, "HH-TARGET-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status500InternalServerError,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
 
-    // ── PUT /directory/{householdRef}/departed ────────────────────────────
+    [Fact]
+    public async Task EraseContact_ambiguous_returns_409()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-2"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-alice-2"));
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-2"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-bob-2"));
+        var uc = new EraseContact(new FakeSession(AdminCtx), store);
+
+        var result = await DirectoryEndpoints.EraseContactEndpoint(
+            uc, "HH-AMBIG-2", role: "Owner", NullLogger.Instance, default);
+
+        Assert.Equal(StatusCodes.Status409Conflict,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    // ── DELETE /directory/board/departed ────────────────────────
 
     [Fact]
     public async Task MarkDeparted_ok_returns_200()
@@ -297,10 +342,10 @@ public class DirectoryEndpointsTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-MD-1"), "Owner", "Alice", null, null, null,
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-alice-md"));
         var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
         var result = await DirectoryEndpoints.MarkDepartedEndpoint(
-            uc, "HH-MD-1", NullLogger.Instance, default);
+            uc, "HH-MD-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status200OK,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
@@ -310,7 +355,7 @@ public class DirectoryEndpointsTests
     {
         var uc = new MarkDeparted(new FakeSession(AdminCtx), new FakeDirectoryStore());
         var result = await DirectoryEndpoints.MarkDepartedEndpoint(
-            uc, "HH-MD-NF", NullLogger.Instance, default);
+            uc, "HH-MD-NF", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status404NotFound,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
@@ -320,7 +365,7 @@ public class DirectoryEndpointsTests
     {
         var uc = new MarkDeparted(new FakeSession(ResidentCtx), new FakeDirectoryStore());
         var result = await DirectoryEndpoints.MarkDepartedEndpoint(
-            uc, "HH-MD-1", NullLogger.Instance, default);
+            uc, "HH-MD-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status403Forbidden,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
@@ -330,8 +375,27 @@ public class DirectoryEndpointsTests
     {
         var uc = new MarkDeparted(new FakeSession(AdminCtx), new FailingDirectoryStore());
         var result = await DirectoryEndpoints.MarkDepartedEndpoint(
-            uc, "HH-MD-1", NullLogger.Instance, default);
+            uc, "HH-MD-1", role: null, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status500InternalServerError,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task MarkDeparted_ambiguous_returns_409()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-3"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-alice-3"));
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-3"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-bob-3"));
+        var uc = new MarkDeparted(new FakeSession(AdminCtx), store);
+
+        var result = await DirectoryEndpoints.MarkDepartedEndpoint(
+            uc, "HH-AMBIG-3", role: "Owner", NullLogger.Instance, default);
+
+        Assert.Equal(StatusCodes.Status409Conflict,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
 
@@ -346,7 +410,6 @@ public class DirectoryEndpointsTests
         var jsonResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
         Assert.Equal(StatusCodes.Status200OK, jsonResult.StatusCode);
 
-        // Verify body has { deleted: 0 }
         var okResult = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.HttpResults.Ok<object>>(result);
         var json = JsonSerializer.Serialize(okResult.Value);
         Assert.Contains("\"deleted\"", json);
@@ -369,6 +432,29 @@ public class DirectoryEndpointsTests
         var result = await DirectoryEndpoints.PurgeExpiredContactsEndpoint(
             uc, NullLogger.Instance, default);
         Assert.Equal(StatusCodes.Status500InternalServerError,
+            Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    // ── DELETE /directory/board/resident ──────────────────────────────────
+
+    [Fact]
+    public async Task RemoveResident_ambiguous_returns_409()
+    {
+        var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-4"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-alice-4"));
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-AMBIG-4"), "Owner", "Bob", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-bob-4"));
+        store.Links.Add(("oid-alice-4", new HouseholdRef("HH-AMBIG-4"), "Owner"));
+        store.Links.Add(("oid-bob-4",   new HouseholdRef("HH-AMBIG-4"), "Owner"));
+        var uc = new RemoveResident(new FakeSession(AdminCtx), store);
+
+        var result = await DirectoryEndpoints.RemoveResidentEndpoint(
+            uc, "HH-AMBIG-4", "Owner", NullLogger.Instance, default);
+
+        Assert.Equal(StatusCodes.Status409Conflict,
             Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
     }
 }

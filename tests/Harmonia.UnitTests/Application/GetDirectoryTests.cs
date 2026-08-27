@@ -70,7 +70,7 @@ public class GetDirectoryTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-1"), "Owner", "Alice", null, null, null,
-            true, DateTimeOffset.UtcNow, null));
+            true, DateTimeOffset.UtcNow, null, "oid-opt-1"));
         var useCase = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = Assert.IsType<GetDirectoryResult.ResidentView>(await useCase.ExecuteAsync());
         Assert.Empty(result.Entries);
@@ -82,7 +82,7 @@ public class GetDirectoryTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-OPT-2"), "Owner", "Bob", null, null, null,
-            true, DateTimeOffset.UtcNow, null));
+            true, DateTimeOffset.UtcNow, null, "oid-opt-2"));
         var useCase = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
         Assert.Single(result.Entries);
@@ -93,7 +93,7 @@ public class GetDirectoryTests
     {
         var contact = new HouseholdContact(
             new HouseholdRef("HH-1"), "Owner", null, null, null, null,
-            false, DateTimeOffset.UtcNow, null);
+            false, DateTimeOffset.UtcNow, null, "oid-1");
         Assert.Null(contact.DepartedAt);
     }
 
@@ -103,7 +103,7 @@ public class GetDirectoryTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-DEP-HIDE"), "Owner", "Departed Alice", null, null, null,
-            false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-30)));
+            false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-30), "oid-dep-hide"));
         var useCase = new GetDirectory(new FakeSession(ResidentCtx), store);
         var result = Assert.IsType<GetDirectoryResult.ResidentView>(await useCase.ExecuteAsync());
         Assert.Empty(result.Entries);
@@ -115,7 +115,7 @@ public class GetDirectoryTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-DEP-BOARD"), "Owner", "Departed Bob", null, null, null,
-            false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-30)));
+            false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-30), "oid-dep-board"));
         var useCase = new GetDirectory(new FakeSession(AdminCtx), store);
         var result = Assert.IsType<GetDirectoryResult.BoardView>(await useCase.ExecuteAsync());
         Assert.Single(result.Entries);

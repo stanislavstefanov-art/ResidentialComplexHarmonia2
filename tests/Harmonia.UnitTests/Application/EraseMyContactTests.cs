@@ -7,8 +7,9 @@ namespace Harmonia.UnitTests.Application;
 
 public class EraseMyContactTests
 {
-    private static readonly SessionContext ResidentCtx =
-        new(IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-ERASE-1"));
+    private static readonly SessionContext ResidentCtx = new(
+        IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-ERASE-1"),
+        EntraObjectId: "oid-erase-1");
     private static readonly SessionContext AdminCtx =
         new(IsResident: false, IsAdmin: true, HouseholdRef: null);
 
@@ -31,7 +32,18 @@ public class EraseMyContactTests
     [Fact]
     public async Task Resident_with_no_householdRef_returns_Refused()
     {
-        var ctx = new SessionContext(IsResident: true, IsAdmin: false, HouseholdRef: null);
+        var ctx = new SessionContext(
+            IsResident: true, IsAdmin: false, HouseholdRef: null, EntraObjectId: "oid-x");
+        var uc = new EraseMyContact(new FakeSession(ctx), new FakeDirectoryStore());
+        var result = await uc.ExecuteAsync();
+        Assert.IsType<EraseContactResult.Refused>(result);
+    }
+
+    [Fact]
+    public async Task Resident_without_EntraObjectId_returns_Refused()
+    {
+        var ctx = new SessionContext(
+            IsResident: true, IsAdmin: false, HouseholdRef: new HouseholdRef("HH-ERASE-1"));
         var uc = new EraseMyContact(new FakeSession(ctx), new FakeDirectoryStore());
         var result = await uc.ExecuteAsync();
         Assert.IsType<EraseContactResult.Refused>(result);
@@ -43,7 +55,7 @@ public class EraseMyContactTests
         var store = new FakeDirectoryStore();
         store.Contacts.Add(new HouseholdContact(
             new HouseholdRef("HH-ERASE-1"), "Owner", "Alice", null, null, null,
-            false, DateTimeOffset.UtcNow, null));
+            false, DateTimeOffset.UtcNow, null, "oid-erase-1"));
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         var result = await uc.ExecuteAsync();
         Assert.IsType<EraseContactResult.Ok>(result);
@@ -67,20 +79,24 @@ public class EraseMyContactTests
     }
 
     [Fact]
-    public async Task HouseholdRef_comes_from_session_not_a_parameter()
+    public async Task Erasing_own_contact_never_touches_a_co_residents_row()
     {
+        // The regression this feature fixes: two residents share HH-ERASE-1 + Owner. Erasing
+        // "my" contact must only ever delete the caller's own row, never a co-resident's row
+        // sharing the same household and role (previously this deleted the ENTIRE household's
+        // contact rows plus its shared PushSubscriptions/NotificationHistory).
         var store = new FakeDirectoryStore();
-        var residentRef = new HouseholdRef("HH-ERASE-1");
-        var otherRef    = new HouseholdRef("HH-OTHER-99");
         store.Contacts.Add(new HouseholdContact(
-            residentRef, "Owner", "Alice", null, null, null, false, DateTimeOffset.UtcNow, null));
+            new HouseholdRef("HH-ERASE-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-erase-1"));
         store.Contacts.Add(new HouseholdContact(
-            otherRef, "Owner", "Bob", null, null, null, false, DateTimeOffset.UtcNow, null));
+            new HouseholdRef("HH-ERASE-1"), "Owner", "Housemate", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-housemate"));
 
         var uc = new EraseMyContact(new FakeSession(ResidentCtx), store);
         await uc.ExecuteAsync();
 
         Assert.Single(store.Contacts);
-        Assert.Equal(otherRef, store.Contacts[0].HouseholdRef);
+        Assert.Equal("oid-housemate", store.Contacts[0].EntraObjectId);
     }
 }

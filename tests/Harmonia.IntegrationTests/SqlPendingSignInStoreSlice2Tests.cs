@@ -108,7 +108,7 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
     {
         var oid = $"oid-{Guid.NewGuid():N}";
         var hh  = $"HH-{Guid.NewGuid():N}";
-        await SeedContactAsync(hh, "Owner", "Existing Owner", "existing@example.com");
+        await SeedContactAsync($"oid-{Guid.NewGuid():N}", hh, "Owner", "Existing Owner", "existing@example.com");
         await Store.UpsertAsync(oid, "newcomer@example.com", "New Comer");
 
         await Store.ActivateAsync(oid, hh, "Owner");
@@ -116,6 +116,31 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
         var (name, email) = await GetContactAsync(hh, "Owner");
         Assert.Equal("Existing Owner", name);
         Assert.Equal("existing@example.com", email);
+    }
+
+    [Fact]
+    public async Task DirectLinkAsync_twice_for_the_same_role_creates_two_HouseholdContacts_rows()
+    {
+        var hh   = $"HH-{Guid.NewGuid():N}";
+        var oid1 = $"oid-{Guid.NewGuid():N}";
+        var oid2 = $"oid-{Guid.NewGuid():N}";
+
+        var result1 = await Store.DirectLinkAsync(oid1, hh, "Owner");
+        var result2 = await Store.DirectLinkAsync(oid2, hh, "Owner");
+
+        Assert.Equal(DirectLinkResult.Ok, result1);
+        Assert.Equal(DirectLinkResult.Ok, result2);
+
+        await using var conn = new SqlConnection(fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT COUNT(*) FROM dbo.HouseholdContacts WHERE HouseholdRef = @HH AND Role = @Role;";
+        cmd.Parameters.AddWithValue("@HH", hh);
+        cmd.Parameters.AddWithValue("@Role", "Owner");
+        var count = (int)(await cmd.ExecuteScalarAsync())!;
+
+        Assert.Equal(2, count);
     }
 
     [Fact]
@@ -233,14 +258,15 @@ public class SqlPendingSignInStoreSlice2Tests(SqlServerFixture fixture)
                 reader.IsDBNull(1) ? null : reader.GetString(1));
     }
 
-    private async Task SeedContactAsync(string householdRef, string role, string name, string email)
+    private async Task SeedContactAsync(string oid, string householdRef, string role, string name, string email)
     {
         await using var conn = new SqlConnection(fixture.ConnectionString);
         await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "INSERT INTO dbo.HouseholdContacts (HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt) " +
-            "VALUES (@HH, @Role, @Name, @Email, 0, SYSUTCDATETIME());";
+            "INSERT INTO dbo.HouseholdContacts (EntraObjectId, HouseholdRef, Role, DisplayName, Email, IsOptedOut, UpdatedAt) " +
+            "VALUES (@Oid, @HH, @Role, @Name, @Email, 0, SYSUTCDATETIME());";
+        cmd.Parameters.AddWithValue("@Oid",   oid);
         cmd.Parameters.AddWithValue("@HH",    householdRef);
         cmd.Parameters.AddWithValue("@Role",  role);
         cmd.Parameters.AddWithValue("@Name",  name);

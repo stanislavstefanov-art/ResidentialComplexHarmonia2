@@ -140,7 +140,13 @@ IF COL_LENGTH('dbo.HouseholdContacts', 'Role') IS NULL
         CONSTRAINT DF_HouseholdContacts_Role DEFAULT 'Owner';
 
 -- Migrate PK from single-column (HouseholdRef) to composite (HouseholdRef, Role).
-IF NOT EXISTS (
+-- Superseded by the EntraObjectId-PK migration below once that has run — gate on
+-- EntraObjectId not existing yet, or this block re-fires on every later schema.sql
+-- re-run (the "PK doesn't include Role" check becomes true again once the PK is
+-- narrowed to EntraObjectId-only) and silently reverts the per-person PK back to the
+-- buggy (HouseholdRef, Role) composite.
+IF COL_LENGTH('dbo.HouseholdContacts', 'EntraObjectId') IS NULL
+AND NOT EXISTS (
     SELECT 1 FROM sys.indexes i
     INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
     INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
@@ -180,6 +186,41 @@ CREATE TABLE dbo.HouseholdLinks
     LinkedAt       datetime2(3)   NOT NULL,
     CONSTRAINT PK_HouseholdLinks PRIMARY KEY (EntraObjectId)
 );
+
+-- Multi-resident fix: HouseholdContacts must be keyed per person, not per (HouseholdRef, Role) —
+-- two residents sharing a household+role otherwise collide (docs/superpowers/specs/2026-08-20-directory-multi-resident-design.md).
+-- Placed after dbo.HouseholdLinks: the backfill below joins against it, and schema.sql runs
+-- top-to-bottom as one unbatched script, so HouseholdLinks must already exist by this point.
+IF COL_LENGTH('dbo.HouseholdContacts', 'EntraObjectId') IS NULL
+BEGIN
+    ALTER TABLE dbo.HouseholdContacts ADD EntraObjectId nvarchar(36) NULL;
+
+    -- Backfill. Deterministic: earliest-linked account per (HouseholdRef, Role) wins the
+    -- existing row's data (HouseholdLinks can already have duplicates — that duplication
+    -- IS this bug — so a plain join would be ambiguous). Any other same-role account was
+    -- never the one whose data survived under the old UpsertAsync/DirectLinkAsync anyway;
+    -- it starts fresh, which the new self-service upsert-recovery path handles safely.
+    ;WITH Ranked AS (
+        SELECT EntraObjectId, HouseholdRef, Role,
+               ROW_NUMBER() OVER (PARTITION BY HouseholdRef, Role ORDER BY LinkedAt ASC) AS rn
+        FROM dbo.HouseholdLinks
+    )
+    UPDATE hc
+    SET hc.EntraObjectId = r.EntraObjectId
+    FROM dbo.HouseholdContacts hc
+    JOIN Ranked r
+      ON r.HouseholdRef = hc.HouseholdRef AND r.Role = hc.Role AND r.rn = 1;
+
+    -- Orphaned contact row (no matching HouseholdLinks row at all) — delete rather than
+    -- leave a NULL-keyed row once EntraObjectId is required.
+    DELETE FROM dbo.HouseholdContacts WHERE EntraObjectId IS NULL;
+
+    ALTER TABLE dbo.HouseholdContacts ALTER COLUMN EntraObjectId nvarchar(36) NOT NULL;
+
+    ALTER TABLE dbo.HouseholdContacts DROP CONSTRAINT PK_HouseholdContacts;
+    ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (EntraObjectId);
+    CREATE INDEX IX_HouseholdContacts_HouseholdRef ON dbo.HouseholdContacts (HouseholdRef);
+END
 
 -- Add Role to existing HouseholdLinks rows (idempotent upgrade for pre-existing databases).
 IF COL_LENGTH('dbo.HouseholdLinks', 'Role') IS NULL

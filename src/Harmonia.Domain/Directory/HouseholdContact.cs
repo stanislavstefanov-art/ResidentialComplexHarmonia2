@@ -1,8 +1,11 @@
 namespace Harmonia.Domain.Directory;
 
 /// <summary>
-/// Snapshot of one apartment's contact information stored in <c>dbo.HouseholdContacts</c>.
-/// Phone, Email, and HouseholdRef are personal data (R3) — never log their values; log counts or opaque refs only.
+/// Snapshot of one resident's contact information stored in <c>dbo.HouseholdContacts</c>.
+/// Keyed per person (EntraObjectId), not per (HouseholdRef, Role) — a household can have
+/// more than one resident sharing the same role. Phone, Email, HouseholdRef, and
+/// EntraObjectId are personal data (R3) — never log their values; log counts or opaque
+/// refs only.
 /// </summary>
 public sealed record HouseholdContact(
     HouseholdRef    HouseholdRef,
@@ -13,4 +16,5 @@ public sealed record HouseholdContact(
     string?         Notes,
     bool            IsOptedOut,
     DateTimeOffset  UpdatedAt,
-    DateTimeOffset? DepartedAt);
+    DateTimeOffset? DepartedAt,
+    string          EntraObjectId);

@@ -47,11 +47,19 @@ public class UpdateNotesTests
     [Fact]
     public async Task HouseholdRef_from_parameter_is_forwarded_to_store()
     {
+        // UpsertNotesAsync is household-level and only ever updates an existing contact row —
+        // a household with zero linked residents can never appear in the admin directory list
+        // for notes to be set on it (see SqlDirectoryStore.UpsertNotesAsync), so this test must
+        // seed a contact first for the forwarded householdRef to have anything to match.
         var store = new FakeDirectoryStore();
+        store.Contacts.Add(new HouseholdContact(
+            new HouseholdRef("HH-NOTES-1"), "Owner", "Alice", null, null, null,
+            false, DateTimeOffset.UtcNow, null, "oid-notes-1"));
         var useCase = new UpdateNotes(new FakeSession(AdminCtx), store);
         await useCase.ExecuteAsync("HH-NOTES-1", "Parking spot A12");
 
         Assert.Single(store.Contacts);
         Assert.Equal(new HouseholdRef("HH-NOTES-1"), store.Contacts[0].HouseholdRef);
+        Assert.Equal("Parking spot A12", store.Contacts[0].Notes);
     }
 }

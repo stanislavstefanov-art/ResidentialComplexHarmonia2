@@ -36,10 +36,14 @@ public abstract record UpdateContactResult
 {
     private UpdateContactResult() { }
     /// <summary>No valid session or insufficient role.</summary>
-    public sealed record Refused : UpdateContactResult;
-    public sealed record Ok      : UpdateContactResult;
+    public sealed record Refused   : UpdateContactResult;
+    public sealed record Ok        : UpdateContactResult;
+    /// <summary>More than one resident matches this (HouseholdRef, Role) pair — the caller must
+    /// disambiguate by a specific resident, which this API surface doesn't yet support (admin-UI
+    /// resident picker is a follow-up slice). Refuse rather than guess or fan out.</summary>
+    public sealed record Ambiguous : UpdateContactResult;
     /// <summary>Store error; details are in the server log.</summary>
-    public sealed record Failed  : UpdateContactResult;
+    public sealed record Failed    : UpdateContactResult;
 }
 
 /// <summary>Outcome of updating a household's operational notes.</summary>
@@ -58,13 +62,16 @@ public abstract record EraseContactResult
 {
     private EraseContactResult() { }
     /// <summary>No valid session or insufficient role.</summary>
-    public sealed record Refused  : EraseContactResult;
+    public sealed record Refused   : EraseContactResult;
     /// <summary>Row deleted successfully.</summary>
-    public sealed record Ok       : EraseContactResult;
-    /// <summary>No row with that HouseholdRef exists.</summary>
-    public sealed record NotFound : EraseContactResult;
+    public sealed record Ok        : EraseContactResult;
+    /// <summary>No matching resident exists for the given lookup key (HouseholdRef+Role, or OID).</summary>
+    public sealed record NotFound  : EraseContactResult;
+    /// <summary>More than one resident matches this (HouseholdRef, Role) pair. Refuse rather than
+    /// guess or delete more than one resident's data.</summary>
+    public sealed record Ambiguous : EraseContactResult;
     /// <summary>Store error; details are in the server log.</summary>
-    public sealed record Failed   : EraseContactResult;
+    public sealed record Failed    : EraseContactResult;
 }
 
 /// <summary>Outcome of marking a household as departed (GDPR Art. 6(1)(f) retention clock start).</summary>
@@ -72,13 +79,16 @@ public abstract record MarkDepartedResult
 {
     private MarkDepartedResult() { }
     /// <summary>Caller lacks the required role or session.</summary>
-    public sealed record Refused  : MarkDepartedResult;
+    public sealed record Refused   : MarkDepartedResult;
     /// <summary>DepartedAt set (or already set — idempotent).</summary>
-    public sealed record Ok       : MarkDepartedResult;
+    public sealed record Ok        : MarkDepartedResult;
     /// <summary>No row with that HouseholdRef exists.</summary>
-    public sealed record NotFound : MarkDepartedResult;
+    public sealed record NotFound  : MarkDepartedResult;
+    /// <summary>More than one resident matches this (HouseholdRef, Role) pair. Refuse rather than
+    /// guess or mark more than one resident departed.</summary>
+    public sealed record Ambiguous : MarkDepartedResult;
     /// <summary>Store error; details are in the server log.</summary>
-    public sealed record Failed   : MarkDepartedResult;
+    public sealed record Failed    : MarkDepartedResult;
 }
 
 /// <summary>Outcome of an admin self-linking to a household.</summary>
@@ -107,31 +117,67 @@ public abstract record PurgeExpiredContactsResult
 public abstract record RemoveResidentResult
 {
     private RemoveResidentResult() { }
-    public sealed record Refused  : RemoveResidentResult;
-    public sealed record Ok       : RemoveResidentResult;
-    public sealed record NotFound : RemoveResidentResult;
-    public sealed record Failed   : RemoveResidentResult;
+    public sealed record Refused   : RemoveResidentResult;
+    public sealed record Ok        : RemoveResidentResult;
+    public sealed record NotFound  : RemoveResidentResult;
+    /// <summary>More than one resident matches this (HouseholdRef, Role) pair. Refuse rather than
+    /// guess or deactivate more than one account.</summary>
+    public sealed record Ambiguous : RemoveResidentResult;
+    public sealed record Failed    : RemoveResidentResult;
 }
 
 /// <summary>
 /// Directory store port — SQL adapter lives in <c>Harmonia.Api.Reservations.Adapters</c>.
-/// R3: <paramref name="phone"/> and <paramref name="email"/> values must never appear in log output;
-/// implementations must log only exception types and opaque identifiers.
+/// R3: <paramref name="phone"/>, <paramref name="email"/>, and any <c>entraObjectId</c>/OID
+/// parameter must never appear in log output; implementations must log only exception types
+/// and opaque identifiers.
 /// </summary>
 public interface IDirectoryStore
 {
     Task<IReadOnlyList<HouseholdContact>> ListAllAsync(CancellationToken ct = default);
 
-    /// <summary>
-    /// Returns the contact record for a single (household, role) pair, or <see langword="null"/> if no row exists.
-    /// R3: never log <paramref name="householdRef"/> value.
-    /// </summary>
-    Task<HouseholdContact?> GetContactAsync(HouseholdRef householdRef, string role, CancellationToken ct = default);
+    /// <summary>Returns the contact record for one person by their Entra OID, or
+    /// <see langword="null"/> if no row exists (e.g. they've never filled their details in, or
+    /// erased them). R3: never log <paramref name="entraObjectId"/>.</summary>
+    Task<HouseholdContact?> GetContactByOidAsync(string entraObjectId, CancellationToken ct = default);
 
     /// <summary>
-    /// Upserts display name, phone, email, and opt-out flag for <paramref name="householdRef"/> + <paramref name="role"/>.
-    /// Passing <see langword="null"/> for any field preserves the existing stored value (COALESCE semantics).
-    /// R3: never log <paramref name="phone"/> or <paramref name="email"/> values.
+    /// Upserts display name, phone, email, and opt-out flag for the person identified by
+    /// <paramref name="entraObjectId"/>. On first call for that person (no existing row —
+    /// including the "erased their contact, now refilling it" case), the new row's
+    /// HouseholdRef/Role are resolved from their <c>HouseholdLinks</c> entry. Passing
+    /// <see langword="null"/> for any field preserves the existing stored value.
+    /// R3: never log <paramref name="entraObjectId"/>, <paramref name="phone"/>, or
+    /// <paramref name="email"/>.
+    /// </summary>
+    Task<UpdateContactResult> UpsertContactByOidAsync(
+        string  entraObjectId,
+        string? displayName,
+        string? phone,
+        string? email,
+        bool?   isOptedOut,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Hard-deletes the contact record for the person identified by
+    /// <paramref name="entraObjectId"/> (GDPR Art. 17). Idempotent: returns
+    /// <see cref="EraseContactResult.Ok"/> whether or not a contact row currently exists, as
+    /// long as they are (or were) a linked resident. Cascades <c>PushSubscriptions</c> and
+    /// <c>NotificationHistory</c> for their household only if no other resident's contact row
+    /// remains afterward — those two tables are shared per-household infrastructure, not
+    /// per-person, so a co-resident's data must survive this call.
+    /// R3: never log <paramref name="entraObjectId"/>.
+    /// </summary>
+    Task<EraseContactResult> DeleteContactByOidAsync(string entraObjectId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Upserts display name, phone, email, and opt-out flag for the one resident matching
+    /// <paramref name="householdRef"/> + <paramref name="role"/>, resolved via
+    /// <c>HouseholdLinks</c> (not <c>HouseholdContacts</c> row-count, since a resident who
+    /// erased their contact still counts as the one match). Returns
+    /// <see cref="UpdateContactResult.Ambiguous"/> if more than one resident currently holds
+    /// that role in that household. R3: never log <paramref name="householdRef"/>,
+    /// <paramref name="phone"/>, or <paramref name="email"/>.
     /// </summary>
     Task<UpdateContactResult> UpsertContactAsync(
         HouseholdRef householdRef,
@@ -143,7 +189,8 @@ public interface IDirectoryStore
         CancellationToken ct = default);
 
     /// <summary>
-    /// Upserts the operational notes for <paramref name="householdRef"/>.
+    /// Upserts the operational notes for <paramref name="householdRef"/> — genuinely
+    /// household-level (not per-person); applies to every resident's row for that household.
     /// Passing <see langword="null"/> clears existing notes.
     /// </summary>
     Task<UpdateNotesResult> UpsertNotesAsync(
@@ -152,37 +199,44 @@ public interface IDirectoryStore
         CancellationToken ct = default);
 
     /// <summary>
-    /// Hard-deletes the contact record for <paramref name="householdRef"/> (GDPR Art. 17).
-    /// Returns <see cref="EraseContactResult.NotFound"/> when no row exists.
-    /// R3: never log <paramref name="householdRef"/> value.
+    /// Hard-deletes the contact record for the one resident matching
+    /// <paramref name="householdRef"/> + <paramref name="role"/> (GDPR Art. 17, board DSAR),
+    /// resolved via <c>HouseholdLinks</c>. Returns <see cref="EraseContactResult.Ambiguous"/> if
+    /// more than one resident currently holds that role. Cascade rules match
+    /// <see cref="DeleteContactByOidAsync"/>. R3: never log <paramref name="householdRef"/>.
     /// </summary>
     Task<EraseContactResult> DeleteContactAsync(
         HouseholdRef householdRef,
+        string       role,
         CancellationToken ct = default);
 
     /// <summary>
-    /// Sets <c>DepartedAt</c> for <paramref name="householdRef"/> to the current UTC time.
-    /// Idempotent — preserves the original departure date if already set.
-    /// Returns <see cref="MarkDepartedResult.NotFound"/> when no row exists.
-    /// R3: never log <paramref name="householdRef"/> value.
+    /// Sets <c>DepartedAt</c> for the one resident matching <paramref name="householdRef"/> +
+    /// <paramref name="role"/>, resolved via <c>HouseholdLinks</c>. Idempotent — preserves the
+    /// original departure date if already set. Returns
+    /// <see cref="MarkDepartedResult.Ambiguous"/> if more than one resident currently holds
+    /// that role. R3: never log <paramref name="householdRef"/>.
     /// </summary>
     Task<MarkDepartedResult> MarkDepartedAsync(
         HouseholdRef householdRef,
+        string       role,
         CancellationToken ct = default);
 
     /// <summary>
-    /// Hard-deletes all rows where <c>DepartedAt</c> is older than 1 year (GDPR Art. 6(1)(f) retention cutoff).
-    /// Returns the count of deleted rows.
+    /// Hard-deletes all rows where <c>DepartedAt</c> is older than 1 year (GDPR Art. 6(1)(f)
+    /// retention cutoff). Returns the count of deleted rows.
     /// </summary>
     Task<PurgeExpiredContactsResult> PurgeExpiredContactsAsync(
         CancellationToken ct = default);
 
     /// <summary>
-    /// Removes a resident completely: deletes the <c>HouseholdContacts</c> row and the
-    /// <c>HouseholdLinks</c> row for the given (householdRef, role) pair.
-    /// After this call the resident's Entra account is unlinked and they re-enter
-    /// the pending flow on next sign-in.
-    /// R3: never log <paramref name="householdRef"/> value.
+    /// Removes the one resident matching <paramref name="householdRef"/> + <paramref name="role"/>
+    /// (resident is resolved via <c>HouseholdLinks</c>) completely: deletes their
+    /// <c>HouseholdContacts</c> row and their <c>HouseholdLinks</c> row. Returns
+    /// <see cref="RemoveResidentResult.Ambiguous"/>
+    /// if more than one resident currently holds that role. After this call their Entra account
+    /// is unlinked and they re-enter the pending flow on next sign-in.
+    /// R3: never log <paramref name="householdRef"/>.
     /// </summary>
     Task<RemoveResidentResult> RemoveResidentAsync(
         HouseholdRef householdRef,
