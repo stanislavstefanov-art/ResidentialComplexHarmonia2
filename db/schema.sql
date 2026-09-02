@@ -195,31 +195,42 @@ IF COL_LENGTH('dbo.HouseholdContacts', 'EntraObjectId') IS NULL
 BEGIN
     ALTER TABLE dbo.HouseholdContacts ADD EntraObjectId nvarchar(36) NULL;
 
-    -- Backfill. Deterministic: earliest-linked account per (HouseholdRef, Role) wins the
-    -- existing row's data (HouseholdLinks can already have duplicates — that duplication
-    -- IS this bug — so a plain join would be ambiguous). Any other same-role account was
-    -- never the one whose data survived under the old UpsertAsync/DirectLinkAsync anyway;
-    -- it starts fresh, which the new self-service upsert-recovery path handles safely.
-    ;WITH Ranked AS (
-        SELECT EntraObjectId, HouseholdRef, Role,
-               ROW_NUMBER() OVER (PARTITION BY HouseholdRef, Role ORDER BY LinkedAt ASC) AS rn
-        FROM dbo.HouseholdLinks
-    )
-    UPDATE hc
-    SET hc.EntraObjectId = r.EntraObjectId
-    FROM dbo.HouseholdContacts hc
-    JOIN Ranked r
-      ON r.HouseholdRef = hc.HouseholdRef AND r.Role = hc.Role AND r.rn = 1;
+    -- The rest of this block is dynamic SQL on purpose: schema.sql runs as one unbatched
+    -- script (no GO), so the whole batch is compiled against a metadata snapshot taken
+    -- before any of it executes. On a database where dbo.HouseholdContacts already exists
+    -- (e.g. prod), a DML statement here referencing the EntraObjectId column the ALTER TABLE
+    -- above just added would fail with "Invalid column name" — the compiler can't see a
+    -- change made earlier in the same batch. EXEC() defers compilation to run time, after
+    -- the ALTER has actually applied, so it sees the column. (This never showed up in CI or
+    -- SqlServerFixture because there dbo.HouseholdContacts doesn't exist yet when this block
+    -- first runs, so deferred name resolution masks the same defect.)
+    EXEC(N'
+        -- Backfill. Deterministic: earliest-linked account per (HouseholdRef, Role) wins the
+        -- existing row''s data (HouseholdLinks can already have duplicates — that duplication
+        -- IS this bug — so a plain join would be ambiguous). Any other same-role account was
+        -- never the one whose data survived under the old UpsertAsync/DirectLinkAsync anyway;
+        -- it starts fresh, which the new self-service upsert-recovery path handles safely.
+        ;WITH Ranked AS (
+            SELECT EntraObjectId, HouseholdRef, Role,
+                   ROW_NUMBER() OVER (PARTITION BY HouseholdRef, Role ORDER BY LinkedAt ASC) AS rn
+            FROM dbo.HouseholdLinks
+        )
+        UPDATE hc
+        SET hc.EntraObjectId = r.EntraObjectId
+        FROM dbo.HouseholdContacts hc
+        JOIN Ranked r
+          ON r.HouseholdRef = hc.HouseholdRef AND r.Role = hc.Role AND r.rn = 1;
 
-    -- Orphaned contact row (no matching HouseholdLinks row at all) — delete rather than
-    -- leave a NULL-keyed row once EntraObjectId is required.
-    DELETE FROM dbo.HouseholdContacts WHERE EntraObjectId IS NULL;
+        -- Orphaned contact row (no matching HouseholdLinks row at all) — delete rather than
+        -- leave a NULL-keyed row once EntraObjectId is required.
+        DELETE FROM dbo.HouseholdContacts WHERE EntraObjectId IS NULL;
 
-    ALTER TABLE dbo.HouseholdContacts ALTER COLUMN EntraObjectId nvarchar(36) NOT NULL;
+        ALTER TABLE dbo.HouseholdContacts ALTER COLUMN EntraObjectId nvarchar(36) NOT NULL;
 
-    ALTER TABLE dbo.HouseholdContacts DROP CONSTRAINT PK_HouseholdContacts;
-    ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (EntraObjectId);
-    CREATE INDEX IX_HouseholdContacts_HouseholdRef ON dbo.HouseholdContacts (HouseholdRef);
+        ALTER TABLE dbo.HouseholdContacts DROP CONSTRAINT PK_HouseholdContacts;
+        ALTER TABLE dbo.HouseholdContacts ADD CONSTRAINT PK_HouseholdContacts PRIMARY KEY (EntraObjectId);
+        CREATE INDEX IX_HouseholdContacts_HouseholdRef ON dbo.HouseholdContacts (HouseholdRef);
+    ');
 END
 
 -- Add Role to existing HouseholdLinks rows (idempotent upgrade for pre-existing databases).
